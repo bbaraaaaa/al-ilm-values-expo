@@ -416,6 +416,7 @@
 
     wakeSpring() {
       if (this.rafId) return;
+      window.PerfTier?.watch(900);
       this.lastFrameTime = performance.now();
       this.rafId = requestAnimationFrame((now) => this.tick(now));
     },
@@ -481,7 +482,12 @@
       const spacing = this.getSpacing();
       const nearest = this.wrapIndex(Math.round(this.position));
       state.activeOrbitIndex = nearest;
-      const maxVisibleDist = len <= 6 ? 2.95 : 3.6;
+      // Device level (perf_tier.js): the full ring with depth-of-field blur on
+      // capable devices; fewer cards and no blur filter on medium / low ones.
+      const perf = window.PerfTier?.level || 'high';
+      const maxVisibleDist =
+        perf === 'low' ? 1.75 : perf === 'medium' ? (len <= 6 ? 2.4 : 2.6) : len <= 6 ? 2.95 : 3.6;
+      const depthBlur = perf === 'high';
       // Day projector cards are light: dimming them too far reads as grey smudge.
       const minBrightness = document.body.classList.contains('projector-day') ? 0.82 : 0.58;
 
@@ -531,9 +537,12 @@
         // While moving, depth is shown with opacity alone (no filter at all, so
         // every frame is a pure GPU transform/opacity change); the blur and the
         // dimming ease back in from `none` once the deck rests.
+        // Medium / low devices never use the filter: the side cards are dimmed
+        // with opacity alone, at rest too, so nothing switches when they stop.
         const blurPx = Math.min(4.5, (absRel - 0.25) * 1.85);
-        const filter = inFocus || isMoving ? 'none' : `blur(${blurPx.toFixed(1)}px) brightness(${brightness.toFixed(2)})`;
-        const shownOpacity = isMoving && !inFocus ? opacity * brightness : opacity;
+        const useFilter = depthBlur && !inFocus && !isMoving;
+        const filter = useFilter ? `blur(${blurPx.toFixed(1)}px) brightness(${brightness.toFixed(2)})` : 'none';
+        const shownOpacity = !useFilter && !inFocus ? opacity * brightness : opacity;
         const opacityText = shownOpacity >= 0.999 ? '1' : shownOpacity.toFixed(3);
         const zIndex = 500 - Math.round(absRel * 100);
 
@@ -555,7 +564,9 @@
         if (s.next !== isNext) el.classList.toggle('is-next', (s.next = isNext));
       }
 
-      if (nearest !== this.lastRenderedNearest) {
+      // The dots follow the cards, except mid-SPIN: a dot changing width on
+      // every card that flew past re-laid out the toolbar ~30 times a spin.
+      if (nearest !== this.lastRenderedNearest && !(state.isSpinning && isMoving)) {
         this.lastRenderedNearest = nearest;
         this.syncDots(nearest);
       }
@@ -763,6 +774,7 @@
 
       const startTime = performance.now();
       let lastWholeCard = Math.floor(startPos);
+      window.PerfTier?.watch(duration);
 
       const frame = (now) => {
         const t = Math.min(1, (now - startTime) / duration);
@@ -812,6 +824,12 @@
 
   window.switchGroup = (grp) => OrbitPhysics.buildDeck(grp);
   window.stepCard = (dir) => OrbitPhysics.step(dir);
+
+  // The device level can change after load (CPU check, frame watch): redraw
+  // the ring with the new number of cards / blur.
+  window.addEventListener('perfchange', () => {
+    if (!OrbitPhysics.rafId && !state.isSpinning) OrbitPhysics.updateTransforms(false);
+  });
 
   // ==========================================================================
   // 4. HIGH-SPEED SPIN REACTOR + WEB AUDIO MECHANICAL TICKS
@@ -1450,6 +1468,7 @@
 
       const modal = $('studioModal');
       if (modal) {
+        window.PerfTier?.watch(900);
         modal.classList.add('active');
         document.body.classList.add('modal-open');
       }

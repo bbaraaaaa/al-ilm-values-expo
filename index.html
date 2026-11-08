@@ -19,8 +19,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
-  <link rel="stylesheet" href="./astra_visionos.css?v=4.6" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=4.6" />
+  <!-- Device performance level (sets html[data-perf]) before the styles apply -->
+  <script src="./perf_tier.js?v=4.7"></script>
+  <link rel="stylesheet" href="./astra_visionos.css?v=4.7" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=4.7" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -67,15 +69,20 @@
     }
 
     /* Ambient Tuwaiq / Diriyah Glow */
+    /* The soft glow is drawn by a gradient mask, not filter: blur(120px):
+       a blur that large was re-rendered on every frame of its colour change
+       (each time the cards stop, each value window) and whenever anything
+       near it repainted. Same size and softness as the old blurred pill. */
     .ambient-orb {
       position: absolute;
-      inline-size: min(52rem, 88vw);
-      block-size: 24rem;
-      top: -8rem;
+      inline-size: calc(min(52rem, 88vw) + 36rem);
+      block-size: calc(24rem + 36rem);
+      top: calc(-8rem - 18rem);
       left: 50%;
       transform: translateX(-50%);
-      border-radius: 999px;
-      filter: blur(120px);
+      border-radius: 50%;
+      -webkit-mask-image: radial-gradient(closest-side, #000 24%, rgba(0, 0, 0, 0.62) 46%, rgba(0, 0, 0, 0.22) 70%, transparent 100%);
+      mask-image: radial-gradient(closest-side, #000 24%, rgba(0, 0, 0, 0.62) 46%, rgba(0, 0, 0, 0.22) 70%, transparent 100%);
       opacity: 0.17;
       pointer-events: none;
       z-index: 0;
@@ -1326,12 +1333,12 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=4.6"></script>
+  <script src="./opus_content.js?v=4.7"></script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=4.6"></script>
+  <script src="./fable_engine.js?v=4.7"></script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=4.6"></script>
+  <script src="./stage3_fable_upgrade.js?v=4.7"></script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=4.6"></script>
+  <script src="./exhibition_kiosk.js?v=4.7"></script>
 </body>
 </html>

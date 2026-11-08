@@ -634,7 +634,8 @@
       onDone?.();
       return;
     }
-    const ms = Math.min(1200, Math.max(600, 420 + Math.abs(dist) * 0.45));
+    const ms = Math.min(1200, Math.max(600, 420 + Math.abs(dist) * 0.45)) * (window.PerfTier?.motion || 1);
+    window.PerfTier?.watch(ms);
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const stop = () => {
       cancelAnimationFrame(glideRaf);
@@ -684,7 +685,7 @@
     // (z-index) and covers the header copy exactly, so the swap happens while
     // one of them is fully opaque and never dips through half-transparency:
     // going down it fades in over the header copy, which then hides (CSS delay,
-    // must match `body.dock-floating .top-nav .header-dock` in section 12);
+    // must match `.top-nav.dock-away .header-dock` in section 12);
     // going up it settles over the slot, the header copy reappears beneath it,
     // and only then does it fade away.
     const HANDOFF_IN = 90;
@@ -715,8 +716,21 @@
       headerDock.setAttribute('aria-hidden', String(isFloating));
     }
 
+    // The bar's state lives on the header and the bar themselves (not on
+    // <body>): a class change on <body> made the browser re-check the whole
+    // page's styles right as the fold started.
+    function setFolded(on) {
+      nav.classList.toggle('is-folded', on);
+    }
+    function setDockFloating(on) {
+      nav.classList.toggle('dock-away', on);
+      floatingDock.classList.toggle('is-floating', on);
+    }
+    const isFolded = () => nav.classList.contains('is-folded');
+
     const T = (x, y, s) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${s.toFixed(4)})`;
-    const durationFor = (dist) => Math.round(Math.min(1200, Math.max(860, 640 + dist * 0.45)));
+    const durationFor = (dist) =>
+      Math.round(Math.min(1200, Math.max(860, 640 + dist * 0.45)) * (window.PerfTier?.motion || 1));
 
     // Where the floating bar must be to sit exactly over the header bar. The
     // header copy is only hidden (its layout box stays), so it can be measured.
@@ -750,11 +764,13 @@
       const from = reversing ? currentTransform() : null;
       stopGlide();
       floating = true;
-      measurePill();
-      document.body.classList.add('dock-floating', 'nav-compact'); // header copy crossfades out
-      setInteractive(true);
-
+      // Measure first, then change classes: measuring after the change forced
+      // a full style + layout pass inside the fold's first frame.
       const p = headerPose();
+      measurePill();
+      setFolded(true);
+      setDockFloating(true); // header copy crossfades out
+      setInteractive(true);
       let ms;
       let frames;
       if (reversing) {
@@ -780,6 +796,7 @@
         ];
       }
       glide = floatingDock.animate(frames, { duration: ms });
+      window.PerfTier?.watch(ms);
       glide.onfinish = () => {
         glide = null;
       };
@@ -790,10 +807,10 @@
       const from = reversing ? currentTransform() : T(0, 0, 1);
       stopGlide();
       floating = false;
-      document.body.classList.remove('nav-compact'); // header grows back first
+      const p = headerPose();
+      setFolded(false); // header grows back first
       setInteractive(false);
 
-      const p = headerPose();
       const travel = durationFor(p.dist) - 80;
       const ms = travel + HANDOFF_OUT;
       const settledAt = travel / ms;
@@ -818,13 +835,14 @@
         { transform: T(p.dx, p.dy, p.s), opacity: 0 }
       ].map((f) => ({ opacity: 1, visibility: 'visible', ...f }));
       glide = floatingDock.animate(frames, { duration: ms, fill: 'forwards' });
+      window.PerfTier?.watch(ms);
       // The header copy reappears beneath the settled floating copy.
       glideTimer = setTimeout(() => {
-        if (!floating) document.body.classList.remove('dock-floating');
+        if (!floating) setDockFloating(false);
       }, travel);
       glide.onfinish = () => {
         if (floating) return; // reversed again meanwhile
-        document.body.classList.remove('dock-floating');
+        setDockFloating(false);
         stopGlide();
       };
     }
@@ -838,18 +856,18 @@
     function applyCompactState() {
       stopGlide();
       const y = window.scrollY;
+      measurePill();
       if (isCompact()) {
         floating = true;
-        document.body.classList.add('dock-floating');
-        document.body.classList.toggle('nav-compact', y > FLOAT_AFTER);
+        setDockFloating(true);
+        setFolded(y > FLOAT_AFTER);
         setInteractive(true);
       } else {
         floating = y > FLOAT_AFTER;
-        document.body.classList.toggle('dock-floating', floating);
-        document.body.classList.toggle('nav-compact', floating);
+        setDockFloating(floating);
+        setFolded(floating);
         setInteractive(floating);
       }
-      measurePill();
     }
     compactMQ.addEventListener?.('change', applyCompactState);
 
@@ -857,6 +875,7 @@
     window.addEventListener(
       'scroll',
       () => {
+        window.PerfTier?.watch(700);
         if (ticking) return;
         ticking = true;
         requestAnimationFrame(() => {
@@ -865,8 +884,8 @@
           spySection();
           if (isCompact()) {
             const fold = y > FLOAT_AFTER;
-            if (fold && !document.body.classList.contains('nav-compact')) measurePill();
-            document.body.classList.toggle('nav-compact', fold ? true : y >= DOCK_BEFORE && document.body.classList.contains('nav-compact'));
+            if (fold && !isFolded()) measurePill();
+            setFolded(fold ? true : y >= DOCK_BEFORE && isFolded());
             return;
           }
           if (floating) {
@@ -921,20 +940,56 @@
       });
     }
 
-    function spySection() {
-      if (spyHold) return;
-      const line = window.scrollY + headerRoom() + 80;
-      let current = 'all';
+    // Section positions are measured once and kept until something changes
+    // size (ResizeObserver), so scrolling itself never asks for a layout.
+    let spyMap = null;
+    function measureSpy() {
+      const y = window.scrollY;
+      spyMap = {
+        room: headerRoom(),
+        bottom: document.documentElement.scrollHeight - window.innerHeight,
+        tops: VIEWS.map((view) => {
+          const el = document.getElementById(SECTION_IDS[view]);
+          return el && el.offsetParent !== null ? el.getBoundingClientRect().top + y : Infinity;
+        })
+      };
+    }
+    // A size change (fonts arriving, "show more", a resize) re-measures and
+    // re-checks once on the next frame, so the lit button is never stale.
+    let spyQueued = false;
+    const invalidateSpy = () => {
+      spyMap = null;
+      if (spyQueued) return;
+      spyQueued = true;
+      requestAnimationFrame(() => {
+        spyQueued = false;
+        spySection();
+      });
+    };
+    if ('ResizeObserver' in window) {
+      const ro = new ResizeObserver(invalidateSpy);
       VIEWS.forEach((view) => {
         const el = document.getElementById(SECTION_IDS[view]);
-        if (el && el.offsetParent !== null && el.getBoundingClientRect().top + window.scrollY <= line) current = view;
+        if (el) ro.observe(el);
       });
-      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
-      if (atBottom && window.scrollY > 0) current = VIEWS[VIEWS.length - 1];
+      ro.observe(document.body);
+    }
+
+    function spySection() {
+      if (spyHold) return;
+      if (!spyMap || !('ResizeObserver' in window)) measureSpy();
+      const y = window.scrollY;
+      const line = y + spyMap.room + 80;
+      let current = 'all';
+      spyMap.tops.forEach((top, i) => {
+        if (top <= line) current = VIEWS[i];
+      });
+      if (y > 0 && y >= spyMap.bottom - 4) current = VIEWS[VIEWS.length - 1];
       if (current !== spyCurrent) setActiveSection(current);
     }
     window.refreshSectionSpy = () => {
       spyCurrent = null;
+      spyMap = null;
       spySection();
     };
 
@@ -962,6 +1017,7 @@
       () => {
         if (!floating) measurePill();
         measureIntro();
+        spyMap = null;
         spySection();
       },
       { passive: true }
