@@ -2385,10 +2385,44 @@ body:not(.projector-day) :is(
  *      verse in the KSU e-Mushaf or the hadith's page in the Dorar
  *      encyclopedia (renderEvidenceSource() in fable_engine.js)
  * ========================================================================== */
+/* one row: the verse's recitation on the right, «المصدر» at the far left */
 .evidence-source {
-  margin: 0.45rem 0 0;
-  text-align: end; /* the far left in this right-to-left page */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0.55rem 0 0;
   line-height: 1;
+}
+
+.evidence-source > a {
+  margin-inline-start: auto; /* the far left in this right-to-left page */
+}
+
+/* the recitation control: the value message's «تشغيل ⇄ إيقاف» + «إعادة»,
+ * at the size of «المصدر» */
+.recite-controls {
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.audio-btn--sm {
+  gap: 0.35rem;
+  min-block-size: 2.25rem;
+  padding: 0.3rem 0.85rem;
+  font-size: 0.82rem;
+}
+
+.audio-btn--main.audio-btn--sm {
+  min-inline-size: 5.4rem;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-accent, #10b981) 24%, transparent);
+}
+
+.recite-credit {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.4;
 }
 
 .evidence-source[hidden] {

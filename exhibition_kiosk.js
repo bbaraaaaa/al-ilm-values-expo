@@ -27,7 +27,7 @@
     const studio = window.AudioStudio;
     // A paused message doesn't hold the screen; only one that is playing.
     const synth = window.speechSynthesis;
-    return Boolean(studio?.isPlaying || (synth?.speaking && !synth.paused));
+    return Boolean(studio?.isPlaying || window.QuranRecite?.isPlaying || (synth?.speaking && !synth.paused));
   };
 
   let idleTimer = 0;

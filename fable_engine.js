@@ -84,19 +84,132 @@
     `https://quran.ksu.edu.sa/index.php?l=ar#aya=${sura}_${aya}&m=hafs&qaree=husary&trans=ar_mu`;
   const KSU = 'المصحف الإلكتروني بجامعة الملك سعود';
   const DORAR = 'الموسوعة الحديثية — الدرر السنية';
+  // `recite`: the cited verse recited by Sheikh Yasser Al-Dosari, one file per
+  // verse (SSSAAA.mp3) in audio/quran/dosari — see the README there.
   const EVIDENCE_SOURCES = {
-    tasamuh: { url: KSU_AYA(24, 22), site: KSU },
+    tasamuh: { url: KSU_AYA(24, 22), site: KSU, recite: '024022' },
     watani: { url: 'https://dorar.net/h/rT3SDt3u', site: DORAR }, // جامع الترمذي 3926
-    taawun: { url: KSU_AYA(5, 2), site: KSU },
+    taawun: { url: KSU_AYA(5, 2), site: KSU, recite: '005002' },
     azeema: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR }, // صحيح مسلم 2664
-    amana: { url: KSU_AYA(4, 58), site: KSU },
-    indibat: { url: KSU_AYA(4, 103), site: KSU },
-    itqan: { url: KSU_AYA(27, 88), site: KSU },
-    ihtiram: { url: KSU_AYA(49, 11), site: KSU },
+    amana: { url: KSU_AYA(4, 58), site: KSU, recite: '004058' },
+    indibat: { url: KSU_AYA(4, 103), site: KSU, recite: '004103' },
+    itqan: { url: KSU_AYA(27, 88), site: KSU, recite: '027088' },
+    ihtiram: { url: KSU_AYA(49, 11), site: KSU, recite: '049011' },
     masooliya: { url: 'https://dorar.net/h/J4fhEcBq', site: DORAR }, // صحيح البخاري 893
-    sidq: { url: KSU_AYA(9, 119), site: KSU },
+    sidq: { url: KSU_AYA(9, 119), site: KSU, recite: '009119' },
     ihsan: { url: 'https://dorar.net/h/zJB1WCUU', site: DORAR }, // صحيح مسلم 1955
     tumooh: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR } // صحيح مسلم 2664
+  };
+
+  // ---- The verse's recitation: a small «تشغيل ⇄ إيقاف» + «إعادة», the same
+  // control as the value message, sized like «المصدر». One shared player, so
+  // only one recitation plays; it and the value message never play together
+  // (AudioStudio.setStatus / stopPlayback call into this).
+  const RECITER = 'الشيخ ياسر الدوسري';
+  const ICON_PLAY =
+    '<svg class="audio-icon-play" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2Z" fill="currentColor"/></svg>';
+  const ICON_PAUSE =
+    '<svg class="audio-icon-pause" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/></svg>';
+  const ICON_REPLAY =
+    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9" stroke-linecap="round"/><path d="M4 4.5V9h4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  const QuranRecite = (window.QuranRecite = {
+    audio: null,
+    ctl: null, // the control box of the verse being played
+    status: 'idle', // 'idle' | 'playing' | 'paused'
+    isPlaying: false,
+
+    player() {
+      if (!this.audio) {
+        this.audio = new Audio();
+        this.audio.preload = 'none';
+        this.audio.addEventListener('ended', () => this.setStatus('idle'));
+        this.audio.addEventListener('error', () => this.setStatus('idle'));
+      }
+      return this.audio;
+    },
+
+    load(ctl) {
+      if (this.ctl === ctl) return;
+      this.stop();
+      this.ctl = ctl;
+      this.player().src = ctl.dataset.src;
+    },
+
+    toggle(ctl) {
+      if (this.ctl === ctl && this.status === 'playing') {
+        this.audio.pause();
+        this.setStatus('paused');
+        return;
+      }
+      this.load(ctl);
+      this.play();
+    },
+
+    replay(ctl) {
+      this.load(ctl);
+      this.player().currentTime = 0;
+      this.play();
+    },
+
+    play() {
+      // the value message pauses while the verse is recited
+      if (window.AudioStudio?.status === 'playing') window.AudioStudio.pauseAudio();
+      this.player()
+        .play()
+        .catch((err) => {
+          if (err?.name !== 'AbortError') this.setStatus('idle');
+        });
+      this.setStatus('playing');
+    },
+
+    pauseIfPlaying() {
+      if (this.status === 'playing') {
+        this.audio.pause();
+        this.setStatus('paused');
+      }
+    },
+
+    stop() {
+      if (this.audio) {
+        this.audio.pause();
+        if (this.ctl) this.audio.currentTime = 0;
+      }
+      this.setStatus('idle');
+      this.ctl = null;
+    },
+
+    setStatus(status) {
+      this.status = status;
+      this.isPlaying = status === 'playing';
+      const ctl = this.ctl;
+      if (!ctl) return;
+      ctl.classList.toggle('is-playing', this.isPlaying);
+      const label = ctl.querySelector('.recite-state');
+      if (label) label.textContent = this.isPlaying ? 'إيقاف' : 'تشغيل';
+      ctl.querySelector('[data-recite="toggle"]')?.setAttribute('aria-label', this.isPlaying ? 'إيقاف تلاوة الآية' : 'تشغيل تلاوة الآية');
+      const replay = ctl.querySelector('[data-recite="replay"]');
+      if (replay) replay.hidden = status === 'idle';
+    }
+  });
+
+  const buildReciteControls = (code) => {
+    const box = document.createElement('span');
+    box.className = 'studio-audio-controls recite-controls';
+    box.setAttribute('role', 'group');
+    box.setAttribute('aria-label', `تلاوة الآية بصوت ${RECITER}`);
+    box.dataset.src = `./audio/quran/dosari/${code}.mp3`;
+    box.innerHTML =
+      `<button type="button" class="audio-btn audio-btn--main audio-btn--sm" data-recite="toggle" aria-label="تشغيل تلاوة الآية">${ICON_PLAY}${ICON_PAUSE}<span class="recite-state">تشغيل</span></button>` +
+      `<button type="button" class="audio-btn audio-btn--sm" data-recite="replay" aria-label="إعادة التلاوة من البداية" hidden>${ICON_REPLAY}<span>إعادة</span></button>` +
+      `<span class="recite-credit">بصوت ${RECITER}</span>`;
+    box.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-recite]');
+      if (!btn) return;
+      if (btn.dataset.recite === 'replay') QuranRecite.replay(box);
+      else QuranRecite.toggle(box);
+    });
+    return box;
   };
 
   const renderEvidenceSource = (afterId, valueId) => {
@@ -109,9 +222,12 @@
       textEl.after(line);
     }
     const src = EVIDENCE_SOURCES[valueId];
+    // a recitation whose control is about to be replaced stops with it
+    if (QuranRecite.ctl && line.contains(QuranRecite.ctl)) QuranRecite.stop();
     line.hidden = !src;
     line.replaceChildren();
     if (!src) return;
+    if (src.recite) line.append(buildReciteControls(src.recite));
     const link = document.createElement('a');
     link.href = src.url;
     link.target = '_blank';
@@ -1450,6 +1566,7 @@
       const val = getValueById(id);
       if (!val) return;
       this.stopPlayback();
+      window.QuranRecite?.stop(); // a recitation from the page or another value stops
       this.currentValue = val;
       state.currentStudioId = val.id;
 
@@ -1533,6 +1650,7 @@
 
     closeStudio() {
       this.stopPlayback();
+      window.QuranRecite?.stop(); // closing the window also stops a verse recitation
       $('studioModal')?.classList.remove('active');
       if (!$('storyReaderModal')?.classList.contains('active')) {
         document.body.classList.remove('modal-open');
@@ -1668,6 +1786,8 @@
     setStatus(status) {
       this.status = status;
       this.isPlaying = status === 'playing';
+      // the verse recitation pauses while the value message plays
+      if (this.isPlaying) window.QuranRecite?.pauseIfPlaying();
       $('studioAudioControls')?.classList.toggle('is-playing', this.isPlaying);
       const label = $('playStateText');
       if (label) label.textContent = this.isPlaying ? 'إيقاف' : 'تشغيل';
