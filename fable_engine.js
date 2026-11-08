@@ -184,7 +184,9 @@
       }
 
       if (shouldScroll) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // The content was just swapped, so go straight to the top (the new
+        // section fades in there); gliding over new content looked jumpy.
+        window.scrollTo({ top: 0, behavior: 'auto' });
       }
     }
   });

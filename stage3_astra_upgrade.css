@@ -1789,8 +1789,10 @@ body.nav-compact .top-nav {
     0 0 calc(100% - var(--nav-pill-h, 82px)) calc(100% - var(--nav-pill-w, 21rem))
     round var(--radius-card, 1.5rem)
   );
-  /* collapse a beat after the bar lifts off, so the two read as one motion */
-  transition-delay: 90ms;
+  /* Fold: starts shrinking at once and eases out, so the header never sits
+   * wide and empty after the search fades (the slow-start curve left it
+   * like that for ~0.3s). Unfolding keeps --nav-glide to match the bar. */
+  transition: clip-path 620ms cubic-bezier(0.22, 1, 0.36, 1) 30ms;
 }
 
 body.nav-compact .top-nav .vision-search-wrap {
@@ -1829,7 +1831,7 @@ body.dock-floating .glass-dock.floating-dock {
   }
 
   body.nav-compact .top-nav {
-    transition-delay: 90ms !important;
+    transition: clip-path 620ms cubic-bezier(0.22, 1, 0.36, 1) 30ms !important;
   }
 
   body.dock-floating .top-nav .header-dock {

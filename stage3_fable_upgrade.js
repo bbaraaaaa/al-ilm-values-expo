@@ -612,6 +612,37 @@
     window.switchView = (v) => window.AppRouter.switchView(v, true);
   }
 
+  // A page glide we control ourselves: the browser's own smooth scroll turns
+  // into an instant jump when the device asks for reduced motion (and its
+  // speed differs between Safari and Chrome). Ease in-out, length from the
+  // distance; a touch, wheel or key during the glide hands control back.
+  let glideRaf = 0;
+  function glideScrollTo(targetY) {
+    cancelAnimationFrame(glideRaf);
+    const startY = window.scrollY;
+    const maxY = document.documentElement.scrollHeight - window.innerHeight;
+    const endY = Math.max(0, Math.min(targetY, maxY));
+    const dist = endY - startY;
+    if (Math.abs(dist) < 2) return;
+    const ms = Math.min(1100, Math.max(600, 420 + Math.abs(dist) * 0.45));
+    const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    const stop = () => {
+      cancelAnimationFrame(glideRaf);
+      ['wheel', 'touchstart', 'keydown'].forEach((type) => window.removeEventListener(type, stop, true));
+    };
+    ['wheel', 'touchstart', 'keydown'].forEach((type) =>
+      window.addEventListener(type, stop, { capture: true, passive: true })
+    );
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / ms);
+      window.scrollTo(0, startY + dist * ease(t));
+      if (t < 1) glideRaf = requestAnimationFrame(step);
+      else stop();
+    };
+    glideRaf = requestAnimationFrame(step);
+  }
+
   // Section bar: lives in the header at the top of the page. When the visitor
   // scrolls down, the header shrinks to a simple logo + name pill and the bar
   // GLIDES down to the bottom of the screen (and glides back up on return).
@@ -821,7 +852,7 @@
       const pillH = parseFloat(nav.style.getPropertyValue('--nav-pill-h')) || 82;
       const navTop = parseFloat(getComputedStyle(nav).top) || 0;
       const top = hero.getBoundingClientRect().top + window.scrollY - (navTop + pillH + 12);
-      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      glideScrollTo(Math.max(0, top));
     };
 
     window.addEventListener(
@@ -1002,7 +1033,7 @@
         const section = grid.closest('section');
         if (section) {
           const top = section.getBoundingClientRect().top + window.scrollY - 96;
-          window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+          glideScrollTo(Math.max(0, top));
         }
       });
     }
