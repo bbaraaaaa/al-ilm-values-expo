@@ -71,39 +71,6 @@
 
   const getIconSVG = (id) => ICONS[id] || '';
 
-  // A verse / hadith with its reference on its own line at the far left:
-  // «…» [سورة النور: 22]  ·  ﴿…﴾ — سورة النمل، من الآية 88  ·  «…» رواه مسلم (2664).
-  // Everything after the last closing quote is the reference; it is shown
-  // without the brackets / dash / final full stop, in the same wording.
-  const splitEvidence = (text) => {
-    const t = String(text || '').trim();
-    const end = Math.max(t.lastIndexOf('»'), t.lastIndexOf('﴾'));
-    if (end < 0) return { body: t, source: '' };
-    const source = t
-      .slice(end + 1)
-      .trim()
-      .replace(/^[—–\-:،,]+\s*/, '')
-      .replace(/^\[(.*)\]$/, '$1')
-      .replace(/[.。]\s*$/, '')
-      .trim();
-    return { body: source ? t.slice(0, end + 1).trim() : t, source };
-  };
-
-  const renderEvidence = (elId, text) => {
-    const el = $(elId);
-    if (!el) return;
-    const { body, source } = splitEvidence(text);
-    el.textContent = body;
-    let cite = el.nextElementSibling;
-    if (!cite || !cite.classList.contains('evidence-source')) {
-      cite = document.createElement('cite');
-      cite.className = 'evidence-source';
-      el.after(cite);
-    }
-    cite.textContent = source;
-    cite.hidden = !source;
-  };
-
   // ==========================================================================
   // 0. VALUES EXHIBITION IDENTITY (معرض ترسيخ القيم)
   // Official exhibition values in the school announcement order, mapped to the
@@ -1264,7 +1231,7 @@
       setTxt('encycTitle', v.name);
       setTxt('encycSubtitle', v.sub);
       setTxt('encycFullText', v.text);
-      renderEvidence('encycEvidence', v.evidence);
+      setTxt('encycEvidence', v.evidence);
       setTxt('encycP1', v.p1);
       setTxt('encycP2', v.p2);
       setTxt('encycP3', v.p3);
@@ -1441,7 +1408,7 @@
       setTxt('modalNum', val.num);
       setTxt('modalTitle', val.name);
       setTxt('modalTagline', val.sub);
-      renderEvidence('modalEvidenceText', val.evidence);
+      setTxt('modalEvidenceText', val.evidence);
       setTxt('modalWithValue', val.withVal);
       setTxt('modalWithoutValue', val.withoutVal);
 
