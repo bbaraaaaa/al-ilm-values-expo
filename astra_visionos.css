@@ -1,0 +1,1685 @@
+/*
+ * ASTRA / VISIONOS — Al Ilm Al Nafi
+ * Tuwaiq depth · Diriyah light · Ilm emerald
+ *
+ * Standalone presentation contract; load after the application's base styles.
+ * No fonts, images, scripts, or external dependencies are fetched here.
+ *
+ * Integration:
+ * - Toggle body.projector-day for the projection palette.
+ * - Toggle .active / .spa-hidden and synchronize aria-selected, aria-expanded,
+ *   aria-hidden and inert in the SPA controller.
+ * - Modals are fixed overlays with a .studio-panel / .manager-panel child
+ *   (.modal-content is also supported). The controller owns focus trapping,
+ *   Escape, focus restoration and body.modal-open.
+ * - The orbit controller owns card placement. Set the static card variables
+ *   below, or write transform directly during dragging / momentum. Mark only
+ *   visible moving cards .is-moving; remove the flag when motion settles.
+ * - Write --spot-x / --spot-y on the individual surface, never on :root.
+ *   Cache bounds before interaction; batch reads before writes, coalesce pointer
+ *   updates into one requestAnimationFrame, and stop on leave / cancel / blur.
+ *   A changing gradient repaints: this effect is NOT a GPU-only shader.
+ *   ::after confines the paint; only its opacity is transitioned. For large
+ *   surfaces, [data-spotlight-mode="composite"] offers a fixed gradient moved by
+ *   transform. Do not update spotlight coordinates on offscreen cards.
+ * - CSS provides a 60 Hz-oriented motion budget, not a frame-rate guarantee.
+ *   Validate compositor layers and frame timings on the target iPad hardware.
+ *   The controller must also honor reduced motion and stop any active JS tween.
+ */
+
+/* 01. Foundation ----------------------------------------------------------- */
+
+:root {
+  color-scheme: dark;
+
+  --tuwaiq-obsidian: #050B14;
+  --tuwaiq-navy: #091426;
+  --tuwaiq-slate: #0E1E36;
+  --diriyah-gold: #D4AF37;
+  --diriyah-amber: #F59E0B;
+  --diriyah-sand: #E6C98F;
+  --ilm-emerald: #10B981;
+  --ilm-emerald-deep: #065F46;
+
+  --bg-main: #050B14;
+  --bg-card: rgba(11, 23, 42, 0.72);
+  --bg-elevated: rgba(15, 31, 56, 0.84);
+  --text-main: #F8FAFC;
+  --text-muted: rgba(226, 232, 240, 0.70);
+  --border-line: rgba(212, 175, 55, 0.16);
+  --glass-bg: rgba(255, 255, 255, 0.045);
+
+  --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-press: 110ms;
+  --duration-fast: 160ms;
+  --duration-ui: 240ms;
+  --duration-sheet: 280ms;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Segoe UI", "Geeza Pro", Tahoma, Arial, sans-serif;
+  --font-reading: var(--font-ui);
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lead: 1.1875rem;
+  --text-title: clamp(1.5rem, 2.2vw, 2rem);
+  --text-display: clamp(2rem, 3.6vw, 3.25rem);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --page-gutter: clamp(1rem, 2.5vw, 2.5rem);
+  --page-max: 90rem;
+  --touch-target: 44px;
+  --radius-control: 0.875rem;
+  --radius-card: 1.5rem;
+  --radius-panel: 2rem;
+  --radius-pill: 999px;
+
+  --glass-filter: blur(26px) saturate(180%);
+  --surface-solid: #0B172A;
+  --surface-elevated-solid: #0F1F38;
+  --specular-top: rgba(255, 255, 255, 0.24);
+  --specular-inner: rgba(255, 255, 255, 0.035);
+  --control-bg: rgba(255, 255, 255, 0.055);
+  --control-hover: rgba(255, 255, 255, 0.09);
+  --text-accent: var(--diriyah-sand);
+  --text-success: #6EE7B7;
+  --focus-ring: var(--diriyah-sand);
+  --selection-bg: rgba(212, 175, 55, 0.25);
+  --active-bg: rgba(212, 175, 55, 0.13);
+  --active-border: rgba(212, 175, 55, 0.48);
+  --scrim: rgba(2, 6, 14, 0.76);
+
+  --shadow-surface: 0 2px 4px rgba(0, 0, 0, 0.16),
+    0 12px 28px rgba(0, 0, 0, 0.22),
+    0 28px 64px rgba(0, 0, 0, 0.18);
+  --shadow-float: 0 4px 8px rgba(0, 0, 0, 0.20),
+    0 24px 48px rgba(0, 0, 0, 0.32),
+    0 52px 100px rgba(0, 0, 0, 0.28);
+  --shadow-control: 0 2px 3px rgba(0, 0, 0, 0.18),
+    0 8px 20px rgba(0, 0, 0, 0.18);
+
+  --best-ink: #6EE7B7;
+  --best-bg: rgba(16, 185, 129, 0.12);
+  --best-border: rgba(16, 185, 129, 0.60);
+  --mid-ink: #FCD58C;
+  --mid-bg: rgba(245, 158, 11, 0.10);
+  --mid-border: rgba(245, 158, 11, 0.58);
+  --low-ink: #F5B7B2;
+  --low-bg: rgba(181, 83, 79, 0.14);
+  --low-border: rgba(216, 137, 132, 0.65);
+
+  --stage-height: clamp(28rem, 52vh, 36rem);
+  --card-width: clamp(17rem, 25vw, 21.5rem);
+  --card-height: clamp(21rem, 38vh, 26rem);
+  --orbit-step: clamp(11rem, 20vw, 18rem);
+  --z-nav: 30;
+  --z-dock: 40;
+  --z-modal: 100;
+}
+
+body.projector-day {
+  color-scheme: light;
+  --bg-main: #F6F3EB;
+  --bg-card: rgba(255, 255, 255, 0.96);
+  --bg-elevated: rgba(255, 253, 248, 0.98);
+  --text-main: #091426;
+  --text-muted: #42516A;
+  --border-line: rgba(9, 20, 38, 0.28);
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --surface-solid: #FFFFFF;
+  --surface-elevated-solid: #FFFDFA;
+  --specular-top: rgba(255, 255, 255, 1);
+  --specular-inner: rgba(255, 255, 255, 0.65);
+  --control-bg: rgba(9, 20, 38, 0.055);
+  --control-hover: rgba(9, 20, 38, 0.10);
+  --text-accent: #735514;
+  --text-success: #065F46;
+  --focus-ring: #075C45;
+  --selection-bg: rgba(212, 175, 55, 0.32);
+  --active-bg: #EDE3C7;
+  --active-border: #8A6C21;
+  --scrim: rgba(9, 20, 38, 0.46);
+  --shadow-surface: 0 2px 4px rgba(9, 20, 38, 0.08),
+    0 12px 28px rgba(9, 20, 38, 0.09),
+    0 28px 64px rgba(9, 20, 38, 0.06);
+  --shadow-float: 0 4px 8px rgba(9, 20, 38, 0.10),
+    0 24px 48px rgba(9, 20, 38, 0.14),
+    0 52px 100px rgba(9, 20, 38, 0.12);
+  --shadow-control: 0 2px 3px rgba(9, 20, 38, 0.08),
+    0 8px 20px rgba(9, 20, 38, 0.10);
+  --best-ink: #065F46;
+  --best-bg: #E1F2E9;
+  --best-border: #18724F;
+  --mid-ink: #734509;
+  --mid-bg: #FBEDD3;
+  --mid-border: #99630E;
+  --low-ink: #883B36;
+  --low-bg: #F6E7E4;
+  --low-border: #9F4B43;
+  --spot-color: rgba(166, 125, 28, 0.09);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  min-block-size: 100%;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-block: 6rem;
+}
+
+body {
+  margin: 0;
+  min-block-size: 100vh;
+  min-block-size: 100dvh;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
+  line-height: 1.65;
+  font-optical-sizing: auto;
+  text-align: start;
+}
+
+:where(button, input, select, textarea) {
+  font: inherit;
+  color: inherit;
+}
+
+button,
+a,
+input,
+select,
+textarea,
+summary,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button,
+[role="button"],
+summary {
+  touch-action: manipulation;
+}
+
+:where(button, [role="button"], a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 4px;
+}
+
+:where(button, [role="button"], input, select, textarea):disabled,
+:where(button, [role="button"], a)[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.50;
+}
+
+:where(img, video, svg) {
+  max-inline-size: 100%;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--text-main);
+}
+
+.astra-shell {
+  inline-size: min(100%, var(--page-max));
+  margin-inline: auto;
+  padding-inline: var(--page-gutter);
+  padding-block-end: calc(7rem + env(safe-area-inset-bottom, 0px));
+}
+
+:where(.section-title, .studio-title, .value-card-title) {
+  margin: 0;
+  color: var(--text-main);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+:where(.section-title, .studio-title, .value-card-title):lang(ar) {
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+
+.section-title {
+  font-size: var(--text-display);
+}
+
+:where(.section-description, .card-description, .studio-description, .text-muted) {
+  color: var(--text-muted);
+}
+
+.section-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-block-end: var(--space-6);
+}
+
+.section-description {
+  max-inline-size: 65ch;
+  margin-block: var(--space-3) 0;
+}
+
+/* 02. Optical materials: static blur and a one-pixel top reflection --------- */
+
+:where(
+  .top-nav, .glass-dock, .surface-card, .story-card, .comparison-card,
+  .studio-panel, .manager-panel,
+  .studio-modal > .modal-content, .manager-modal > .modal-content
+) {
+  position: relative;
+  border: 1px solid var(--border-line);
+  border-top-color: var(--specular-top);
+  border-radius: var(--radius-card);
+  background: var(--bg-card);
+  background-clip: padding-box;
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: inset 0 1px 0 var(--specular-inner), var(--shadow-surface);
+}
+
+:where(.surface-card, .story-card, .comparison-card) {
+  padding: var(--space-5);
+  min-inline-size: 0;
+}
+
+:where(.surface-card, .spotlight-surface) {
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--radius-card);
+}
+
+/* The native card itself stays unflattened: no overflow:hidden, opacity
+ * animation, backdrop-filter or isolation:isolate on the 3D stage.
+ * The card's optical material lives on its own flat pseudo-element. */
+.value-card-3d::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 1px solid var(--border-line);
+  border-top-color: var(--specular-top);
+  border-radius: inherit;
+  background: var(--bg-card);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: inset 0 1px 0 var(--specular-inner), var(--shadow-surface);
+  transform: translateZ(0);
+}
+
+/* 03. Local pointer / touch illumination ----------------------------------- */
+
+:where(.spotlight-surface, .surface-card, .value-card-3d)::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  contain: paint;
+  background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), var(--spot-color, rgba(212, 175, 55, 0.15)), transparent 65%);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-out-expo);
+}
+
+:where(.spotlight-surface, .surface-card) > * {
+  position: relative;
+  z-index: 1;
+}
+
+.value-card-3d::after {
+  z-index: 1;
+  transform: translateZ(1px);
+}
+
+.value-card-3d > * {
+  position: relative;
+  z-index: 2;
+  transform: translateZ(2px);
+}
+
+:where(.spotlight-surface, .surface-card, .value-card-3d):is(
+  :focus-within, :active, .is-spotlit, [data-spotlight-active="true"]
+)::after {
+  opacity: 1;
+}
+
+/* Optional fixed texture for large, flat surfaces. overflow:clip is limited to
+ * this 2D mode; never put a clipping / paint containment boundary on the orbit.
+ * This optional mode takes local pixel coordinates, not percentages. */
+:where(.spotlight-surface, .surface-card)[data-spotlight-mode="composite"] {
+  overflow: clip;
+}
+
+:where(.spotlight-surface, .surface-card)[data-spotlight-mode="composite"]::after {
+  inset: -420px auto auto -420px;
+  inline-size: 840px;
+  block-size: 840px;
+  border-radius: 0;
+  background: radial-gradient(420px circle at 420px 420px, var(--spot-color, rgba(212, 175, 55, 0.15)), transparent 65%);
+  transform: translate3d(var(--spot-x, 0px), var(--spot-y, 0px), 0);
+  /* This mode expects local pixel coordinates, including an initial center. */
+}
+
+:where(.spotlight-surface, .surface-card)[data-spotlight-mode="composite"]:is(
+  .is-spotlit, [data-spotlight-active="true"]
+)::after {
+  will-change: transform, opacity;
+}
+
+/* 04. Floating navigation, search and filters ------------------------------ */
+
+.top-nav {
+  position: sticky;
+  inset-block-start: max(0.75rem, env(safe-area-inset-top, 0px));
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  min-block-size: 4.5rem;
+  margin-block: var(--space-4) var(--space-6);
+  padding: var(--space-3) var(--space-5);
+  background: var(--bg-elevated);
+}
+
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--touch-target);
+  color: var(--text-main);
+  font-size: var(--text-lead);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+:where(.nav-actions, .spa-nav, .filter-bar, .section-actions, .studio-actions) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.glass-dock {
+  position: fixed;
+  inset-block-end: max(1rem, env(safe-area-inset-bottom, 0px));
+  inset-inline: var(--page-gutter);
+  z-index: var(--z-dock);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  inline-size: max-content;
+  max-inline-size: calc(100% - 2 * var(--page-gutter));
+  margin-inline: auto;
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-elevated);
+  box-shadow: inset 0 1px 0 var(--specular-inner), var(--shadow-float);
+}
+
+:where(.spa-nav-btn, .filter-pill, .studio-tab, .icon-btn, .modal-close) {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-inline-size: var(--touch-target);
+  min-block-size: var(--touch-target);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  padding: 0.625rem 1rem;
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 600;
+  line-height: 1.4;
+  text-decoration: none;
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--duration-press) var(--ease-out-expo);
+}
+
+:where(.spa-nav-btn, .studio-tab):is(.active, [aria-selected="true"], [aria-current="page"]) {
+  border-color: var(--active-border);
+  background: var(--active-bg);
+  color: var(--text-accent);
+}
+
+.spa-nav-btn:is(.active, [aria-selected="true"], [aria-current="page"])::before {
+  content: "";
+  position: absolute;
+  inset-inline: 35%;
+  inset-block-end: 0.25rem;
+  block-size: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--ilm-emerald);
+}
+
+.filter-pill {
+  border-color: var(--border-line);
+  background: var(--control-bg);
+  color: var(--text-main);
+}
+
+.filter-pill:is(.active, [aria-pressed="true"]) {
+  border-color: var(--best-border);
+  background: var(--best-bg);
+  color: var(--best-ink);
+}
+
+:where(.icon-btn, .modal-close) {
+  padding: var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--text-main);
+}
+
+:where(.spa-nav-btn, .filter-pill, .studio-tab, .icon-btn, .modal-close):active:not(
+  :disabled, [aria-disabled="true"]
+) {
+  transform: scale(0.97);
+}
+
+.vision-search {
+  position: relative;
+  flex: 1 1 16rem;
+  max-inline-size: 32rem;
+}
+
+.vision-search-input {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 3rem;
+  border: 1px solid var(--border-line);
+  border-top-color: var(--specular-top);
+  border-radius: var(--radius-pill);
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-card);
+  color: var(--text-main);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+  box-shadow: inset 0 1px 0 var(--specular-inner);
+  font-size: max(16px, 1rem);
+  line-height: 1.5;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.vision-search-input::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+.vision-search-input:focus {
+  border-color: var(--focus-ring);
+}
+
+/* 05. SPA: five content families, one navigation state contract ------------ */
+
+.spa-viewport {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+}
+
+.spa-viewport > .spa-section {
+  grid-area: 1 / 1;
+}
+
+.spa-section {
+  display: block;
+  min-inline-size: 0;
+  padding-block: var(--space-4) var(--space-7);
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--duration-fast) var(--ease-out-expo),
+    transform var(--duration-ui) var(--ease-sheet);
+}
+
+.spa-hidden {
+  display: none;
+}
+
+.spa-section.spa-hidden {
+  display: none;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+}
+
+/* Browsers without discrete transitions still get a usable immediate switch.
+ * inert must be applied immediately to the outgoing section by the controller. */
+@supports (transition-behavior: allow-discrete) {
+  .spa-section {
+    transition: opacity var(--duration-fast) var(--ease-out-expo),
+      transform var(--duration-ui) var(--ease-sheet),
+      display var(--duration-ui) allow-discrete;
+  }
+
+  @starting-style {
+    .spa-section:not(.spa-hidden) {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+}
+
+:where(.values-grid, .stories-grid, .comparison-grid, .scenario-list, .encyclopedia-layout) {
+  display: grid;
+  gap: var(--space-5);
+  min-inline-size: 0;
+}
+
+.values-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+}
+
+.stories-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+}
+
+.comparison-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.scenario-list {
+  grid-template-columns: minmax(0, 1fr);
+  max-inline-size: 54rem;
+}
+
+.encyclopedia-layout {
+  grid-template-columns: minmax(12rem, 0.28fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+/* 06. Spatial theatre ------------------------------------------------------ */
+
+:where(.coverflow-stage, .spatial-orbit-stage) {
+  position: relative;
+  inline-size: 100%;
+  block-size: var(--stage-height);
+  min-block-size: calc(var(--card-height) + 5rem);
+  margin-block: var(--space-4) var(--space-5);
+  perspective: 1500px;
+  perspective-origin: 50% 46%;
+  transform-style: preserve-3d;
+  contain: layout style;
+  /* Preserve depth and shadows: no opacity, filter or overflow clipping here. */
+  overflow: visible;
+  touch-action: pan-y pinch-zoom;
+}
+
+.spatial-orbit-track {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.value-card-3d {
+  --card-accent: var(--diriyah-gold);
+  --card-x: 0px;
+  --card-y: 0px;
+  --card-z: -120px;
+  --card-rotate-x: 0deg;
+  --card-rotate-y: 0deg;
+  --card-scale: 0.90;
+
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: var(--space-4);
+  inline-size: var(--card-width);
+  min-inline-size: 0;
+  block-size: var(--card-height);
+  padding: var(--space-6);
+  border: 0;
+  border-radius: var(--radius-panel);
+  background: transparent;
+  color: var(--text-main);
+  text-align: start;
+  cursor: pointer;
+  isolation: auto;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  box-shadow: none;
+  transform-origin: center;
+  transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  contain: layout style;
+  transform: translate3d(
+    calc(-50% + var(--card-x)),
+    calc(-50% + var(--card-y)),
+    var(--card-z)
+  ) rotateY(var(--card-rotate-y)) rotateX(var(--card-rotate-x)) scale(var(--card-scale));
+  /* NO transform transition: OrbitPhysics (fable_engine.js) is the sole owner
+   * of `transform` and writes it every 60Hz frame. A CSS transform transition
+   * here made every frame chase the previous one (the swipe stutter). */
+  transition: opacity var(--duration-fast) var(--ease-out-expo),
+    filter var(--duration-fast) var(--ease-out-expo);
+}
+
+.value-card-3d.is-center {
+  --card-x: 0px;
+  --card-y: -0.375rem;
+  --card-z: 80px;
+  --card-rotate-y: 0deg;
+  --card-scale: 1;
+  z-index: 5;
+}
+
+.value-card-3d.is-center::before {
+  border-color: var(--card-accent);
+  border-top-color: var(--specular-top);
+  background: var(--bg-elevated);
+  box-shadow: inset 0 1px 0 var(--specular-inner),
+    0 0 0 1px var(--border-line), var(--shadow-float);
+}
+
+@supports (color: color-mix(in srgb, white, black)) {
+  .value-card-3d.is-center::before {
+    border-color: color-mix(in srgb, var(--card-accent) 54%, transparent);
+    border-top-color: color-mix(in srgb, var(--card-accent) 35%, white);
+    box-shadow: inset 0 1px 0 var(--specular-inner),
+      0 0 20px color-mix(in srgb, var(--card-accent) 9%, transparent),
+      var(--shadow-float);
+  }
+}
+
+.value-card-3d.is-prev {
+  --card-x: calc(-1 * var(--orbit-step));
+  --card-z: -100px;
+  --card-rotate-y: 24deg;
+  --card-scale: 0.88;
+  z-index: 3;
+}
+
+.value-card-3d.is-next {
+  --card-x: var(--orbit-step);
+  --card-z: -100px;
+  --card-rotate-y: -24deg;
+  --card-scale: 0.88;
+  z-index: 3;
+}
+
+.value-card-3d:is(.is-center, .is-moving),
+:where(.coverflow-stage, .spatial-orbit-stage).is-spinning .value-card-3d:not(
+  .is-offstage, [aria-hidden="true"], [hidden]
+) {
+  will-change: transform, opacity;
+}
+
+/* Drag / spin / spring controllers own frame-by-frame values without CSS lag. */
+:where(.coverflow-stage, .spatial-orbit-stage):is(.is-dragging, .is-spinning) .value-card-3d,
+:where(.coverflow-stage, .spatial-orbit-stage) .value-card-3d.is-moving {
+  transition: none;
+}
+
+.value-card-3d:is(.is-offstage, [aria-hidden="true"]) {
+  visibility: hidden;
+  pointer-events: none;
+  will-change: auto;
+}
+
+.value-card-3d[hidden] {
+  display: none;
+}
+
+.value-card-symbol {
+  inline-size: 3.25rem;
+  block-size: 3.25rem;
+  color: var(--card-accent);
+}
+
+.value-card-description {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.value-card-meta {
+  margin-block-start: auto;
+  color: var(--text-accent);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.spatial-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  padding-block: var(--space-4);
+}
+
+/* 07. Spin: weighted gold, emerald feedback, no decorative reactor rings ---- */
+
+:where(.spin-action-btn, .spin-reactor-btn) {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-inline-size: 10.5rem;
+  min-block-size: 3.5rem;
+  padding: 0.875rem 1.875rem;
+  border: 1px solid var(--diriyah-sand);
+  border-top-color: #F5E3BC;
+  border-radius: var(--radius-pill);
+  background: var(--diriyah-gold);
+  color: var(--tuwaiq-obsidian);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.50), var(--shadow-control);
+  font-weight: 750;
+  font-size: var(--text-lead);
+  line-height: 1.3;
+  text-decoration: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform var(--duration-press) var(--ease-out-expo);
+}
+
+:where(.spin-action-btn, .spin-reactor-btn)::before {
+  content: "";
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--ilm-emerald-deep);
+}
+
+:where(.spin-action-btn, .spin-reactor-btn):active:not(
+  :disabled, [aria-disabled="true"], .busy, .is-spinning
+) {
+  transform: scale(0.97);
+}
+
+:where(.spin-action-btn, .spin-reactor-btn):is(.busy, .is-spinning, [aria-busy="true"]) {
+  border-color: var(--ilm-emerald);
+  border-top-color: #6EE7B7;
+  background: var(--ilm-emerald-deep);
+  color: #F8FAFC;
+  cursor: progress;
+}
+
+/* A small real progress indicator; never rotate the label or whole button. */
+:where(.spin-action-btn, .spin-reactor-btn):is(.busy, .is-spinning, [aria-busy="true"])::before {
+  inline-size: 1rem;
+  block-size: 1rem;
+  border: 2px solid rgba(248, 250, 252, 0.30);
+  border-top-color: var(--diriyah-sand);
+  background: transparent;
+  animation: astra-progress-turn 720ms linear infinite;
+  will-change: transform;
+}
+
+:where(.spin-action-btn, .spin-reactor-btn):is(.busy, .is-spinning, [aria-busy="true"]):disabled {
+  opacity: 1;
+}
+
+@keyframes astra-progress-turn {
+  to { transform: rotate(1turn); }
+}
+
+/* 08. Stories, comparison and scenario feedback ---------------------------- */
+
+.story-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.story-card :where(h2, h3, p),
+.comparison-card :where(h2, h3) {
+  margin: 0;
+}
+
+.story-card :where(h2, h3),
+.comparison-card :where(h2, h3) {
+  font-size: var(--text-title);
+  line-height: 1.5;
+}
+
+.story-card :where(p, blockquote) {
+  max-inline-size: 68ch;
+  line-height: 1.85;
+}
+
+.story-card .story-media {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: calc(var(--radius-card) - 0.5rem);
+}
+
+.story-card .story-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.story-card .story-action {
+  align-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--touch-target);
+  color: var(--text-accent);
+  font-weight: 600;
+  text-underline-offset: 0.25em;
+}
+
+.comparison-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.comparison-card.is-preferred {
+  border-inline-start: 3px solid var(--best-border);
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.4fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+}
+
+.comparison-row :where(dt, dd) {
+  margin: 0;
+}
+
+.comparison-row dt {
+  color: var(--text-muted);
+}
+
+.scenario-option {
+  display: flex;
+  align-items: start;
+  gap: var(--space-4);
+  inline-size: 100%;
+  min-block-size: 3.75rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border-line);
+  border-inline-start-width: 3px;
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-main);
+  text-align: start;
+  line-height: 1.75;
+  cursor: pointer;
+  transition: transform var(--duration-press) var(--ease-out-expo);
+}
+
+.scenario-option:active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(0.99);
+}
+
+.scenario-option.selected-best {
+  border-color: var(--best-border);
+  background: var(--best-bg);
+  color: var(--best-ink);
+}
+
+.scenario-option.selected-mid {
+  border-color: var(--mid-border);
+  border-inline-start-style: double;
+  border-inline-start-width: 5px;
+  background: var(--mid-bg);
+  color: var(--mid-ink);
+}
+
+.scenario-option.selected-low {
+  border-color: var(--low-border);
+  border-inline-start-style: dashed;
+  background: var(--low-bg);
+  color: var(--low-ink);
+}
+
+/* Keep a real text .scenario-feedback label in markup: color is supplemental. */
+.scenario-feedback {
+  margin: 0;
+  font-weight: 650;
+  line-height: 1.75;
+}
+
+/* 09. Encyclopedia studio and manager overlays ----------------------------- */
+
+:where(.studio-modal, .manager-modal) {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding-block: max(1.5rem, env(safe-area-inset-top, 0px))
+    max(1.5rem, env(safe-area-inset-bottom, 0px));
+  padding-inline: max(1.5rem, env(safe-area-inset-left, 0px))
+    max(1.5rem, env(safe-area-inset-right, 0px));
+  background: var(--scrim);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  overscroll-behavior: contain;
+  transition: opacity var(--duration-fast) var(--ease-out-expo),
+    visibility 0s linear var(--duration-sheet);
+}
+
+.manager-modal {
+  z-index: calc(var(--z-modal) + 10);
+}
+
+:where(.studio-modal, .manager-modal).active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+:where(.studio-modal, .manager-modal)[hidden] {
+  display: none;
+}
+
+:where(
+  .studio-panel, .manager-panel,
+  .studio-modal > .modal-content, .manager-modal > .modal-content
+) {
+  display: flex;
+  flex-direction: column;
+  inline-size: min(100%, 74rem);
+  min-inline-size: 0;
+  min-block-size: 0;
+  max-block-size: calc(100vh - 3rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  max-block-size: calc(100dvh - 3rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+  border-radius: var(--radius-panel);
+  background: var(--bg-elevated);
+  box-shadow: inset 0 1px 0 var(--specular-inner), var(--shadow-float);
+  transform: translateY(16px) scale(0.98);
+  transform-origin: center;
+  transition: transform var(--duration-sheet) var(--ease-sheet);
+}
+
+:where(.manager-panel, .manager-modal > .modal-content) {
+  inline-size: min(100%, 48rem);
+}
+
+:where(.studio-modal, .manager-modal).active > :where(
+  .studio-panel, .manager-panel, .modal-content
+) {
+  transform: translateY(0) scale(1);
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+:where(.studio-header, .manager-header, .studio-footer, .manager-footer) {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-6);
+}
+
+:where(.studio-header, .manager-header) {
+  background: var(--glass-bg);
+}
+
+:where(.studio-header, .manager-header) .modal-close {
+  flex: 0 0 auto;
+}
+
+.studio-layout {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.27fr) minmax(0, 1fr);
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.studio-sidebar {
+  min-inline-size: 0;
+  padding: var(--space-5);
+  background: var(--control-bg);
+}
+
+.studio-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.studio-tab {
+  justify-content: start;
+  inline-size: 100%;
+  border-radius: var(--radius-control);
+  text-align: start;
+}
+
+.studio-main {
+  min-inline-size: 0;
+  padding: var(--space-6);
+}
+
+.studio-section + .studio-section {
+  margin-block-start: var(--space-7);
+}
+
+.studio-section :where(h2, h3) {
+  margin-block: 0 var(--space-4);
+  font-size: var(--text-title);
+  line-height: 1.5;
+}
+
+:where(.studio-definition, .studio-transcript, .studio-example) {
+  max-inline-size: 72ch;
+  margin-block: var(--space-4);
+  font-family: var(--font-reading);
+  font-size: var(--text-lead);
+  line-height: 1.95;
+  overflow-wrap: anywhere;
+}
+
+:where(.studio-quote, .studio-evidence) {
+  margin: var(--space-5) 0;
+  padding: var(--space-4) var(--space-5);
+  border-inline-start: 3px solid var(--active-border);
+  border-radius: var(--radius-control);
+  background: var(--control-bg);
+  color: var(--text-main);
+  line-height: 1.95;
+}
+
+:where(.studio-quote, .studio-evidence) cite {
+  display: block;
+  margin-block-start: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-style: normal;
+}
+
+.studio-media {
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--surface-solid);
+}
+
+.studio-media :where(audio, video) {
+  display: block;
+  inline-size: 100%;
+}
+
+.studio-media video {
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+}
+
+.studio-details {
+  padding-block: var(--space-3);
+}
+
+.studio-details summary {
+  min-block-size: var(--touch-target);
+  padding-block: var(--space-3);
+  color: var(--text-accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+:where(.studio-footer, .manager-footer) {
+  flex-wrap: wrap;
+  background: var(--control-bg);
+}
+
+:where(.studio-main, .manager-body) a {
+  color: var(--text-accent);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+  overflow-wrap: anywhere;
+}
+
+.manager-body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-6);
+  scrollbar-gutter: stable;
+}
+
+.manager-form {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.manager-field {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.manager-field label {
+  font-weight: 600;
+}
+
+.manager-field :where(
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea
+) {
+  inline-size: 100%;
+  min-block-size: var(--touch-target);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-control);
+  padding: 0.75rem 1rem;
+  background: var(--surface-solid);
+  color: var(--text-main);
+  font-size: max(16px, 1rem);
+}
+
+.manager-field textarea {
+  min-block-size: 8rem;
+  resize: vertical;
+}
+
+.manager-field :where(input[type="checkbox"], input[type="radio"]) {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  accent-color: var(--ilm-emerald-deep);
+}
+
+.manager-field label:has(input[type="checkbox"], input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: var(--touch-target);
+  cursor: pointer;
+}
+
+.manager-field [aria-invalid="true"] {
+  border-color: var(--low-border);
+}
+
+.field-error {
+  margin: 0;
+  color: var(--low-ink);
+}
+
+.manager-table-wrap {
+  max-inline-size: 100%;
+  overflow-x: auto;
+}
+
+.manager-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.manager-table :where(th, td) {
+  padding: var(--space-3) var(--space-4);
+  text-align: start;
+  vertical-align: top;
+}
+
+.manager-table th {
+  background: var(--control-bg);
+  font-weight: 650;
+}
+
+.manager-table tbody tr:nth-child(even) {
+  background: var(--glass-bg);
+}
+
+/* 11. Input-specific feedback --------------------------------------------- */
+
+@media (hover: hover) and (pointer: fine) {
+  :where(.spotlight-surface, .surface-card, .value-card-3d):hover::after {
+    opacity: 1;
+  }
+
+  :where(.spa-nav-btn, .filter-pill, .studio-tab, .icon-btn, .modal-close):hover:not(
+    :disabled, [aria-disabled="true"], .active, [aria-selected="true"], [aria-pressed="true"]
+  ) {
+    background: var(--control-hover);
+    color: var(--text-main);
+  }
+
+  .scenario-option:hover:not(
+    :disabled, [aria-disabled="true"], .selected-best, .selected-mid, .selected-low
+  ) {
+    background: var(--control-hover);
+    border-color: var(--active-border);
+  }
+
+  :where(.spin-action-btn, .spin-reactor-btn):hover:not(
+    :disabled, [aria-disabled="true"], .busy, .is-spinning, [aria-busy="true"]
+  ) {
+    transform: translateY(-1px);
+    background: var(--diriyah-sand);
+  }
+}
+
+@media (pointer: coarse) {
+  :root {
+    --touch-target: 48px;
+  }
+
+  :where(.spa-nav-btn, .filter-pill, .studio-tab, .icon-btn, .modal-close) {
+    min-block-size: var(--touch-target);
+  }
+}
+
+/* Optional controller flag: suppress decorative motion for keyboard actions. */
+[data-input-modality="keyboard"] :where(
+  .spa-section, .value-card-3d, .studio-panel, .manager-panel, .modal-content,
+  .spa-nav-btn, .filter-pill, .studio-tab, .spin-action-btn, .spin-reactor-btn
+) {
+  transition: none;
+}
+
+/* 12. iPad Air 13 landscape / 1366 x 1024 ---------------------------------- */
+
+@media (min-width: 1024px) and (max-width: 1440px) {
+  :root {
+    --page-gutter: 2rem;
+    --stage-height: clamp(29rem, 50vh, 32rem);
+    --card-width: 20rem;
+    --card-height: 25rem;
+    --orbit-step: clamp(14rem, 20vw, 17rem);
+    --touch-target: 48px;
+  }
+
+  .top-nav {
+    min-block-size: 5rem;
+    margin-block-end: var(--space-5);
+    padding-inline: var(--space-5);
+  }
+
+  .glass-dock {
+    gap: var(--space-2);
+    padding: 0.625rem;
+  }
+
+  .spa-nav-btn {
+    min-inline-size: 6.75rem;
+    padding-inline: 1.125rem;
+  }
+
+  .spa-section {
+    padding-block-start: var(--space-3);
+  }
+
+  .value-card-3d {
+    padding: 1.75rem;
+  }
+
+  :where(.spin-action-btn, .spin-reactor-btn) {
+    min-block-size: 3.75rem;
+    min-inline-size: 12rem;
+  }
+
+  :where(.studio-panel, .studio-modal > .modal-content) {
+    inline-size: min(100%, 76rem);
+  }
+
+  .studio-layout {
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+
+  .studio-main {
+    padding: 1.75rem 2rem;
+  }
+
+  .values-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Shallow landscape windows preserve reading and allow document scrolling. */
+@media (min-width: 1024px) and (max-height: 800px) {
+  :root {
+    --stage-height: 26rem;
+    --card-height: 21rem;
+  }
+
+  .top-nav {
+    position: relative;
+    inset-block-start: auto;
+  }
+}
+
+/* 13. Smaller screens: readable content before spatial decoration ---------- */
+
+@media (max-width: 1023px) {
+  :root {
+    --card-width: 18rem;
+    --card-height: 23rem;
+    --stage-height: 29rem;
+    --orbit-step: 11rem;
+  }
+
+  .top-nav {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .vision-search {
+    max-inline-size: none;
+  }
+
+  .section-header {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .encyclopedia-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .studio-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .studio-sidebar {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .studio-tabs {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: var(--space-2);
+    scroll-padding-inline: var(--space-2);
+  }
+
+  .studio-tab {
+    flex: 0 0 auto;
+    inline-size: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --page-gutter: 1rem;
+    --radius-panel: 1.5rem;
+    --card-width: min(18rem, calc(100vw - 3rem));
+    --card-height: 23rem;
+    --stage-height: 28rem;
+    --orbit-step: 4.5rem;
+  }
+
+  .top-nav {
+    position: relative;
+    inset-block-start: auto;
+    gap: var(--space-3);
+  }
+
+  .vision-search {
+    flex-basis: 100%;
+  }
+
+  .glass-dock {
+    justify-content: start;
+    gap: 0.25rem;
+    border-radius: 1.25rem;
+    overflow-x: auto;
+    padding: var(--space-2);
+    scroll-padding-inline: var(--space-2);
+  }
+
+  .glass-dock .spa-nav-btn {
+    flex: 0 0 auto;
+    padding-inline: 0.75rem;
+    font-size: var(--text-sm);
+  }
+
+  :where(.stories-grid, .comparison-grid) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .value-card-3d {
+    padding: var(--space-5);
+  }
+
+  .value-card-3d.is-center {
+    --card-z: 0px;
+  }
+
+  .value-card-3d:is(.is-prev, .is-next) {
+    --card-z: -220px;
+    --card-scale: 0.78;
+  }
+
+  :where(.studio-modal, .manager-modal) {
+    align-items: end;
+    padding-block-start: max(0.75rem, env(safe-area-inset-top, 0px));
+    padding-block-end: 0;
+    padding-inline: 0;
+  }
+
+  :where(
+    .studio-panel, .manager-panel,
+    .studio-modal > .modal-content, .manager-modal > .modal-content
+  ) {
+    max-block-size: calc(100vh - 0.75rem - env(safe-area-inset-top, 0px));
+    max-block-size: calc(100dvh - 0.75rem - env(safe-area-inset-top, 0px));
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+    transform: translateY(20px);
+  }
+
+  :where(.studio-header, .manager-header, .studio-main, .manager-body) {
+    padding: var(--space-5);
+  }
+
+  :where(.studio-footer, .manager-footer) {
+    padding: var(--space-4) var(--space-5)
+      max(1rem, env(safe-area-inset-bottom, 0px));
+  }
+
+  .comparison-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+
+/* 14. Solid-material fallback and accessibility preferences ---------------- */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :is(
+    .top-nav, .glass-dock, .surface-card, .story-card, .comparison-card,
+    .vision-search-input
+  ),
+  .value-card-3d::before {
+    background: var(--surface-solid);
+  }
+
+  :is(
+    .studio-panel, .manager-panel,
+    .studio-modal > .modal-content, .manager-modal > .modal-content
+  ),
+  .value-card-3d.is-center::before {
+    background: var(--surface-elevated-solid);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :is(
+    .top-nav, .glass-dock, .surface-card, .story-card, .comparison-card,
+    .vision-search-input, .studio-panel, .manager-panel,
+    .studio-modal > .modal-content, .manager-modal > .modal-content
+  ),
+  .value-card-3d::before {
+    background: var(--surface-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .value-card-3d.is-center::before {
+    background: var(--surface-elevated-solid);
+  }
+
+  :where(.spotlight-surface, .surface-card, .value-card-3d)::after {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  body {
+    --text-muted: var(--text-main);
+    --border-line: var(--text-main);
+    --specular-top: var(--text-main);
+    --bg-card: var(--surface-solid);
+    --bg-elevated: var(--surface-elevated-solid);
+  }
+
+  :where(.spotlight-surface, .surface-card, .value-card-3d)::after {
+    display: none;
+  }
+
+  :where(.spa-nav-btn, .filter-pill, .studio-tab).active {
+    outline: 2px solid currentColor;
+    outline-offset: -3px;
+  }
+
+  .value-card-3d.is-center::before {
+    border: 2px solid var(--text-main);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+    .spa-section, .value-card-3d, .studio-modal, .manager-modal,
+    .studio-panel, .manager-panel, .modal-content,
+    .spa-nav-btn, .filter-pill, .studio-tab, .icon-btn, .modal-close,
+    .spin-action-btn, .spin-reactor-btn, .scenario-option
+  ) {
+    animation: none;
+    transition: none;
+    will-change: auto;
+  }
+
+  .spa-section {
+    transform: none;
+  }
+
+  :where(.studio-modal, .manager-modal) {
+    transition: opacity 100ms linear, visibility 0s linear 100ms;
+  }
+
+  :where(.studio-modal, .manager-modal).active {
+    transition-delay: 0s;
+  }
+
+  :where(
+    .studio-panel, .manager-panel,
+    .studio-modal > .modal-content, .manager-modal > .modal-content
+  ) {
+    transform: none;
+  }
+
+  /* Keep all 3D spatial orbit cards visible and fanned out side-by-side even when OS reduced-motion is active */
+  .value-card-3d {
+    will-change: auto;
+  }
+
+  :where(.coverflow-stage, .spatial-orbit-stage).is-spinning .value-card-3d {
+    will-change: auto;
+  }
+
+  :where(.spotlight-surface, .surface-card, .value-card-3d)::after {
+    display: none;
+    transition: none;
+    will-change: auto;
+  }
+
+  :where(.spin-action-btn, .spin-reactor-btn):is(.busy, .is-spinning, [aria-busy="true"])::before {
+    animation: none;
+    will-change: auto;
+    border-color: var(--diriyah-sand);
+  }
+
+  :is(.spa-nav-btn, .filter-pill, .studio-tab, .icon-btn, .modal-close,
+    .spin-action-btn, .spin-reactor-btn, .scenario-option):is(:hover, :active) {
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  :root,
+  body.projector-day {
+    --bg-main: Canvas;
+    --bg-card: Canvas;
+    --bg-elevated: Canvas;
+    --surface-solid: Canvas;
+    --surface-elevated-solid: Canvas;
+    --text-main: CanvasText;
+    --text-muted: CanvasText;
+    --text-accent: LinkText;
+    --border-line: ButtonText;
+    --focus-ring: Highlight;
+  }
+
+  :where(
+    .top-nav, .glass-dock, .surface-card, .story-card, .comparison-card,
+    .vision-search-input, .studio-panel, .manager-panel,
+    .studio-modal > .modal-content, .manager-modal > .modal-content
+  ),
+  .value-card-3d::before {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  :where(.spotlight-surface, .surface-card, .value-card-3d)::after {
+    display: none;
+  }
+
+  :where(.spa-nav-btn, .filter-pill, .studio-tab).active {
+    outline: 2px solid Highlight;
+  }
+
+  .value-card-3d.is-center::before {
+    border: 2px solid Highlight;
+    box-shadow: none;
+  }
+
+  :where(.spin-action-btn, .spin-reactor-btn, .scenario-option) {
+    border: 2px solid ButtonText;
+  }
+}
+

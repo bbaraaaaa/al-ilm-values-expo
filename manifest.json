@@ -1,0 +1,18 @@
+{
+  "name": "معرض ترسيخ القيم — ثانوية العلم النافع الأهلية",
+  "short_name": "معرض القيم",
+  "description": "منصة عرض تفاعلية ثلاثية الأبعاد وصوتية لمعرض ترسيخ القيم في ثانوية العلم النافع الأهلية",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#050a08",
+  "theme_color": "#050a08",
+  "dir": "rtl",
+  "lang": "ar-SA",
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icons/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}

@@ -1,0 +1,2152 @@
+/*
+ * Stage 3 / Astra — Al Ilm Al Nafi
+ * Load AFTER astra_visionos.css and the base <style> block in index.html.
+ *
+ * Contracts:
+ * - --jewel-pct is a percentage: 0%, 25%, 50%, 75%, 100%.
+ * - --jewel-accent is supplied per value; no positional color mapping.
+ * - Reader font steps are 0..4 via data-reader-font-step / data-font-step,
+ *   or an inline --reader-font-size on the modal, panel or reading body.
+ * - Custom modals open with .active, .is-open or aria-hidden="false".
+ *   Native <dialog> opens with showModal(); [hidden] always wins.
+ * - JS owns focus trapping, status text, persistence and audio cancellation.
+ *
+ * Priority: projector-day owns colors; classroom-mode owns scale and motion.
+ * No external assets, continuous animations, global font replacement or
+ * per-card backdrop filters. Essential content remains visible in all modes.
+ */
+
+/* 01. Component tokens --------------------------------------------------- */
+
+:root {
+  --alm-surface: #111d2e;
+  --alm-glass: rgb(17 29 46 / 94%);
+  --alm-reading: #142236;
+  --alm-hover: #1c2d43;
+  --alm-ink: #f5f7fa;
+  --alm-secondary: #c2cdda;
+  --alm-muted: #a4b3c6;
+  --alm-border: rgb(214 226 241 / 22%);
+  --alm-control-border: #71839b;
+  --alm-specular: rgb(255 255 255 / 16%);
+  --alm-gold: #d4af37;
+  --alm-gold-ink: #050b14;
+  --alm-selected: #302d24;
+  --alm-emerald: #10b981;
+  --alm-emerald-ink: #041c15;
+  --alm-success-text: #6ee7b7;
+  --alm-success-surface: #102e2a;
+  --alm-danger: #ffb4b4;
+  --alm-focus: #f6d977;
+  --alm-track: #34445b;
+  --alm-scrim: rgb(2 6 14 / 78%);
+  --alm-mark-bg: #f3d777;
+  --alm-mark-ink: #172132;
+  --alm-shadow: 0 16px 40px rgb(0 0 0 / 22%),
+    inset 0 1px 0 var(--alm-specular);
+  --alm-modal-shadow: 0 24px 64px rgb(0 0 0 / 36%);
+  --alm-blur: 12px;
+  --alm-radius: 1.5rem;
+  --alm-control-radius: 0.875rem;
+  --alm-control-min: 3rem;
+  --alm-card-padding: 1.5rem;
+  --alm-body-size: 1.125rem;
+  --alm-label-size: 1rem;
+  --alm-reader-min: 1.125rem;
+  --alm-ease: cubic-bezier(0.2, 0, 0, 1);
+  --alm-duration: 160ms;
+  --reader-font-size: 1.375rem;
+}
+
+body.projector-day {
+  --alm-surface: #ffffff;
+  --alm-glass: #ffffff;
+  --alm-reading: #fffefa;
+  --alm-hover: #eee8db;
+  --alm-ink: #102136;
+  --alm-secondary: #34465c;
+  --alm-muted: #526176;
+  --alm-border: #cdd3db;
+  --alm-control-border: #748297;
+  --alm-specular: #ffffff;
+  --alm-gold: #765600;
+  --alm-gold-ink: #ffffff;
+  --alm-selected: #f4ebd3;
+  --alm-emerald: #086846;
+  --alm-emerald-ink: #ffffff;
+  --alm-success-text: #086846;
+  --alm-success-surface: #e7f4ed;
+  --alm-danger: #a32d38;
+  --alm-focus: #174d9b;
+  --alm-track: #d5dce4;
+  --alm-scrim: rgb(16 33 54 / 42%);
+  --alm-mark-bg: #f6df8c;
+  --alm-mark-ink: #102136;
+  --alm-shadow: 0 4px 12px rgb(16 33 54 / 8%);
+  --alm-modal-shadow: 0 20px 56px rgb(16 33 54 / 18%);
+  --alm-blur: 0px;
+}
+
+:where(
+  .jewel-constellation-bar, #todayFocusBanner, .practice-step-card,
+  #storyReaderModal,
+  #pledgeCertificateModal, #pledgePrintRoot
+),
+:where(
+  .jewel-constellation-bar, #todayFocusBanner, .practice-step-card,
+  #storyReaderModal,
+  #pledgeCertificateModal, #pledgePrintRoot
+) *,
+:where(.jewel-pill, .jewel-pill__ring)::before {
+  box-sizing: border-box;
+}
+
+.jewel-pill,
+.practice-check-btn,
+.practice-focus-btn,
+#todayFocusBanner :where(button),
+#storyReaderModal :where(button),
+#pledgeCertificateModal :where(button) {
+  min-inline-size: 2.75rem;
+  min-block-size: var(--alm-control-min);
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--alm-control-border);
+  border-radius: var(--alm-control-radius);
+  background: var(--alm-surface);
+  color: var(--alm-ink);
+  font: inherit;
+  font-size: var(--alm-label-size);
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--alm-duration) var(--alm-ease);
+}
+
+:is(
+  .jewel-pill, .practice-check-btn, .practice-focus-btn,
+  #todayFocusBanner button, #storyReaderModal button,
+  #pledgeCertificateModal button,
+  #studentPledgeNameInput
+):focus-visible,
+:is(#storyReaderModal, #pledgeCertificateModal)
+  :where(a, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--alm-focus);
+  outline-offset: 3px;
+}
+
+:is(
+  .jewel-pill, .practice-check-btn, .practice-focus-btn,
+  #todayFocusBanner button, #storyReaderModal button,
+  #pledgeCertificateModal button
+):is(:disabled, [aria-disabled="true"]) {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+:is(
+  .jewel-pill, .practice-check-btn, .practice-focus-btn,
+  #todayFocusBanner button, #storyReaderModal button,
+  #pledgeCertificateModal button
+):active:not(:disabled):not([aria-disabled="true"]) {
+  transform: translateY(1px);
+}
+
+/* 02. Twelve jewels: stable positions and always-visible names ------------ */
+
+.orbit-toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  padding-block-start: 0.5rem;
+  margin-block-end: 0.75rem;
+}
+
+.orbit-nav-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.jewel-constellation-bar,
+#dotsBar.jewel-constellation-bar {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.5rem;
+  inline-size: 100%;
+  max-inline-size: 80rem;
+  block-size: auto;
+  min-inline-size: 0;
+  margin: 0.15rem auto 0;
+  padding: 0.35rem;
+  overflow: visible;
+  direction: rtl;
+}
+
+@media (max-width: 68rem) {
+  .jewel-constellation-bar,
+  #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 44rem) {
+  .jewel-constellation-bar,
+  #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.jewel-pill {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.42rem;
+  inline-size: 100%;
+  min-inline-size: 0;
+  min-block-size: 3.1rem;
+  block-size: auto;
+  padding: 0.38rem 0.58rem;
+  border-color: var(--alm-border);
+  border-radius: 0.95rem;
+  background: var(--alm-surface);
+  color: var(--alm-ink);
+  box-shadow: inset 0 1px 0 var(--alm-specular);
+  line-height: 1.3;
+  opacity: 1;
+}
+
+.jewel-pill:is(.active, [aria-pressed="true"], [aria-selected="true"]) {
+  border-color: var(--jewel-accent, var(--alm-gold));
+  background: var(--alm-selected);
+  box-shadow: inset 0 0 0 1px var(--jewel-accent, var(--alm-gold)), 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.jewel-pill.is-today-focus {
+  outline: 2px solid var(--alm-gold);
+  outline-offset: 1px;
+}
+
+.jewel-pill__ring {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 2rem;
+  block-size: 2rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  color: var(--jewel-accent, var(--alm-ink));
+  background: var(--alm-track);
+  background: conic-gradient(
+    from -90deg,
+    var(--jewel-accent, #62a8ff) 0% clamp(0%, var(--jewel-pct, 0%), 100%),
+    var(--alm-track) clamp(0%, var(--jewel-pct, 0%), 100%) 100%
+  );
+}
+
+.jewel-pill__ring::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--alm-surface);
+}
+
+.jewel-pill:is(.active, [aria-pressed="true"], [aria-selected="true"])
+  .jewel-pill__ring::before {
+  background: var(--alm-selected);
+}
+
+.jewel-pill__ring > *,
+.jewel-pill__core,
+.jewel-pill__icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  line-height: 1;
+  color: var(--jewel-accent, currentColor);
+}
+
+.jewel-pill__ring > svg,
+.jewel-pill__core svg,
+.jewel-pill__icon svg {
+  inline-size: 1.2rem;
+  block-size: 1.2rem;
+  display: block;
+}
+
+.jewel-pill__label,
+.jewel-pill__name {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  text-align: start;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--alm-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.jewel-pill__progress,
+.jewel-pill__count {
+  flex: 0 0 auto;
+  color: var(--alm-secondary);
+  font-size: 0.74rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.jewel-pill[data-completion="complete"] .jewel-pill__count {
+  color: var(--alm-success-text);
+  font-weight: 800;
+}
+
+body.projector-day .jewel-pill {
+  border-color: var(--alm-control-border);
+}
+
+body.projector-day .jewel-pill__ring {
+  /* A dark outer boundary preserves the silhouette of pale jewel colors. */
+  outline: 1px solid var(--alm-control-border);
+  outline-offset: 1px;
+}
+
+/* 03. Today's practice stays in document flow ---------------------------- */
+
+#todayFocusBanner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 1.5rem;
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 78rem;
+  margin: 1.25rem auto;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--alm-border);
+  border-inline-start: 3px solid var(--alm-gold);
+  border-radius: var(--alm-radius);
+  background: var(--alm-glass);
+  background-image: linear-gradient(180deg, var(--alm-specular), transparent 65%);
+  color: var(--alm-ink);
+  box-shadow: var(--alm-shadow);
+  -webkit-backdrop-filter: blur(var(--alm-blur));
+  backdrop-filter: blur(var(--alm-blur));
+  font-size: var(--alm-body-size);
+  line-height: 1.85;
+  text-align: start;
+}
+
+#todayFocusBanner > :where(div, p, .today-focus-content) {
+  flex: 1 1 20rem;
+  min-inline-size: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#todayFocusBanner :where(.today-focus-label, .today-focus-value, small) {
+  display: block;
+  color: var(--alm-secondary);
+  font-size: var(--alm-label-size);
+}
+
+#todayFocusBanner #completeTodayFocusBtn,
+#todayFocusBanner .practice-check-btn,
+#readerMarkReadBtn {
+  background: var(--alm-emerald);
+  border-color: var(--alm-emerald);
+  color: var(--alm-emerald-ink);
+}
+
+#todayFocusBanner .today-focus-actions {
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+#todayFocusBanner:is(.is-completed, [data-completed="true"]) {
+  border-inline-start-color: var(--alm-emerald);
+  background: var(--alm-success-surface);
+}
+
+/* 04. Interactive practices in both encyclopedia and studio -------------- */
+
+.practice-step-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-inline-size: 0;
+  padding: var(--alm-card-padding);
+  border: 1px solid var(--alm-border);
+  border-inline-start: 3px solid var(--alm-control-border);
+  border-radius: var(--alm-radius);
+  background: var(--alm-reading);
+  color: var(--alm-ink);
+  font-size: var(--alm-body-size);
+  line-height: 1.85;
+  text-align: start;
+  overflow-wrap: anywhere;
+  scroll-margin-block: 6rem 2rem;
+}
+
+.practice-step-card + .practice-step-card {
+  margin-block-start: 0.75rem;
+}
+
+.practice-step-card > :where(p, label, .practice-step-text, .practice-step-content) {
+  flex: 1 1 15rem;
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.practice-step-card :where(.practice-step-title, h4) {
+  margin: 0 0 0.375rem;
+  color: var(--alm-ink);
+  font-size: 1em;
+  font-weight: 800;
+}
+
+.practice-step-card :where(.practice-actions, .practice-step-actions) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  inline-size: 100%;
+}
+
+.practice-step-card input[type="checkbox"] {
+  flex: 0 0 auto;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  margin: 0.375rem 0;
+  accent-color: var(--alm-emerald);
+}
+
+.practice-step-card label {
+  min-block-size: var(--alm-control-min);
+  cursor: pointer;
+}
+
+.practice-check-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.practice-focus-btn {
+  color: var(--alm-ink);
+  background: var(--alm-surface);
+}
+
+.practice-step-card.is-completed {
+  border-inline-start-color: var(--alm-emerald);
+  background: var(--alm-success-surface);
+}
+
+.practice-step-card.is-completed .practice-check-btn,
+.practice-check-btn:is(.is-completed, [aria-pressed="true"], [aria-checked="true"]) {
+  background: var(--alm-emerald);
+  border-color: var(--alm-emerald);
+  color: var(--alm-emerald-ink);
+}
+
+.practice-focus-btn:is(.active, .is-focused, [aria-pressed="true"]) {
+  border-color: var(--alm-gold);
+  background: var(--alm-selected);
+  box-shadow: inset 0 0 0 1px var(--alm-gold);
+}
+
+.practice-step-card :where(.practice-completed-hint, .practice-status) {
+  font-size: var(--alm-label-size);
+  color: var(--alm-success-text);
+}
+
+/* 05. Story reader and shared modal shell -------------------------------- */
+
+#storyReaderModal,
+#pledgeCertificateModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 100);
+  align-items: center;
+  justify-items: center;
+  inline-size: 100%;
+  max-inline-size: none;
+  block-size: 100vh;
+  block-size: 100dvh;
+  max-block-size: none;
+  margin: 0;
+  padding: max(1rem, env(safe-area-inset-top, 0px))
+    max(1rem, env(safe-area-inset-right, 0px))
+    max(1rem, env(safe-area-inset-bottom, 0px))
+    max(1rem, env(safe-area-inset-left, 0px));
+  border: 0;
+  background: var(--alm-scrim);
+  color: var(--alm-ink);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  overflow: auto;
+  overscroll-behavior: contain;
+  direction: rtl;
+  text-align: start;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:is(#storyReaderModal, #pledgeCertificateModal):is(
+  .active, .is-open, [aria-hidden="false"], [open]
+) {
+  display: grid;
+}
+
+:is(dialog#storyReaderModal, dialog#pledgeCertificateModal) {
+  background: transparent;
+}
+
+:is(dialog#storyReaderModal, dialog#pledgeCertificateModal)::backdrop {
+  background: var(--alm-scrim);
+}
+
+:is(dialog#storyReaderModal, dialog#pledgeCertificateModal):not([open]),
+:is(#storyReaderModal, #pledgeCertificateModal)[aria-hidden="true"] {
+  display: none;
+}
+
+#storyReaderModal .reader-panel,
+#pledgeCertificateModal :is(.pledge-panel, .pledge-certificate-panel, .studio-panel, .modal-content) {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: min(100%, 56rem);
+  min-inline-size: 0;
+  min-block-size: 0;
+  max-block-size: 100%;
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--alm-border);
+  border-block-start-color: var(--alm-specular);
+  border-radius: 2rem;
+  background: var(--alm-surface);
+  color: var(--alm-ink);
+  box-shadow: var(--alm-modal-shadow);
+  overflow: auto;
+  overscroll-behavior: contain;
+  transform: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+#pledgeCertificateModal :is(.pledge-panel, .pledge-certificate-panel, .studio-panel, .modal-content) {
+  inline-size: min(100%, 64rem);
+}
+
+.reader-header,
+.pledge-header,
+:is(#storyReaderModal, #pledgeCertificateModal) .manager-header {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-block-end: 1px solid var(--alm-border);
+  background: var(--alm-surface);
+}
+
+#storyReaderTitle,
+.reader-header h2,
+.pledge-header h2 {
+  flex: 1 1 15rem;
+  min-inline-size: 0;
+  margin: 0;
+  font-size: clamp(1.5rem, 1.1rem + 1vw, 2rem);
+  line-height: 1.5;
+  color: var(--alm-ink);
+  overflow-wrap: anywhere;
+}
+
+.reader-toolbar,
+.reader-font-controls {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reader-toolbar {
+  padding: 0.75rem 2rem;
+  border-block-end: 1px solid var(--alm-border);
+}
+
+:is(#readerFontDec, #readerFontInc) {
+  min-inline-size: var(--alm-control-min);
+  padding-inline: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+:where(#storyReaderModal, .reader-panel, .reader-body, #storyReaderBody):is(
+  [data-reader-font-step="0"], [data-font-step="0"]
+) {
+  --reader-font-size: 1.125rem;
+}
+
+:where(#storyReaderModal, .reader-panel, .reader-body, #storyReaderBody):is(
+  [data-reader-font-step="1"], [data-font-step="1"]
+) {
+  --reader-font-size: 1.25rem;
+}
+
+:where(#storyReaderModal, .reader-panel, .reader-body, #storyReaderBody):is(
+  [data-reader-font-step="2"], [data-font-step="2"]
+) {
+  --reader-font-size: 1.375rem;
+}
+
+:where(#storyReaderModal, .reader-panel, .reader-body, #storyReaderBody):is(
+  [data-reader-font-step="3"], [data-font-step="3"]
+) {
+  --reader-font-size: 1.5rem;
+}
+
+:where(#storyReaderModal, .reader-panel, .reader-body, #storyReaderBody):is(
+  [data-reader-font-step="4"], [data-font-step="4"]
+) {
+  --reader-font-size: 1.75rem;
+}
+
+.reader-body,
+#storyReaderBody {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  min-inline-size: 0;
+  inline-size: 100%;
+  margin: 0;
+  padding: 1.75rem max(1.5rem, calc((100% - 46rem) / 2));
+  background: var(--alm-reading);
+  color: var(--alm-ink);
+  font-family: inherit;
+  font-size: var(--reader-font-size, 1.375rem);
+  line-height: 1.95;
+  text-align: start;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scroll-padding-block: 1.5rem;
+}
+
+.reader-body :where(p, li, blockquote),
+#storyReaderBody :where(p, li, blockquote) {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.reader-body p,
+#storyReaderBody p {
+  margin-block: 0 1.25em;
+}
+
+.reader-body > :last-child,
+#storyReaderBody > :last-child {
+  margin-block-end: 0;
+}
+
+.reader-body blockquote,
+#storyReaderBody blockquote {
+  margin: 1.25em 0;
+  padding: 0.25em 1em;
+  border-inline-start: 3px solid var(--alm-gold);
+  color: var(--alm-secondary);
+}
+
+/* Argon's manager shell scrolls around #storyReaderBody. */
+#storyReaderModal .manager-body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  padding: 0;
+  background: var(--alm-reading);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+
+#storyReaderModal .manager-body > #storyReaderBody {
+  overflow: visible;
+  scrollbar-gutter: auto;
+}
+
+.reader-action-bridge {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
+  border-block-start: 1px solid var(--alm-border);
+  background: var(--alm-surface);
+}
+
+.reader-action-bridge :where(p, .reader-bridge-label) {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--alm-secondary);
+  font-size: var(--alm-label-size);
+  line-height: 1.7;
+}
+
+#readerToPracticeBtn {
+  border-color: var(--alm-gold);
+  background: var(--alm-gold);
+  color: var(--alm-gold-ink);
+}
+
+/* 07. Shared utilities -------------------------------------------------- */
+
+.alm-sr-only {
+  position: absolute !important;
+  inline-size: 1px !important;
+  block-size: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+mark.alm-hl {
+  padding: 0.0625em 0.125em;
+  border-radius: 0.2em;
+  background: var(--alm-mark-bg);
+  color: var(--alm-mark-ink);
+  font: inherit;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Explicit visibility state beats component display rules. */
+:is(#todayFocusBanner, #storyReaderModal, #pledgeCertificateModal)[hidden],
+:is(#todayFocusBanner, #storyReaderModal, #pledgeCertificateModal).hidden,
+:is(
+  .jewel-constellation-bar, .practice-step-card, .reader-panel,
+  .reader-action-bridge, .hikmah-stats-grid
+)[hidden],
+:is(#storyReaderModal, #pledgeCertificateModal, #todayFocusBanner) [hidden] {
+  display: none !important;
+}
+
+/* 08. Responsive scale and classroom density ---------------------------- */
+
+.practice-step-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-block-start: 0.35rem;
+}
+
+/* Balanced Studio 3-column proportion & compact practice cards */
+#studioModal .practice-step-card {
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  font-size: 0.86rem;
+  line-height: 1.65;
+  gap: 0.5rem;
+}
+
+#studioModal .practice-step-card :is(.practice-check-btn, .practice-focus-btn) {
+  min-block-size: 2.3rem;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  flex: 1 1 auto;
+}
+
+#modalExamplesGrid .studio-story-card {
+  justify-content: space-between;
+}
+
+/* Immersive Story Reader Pedagogical Takeaway Card */
+.reader-insight-card {
+  margin: 0 max(1.5rem, calc((100% - 46rem) / 2)) 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--alm-border);
+  border-inline-start: 3px solid var(--alm-gold);
+  border-radius: 1.1rem;
+  background: var(--alm-surface);
+  color: var(--alm-ink);
+}
+
+.reader-insight-label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--alm-gold);
+  margin-block-end: 0.35rem;
+}
+
+body.projector-day .reader-insight-label {
+  color: var(--alm-gold);
+}
+
+.reader-insight-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: var(--alm-secondary);
+}
+
+:is(#readerPrevBtn, #readerNextBtn) {
+  min-inline-size: 2.65rem;
+  padding-inline: 0.65rem;
+}
+
+:is(html.classroom-mode, body.classroom-mode) .jewel-pill__name {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 71.999rem) {
+  .jewel-constellation-bar,
+  #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .hikmah-stats-grid:has(> :nth-child(4):last-child) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 44rem) {
+  .jewel-constellation-bar,
+  #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Respect the user's root preference; 106.25% is 17px at a 16px default. */
+html.classroom-mode {
+  font-size: 106.25%;
+}
+
+html.classroom-mode body,
+body.classroom-mode {
+  --alm-body-size: 1.375rem;
+  --alm-label-size: 1.125rem;
+  --alm-card-padding: 1.75rem;
+  --alm-control-min: 3.25rem;
+  --alm-reader-min: 1.5rem;
+  --alm-blur: 0px;
+  --alm-duration: 0ms;
+  --glass-blur: 0px;
+  --glass-filter: none;
+  --font-body: 1.375rem;
+  --text-base: 1.375rem;
+  --text-lead: 1.5rem;
+  --text-title: 2.25rem;
+  --text-display: 3.25rem;
+  --lh-normal: 1.85;
+  font-size: var(--alm-body-size);
+  line-height: 1.85;
+}
+
+:is(html.classroom-mode, body.classroom-mode) #storyReaderBody {
+  font-size: calc(var(--reader-font-size, 1.375rem) + 0.15rem);
+}
+
+:is(html.classroom-mode, body.classroom-mode) .jewel-pill__name {
+  font-size: 0.85rem;
+}
+
+@media (max-width: 71.999rem) {
+  :is(html.classroom-mode, body.classroom-mode) .jewel-constellation-bar,
+  :is(html.classroom-mode, body.classroom-mode) #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 44rem) {
+  :is(html.classroom-mode, body.classroom-mode) .jewel-constellation-bar,
+  :is(html.classroom-mode, body.classroom-mode) #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+:is(html.classroom-mode, body.classroom-mode) :is(
+  .alm-aurora, .alm-starfield, .ambient-orb, .aurora-orb, .cosmic-bg
+) {
+  display: none;
+}
+
+:is(html.classroom-mode, body.classroom-mode) :is(
+  .top-nav, .glass-dock, .surface-card, .studio-panel, .manager-panel,
+  .reader-panel, .pledge-panel
+),
+:is(html.classroom-mode, body.classroom-mode) .value-card-3d::before {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:is(html.classroom-mode, body.classroom-mode) *,
+:is(html.classroom-mode, body.classroom-mode) *::before,
+:is(html.classroom-mode, body.classroom-mode) *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+body.projector-day :is(.alm-aurora, .alm-starfield, .ambient-orb, .aurora-orb) {
+  display: none;
+}
+
+@media (max-width: 39.999rem) {
+  .jewel-constellation-bar,
+  #dotsBar.jewel-constellation-bar,
+  :is(html.classroom-mode, body.classroom-mode) .jewel-constellation-bar,
+  :is(html.classroom-mode, body.classroom-mode) #dotsBar.jewel-constellation-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hikmah-stats-grid,
+  .hikmah-stats-grid:has(> :nth-child(4):last-child) {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  #todayFocusBanner > button {
+    inline-size: 100%;
+  }
+
+  .reader-header,
+  .reader-toolbar,
+  .reader-action-bridge,
+  .pledge-header,
+  :is(#storyReaderModal, #pledgeCertificateModal) .manager-header {
+    padding: 1rem;
+  }
+
+  .reader-body,
+  #storyReaderBody {
+    padding: 1.25rem 1rem;
+  }
+
+  .reader-action-bridge > button,
+  .pledge-actions > button {
+    flex: 1 1 100%;
+  }
+
+  #storyReaderModal .reader-panel,
+  #pledgeCertificateModal :is(.pledge-panel, .pledge-certificate-panel, .studio-panel, .modal-content) {
+    border-radius: 1.25rem;
+  }
+}
+
+/* Keep controls reachable when the software keyboard reduces the height. */
+@media (max-height: 36rem) {
+  #storyReaderModal,
+  #pledgeCertificateModal {
+    align-items: start;
+  }
+
+  #storyReaderModal .reader-panel,
+  #pledgeCertificateModal :is(.pledge-panel, .pledge-certificate-panel, .studio-panel, .modal-content) {
+    max-block-size: none;
+    margin-block: 0;
+    overflow: visible;
+  }
+
+  .reader-body,
+  .pledge-body,
+  .pledge-scroll-body,
+  :is(#storyReaderModal, #pledgeCertificateModal) .manager-body {
+    flex: 0 0 auto;
+    overflow: visible;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(
+    .jewel-pill, .practice-focus-btn,
+    #readerToScenarioBtn, #readerFontDec, #readerFontInc
+  ):hover:not(:disabled):not([aria-disabled="true"]):not(.active):not([aria-pressed="true"]) {
+    border-color: var(--alm-gold);
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  #todayFocusBanner {
+    background: var(--alm-surface);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  #todayFocusBanner {
+    background: var(--alm-surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html,
+  body,
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .jewel-pill,
+  #storyReaderModal .reader-panel,
+  #pledgeCertificateModal :is(.pledge-panel, .pledge-certificate-panel, .studio-panel, .modal-content) {
+    transform: none !important;
+  }
+
+  .jewel-pill {
+    opacity: 1 !important;
+  }
+
+  .alm-aurora,
+  .alm-starfield {
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .jewel-pill,
+  .practice-step-card,
+  .pledge-preview-card,
+  #todayFocusBanner {
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
+
+  .jewel-pill:is(.active, [aria-pressed="true"], [aria-selected="true"]),
+  .practice-focus-btn[aria-pressed="true"] {
+    outline: 3px solid Highlight;
+    outline-offset: -4px;
+  }
+
+  .jewel-pill__ring {
+    /* System colors keep the progress arc visible in high contrast mode. */
+    forced-color-adjust: none;
+    --jewel-accent: Highlight;
+    --alm-track: GrayText;
+    --alm-surface: Canvas;
+    --alm-selected: Canvas;
+    color: CanvasText;
+  }
+
+  mark.alm-hl {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+/* ==========================================================================
+ * 10. EXHIBITION SHOWCASE LAYER — معرض ترسيخ القيم
+ * Turns the former practice-tracker UI into a gallery experience and gives
+ * the 3D orbit its spatial anatomy (watermark · glass · lifted layers · glare).
+ * ========================================================================== */
+
+/* 10.1 Retired tracker surfaces (DOM ids kept for script compatibility) ---- */
+#todayFocusBanner,
+#hikmahProgressBadge,
+#savedAudioCountBadge,
+.story-read-badge,
+.jewel-pill__count {
+  display: none !important;
+}
+
+/* 10.2 Orbit physics contract ---------------------------------------------
+ * OrbitPhysics writes transform / opacity / filter every frame. Only opacity
+ * and filter may ease, and only while the deck is at rest. */
+.spatial-orbit-stage .value-card-3d {
+  transition:
+    opacity var(--duration-fast, 160ms) var(--ease-out-expo, ease-out),
+    filter var(--duration-fast, 160ms) var(--ease-out-expo, ease-out);
+}
+
+.spatial-orbit-stage:is(.is-dragging, .is-spinning) .value-card-3d,
+.spatial-orbit-stage .value-card-3d.is-moving {
+  transition: none;
+}
+
+.spatial-orbit-stage .value-card-3d:is(.is-center, .is-moving) {
+  will-change: transform, opacity, filter;
+}
+
+/* 10.3 Interior 3D layers: lifted off the glass on the resting centre card */
+.spatial-orbit-stage .value-card-3d > :is(.vcard-header, .vcard-body, .vcard-footer, .vcard-glare) {
+  transition: transform 300ms var(--ease-out-expo, ease-out), opacity 240ms ease;
+}
+
+.spatial-orbit-stage .value-card-3d.is-center:not(.is-moving) > .vcard-header { transform: translateZ(26px); }
+.spatial-orbit-stage .value-card-3d.is-center:not(.is-moving) > .vcard-body { transform: translateZ(36px); }
+.spatial-orbit-stage .value-card-3d.is-center:not(.is-moving) > .vcard-footer { transform: translateZ(24px); }
+.spatial-orbit-stage .value-card-3d.is-center:not(.is-moving) > .vcard-glare { transform: translateZ(40px); }
+
+.value-grid-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* Static specular sheen on the centre card (fixed position, no pointer tracking) */
+.value-card-3d > .vcard-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  margin: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      90% 70% at var(--glare-x, 28%) var(--glare-y, 0%),
+      rgb(255 255 255 / 24%) 0%,
+      rgb(255 255 255 / 7%) 34%,
+      transparent 62%
+    ),
+    linear-gradient(118deg, transparent 36%, rgb(255 255 255 / 6%) 50%, transparent 64%);
+  opacity: 0;
+}
+
+.spatial-orbit-stage .value-card-3d.is-center > .vcard-glare { opacity: 0.5; }
+body.projector-day .value-card-3d > .vcard-glare { opacity: 0 !important; }
+
+/* Exhibition value badge on cards (reference amber) */
+.vcard-group-pill.vcard-expo-pill {
+  color: #fbbf24;
+  background: rgb(245 158 11 / 12%);
+  border-color: rgb(245 158 11 / 42%);
+}
+
+body.projector-day .vcard-group-pill.vcard-expo-pill {
+  color: #92400e;
+  background: #fef3c7;
+  border-color: #d97706;
+}
+
+/* 10.5 Hero: simple, reference-style --------------------------------------- */
+.hero-kicker.expo-kicker {
+  background: rgb(16 185 129 / 10%);
+  border-color: rgb(16 185 129 / 30%);
+  color: #34d399;
+  box-shadow: none;
+}
+
+body.projector-day .hero-kicker.expo-kicker {
+  background: #d1fae5;
+  border-color: #6ee7b7;
+  color: #065f46;
+}
+
+/* Keep the group control beside the hero copy (not wrapped below it)
+ * so the orbit stays above the fold on iPad Air 13. */
+.hero-top-grid > :first-child {
+  flex: 1 1 30rem;
+  min-inline-size: 0;
+}
+
+.hero-top-grid > :last-child {
+  flex: 0 0 auto;
+}
+
+.hero-top-grid .hero-slogan {
+  max-inline-size: 72ch;
+  line-height: 1.75;
+}
+
+/* One segmented group control (reference: glass pill, emerald active tab) */
+#hero-section .filter-bar.group-segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  align-self: flex-end;
+  gap: 0.375rem;
+  padding: 0.375rem;
+  border: 1px solid var(--border-line);
+  border-radius: 1rem;
+  background: var(--glass-bg);
+}
+
+#hero-section .group-segmented .filter-pill {
+  min-block-size: 2.75rem;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+#hero-section .group-segmented .filter-pill:is(.active, [aria-pressed="true"]) {
+  border-color: rgb(16 185 129 / 40%);
+  background: rgb(16 185 129 / 20%);
+  color: #6ee7b7;
+  font-weight: 800;
+}
+
+body.projector-day #hero-section .group-segmented .filter-pill:is(.active, [aria-pressed="true"]) {
+  border-color: #047857;
+  background: #d1fae5;
+  color: #065f46;
+}
+
+/* One control row: [arrows + dots] ··· [SPIN] with a hairline on top */
+#hero-section .orbit-toolbar {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-block: 0.75rem 0;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--border-line);
+}
+
+#hero-section .orbit-nav-cluster {
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+#hero-section .orbit-nav-cluster .icon-btn {
+  inline-size: 2.75rem;
+  min-inline-size: 2.75rem;
+  block-size: 2.75rem;
+  min-block-size: 2.75rem;
+  padding: 0;
+  border-radius: 0.75rem;
+  border-color: var(--border-line);
+  background: var(--glass-bg);
+  color: var(--text-main);
+}
+
+#dotsBar.orbit-dots-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: 0.6rem;
+}
+
+#dotsBar .orbit-dot {
+  position: relative;
+  flex: 0 0 auto;
+  inline-size: 8px;
+  min-inline-size: 0;
+  block-size: 8px;
+  min-block-size: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 22%);
+  cursor: pointer;
+  transition: inline-size 300ms var(--ease-out-expo, ease-out), background-color 300ms ease;
+}
+
+/* Generous invisible hit area so the tiny dots stay easy to tap on iPad */
+#dotsBar .orbit-dot::after {
+  content: "";
+  position: absolute;
+  inset: -14px -4px;
+}
+
+#dotsBar .orbit-dot.active {
+  inline-size: 24px;
+  background: var(--dot-accent, #10b981);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--dot-accent, #10b981) 55%, transparent);
+}
+
+body.projector-day #dotsBar .orbit-dot:not(.active) {
+  background: rgb(6 33 22 / 20%);
+}
+
+/* SPIN: reference emerald gradient pill; amber while spinning */
+.spin-reactor-btn {
+  gap: 0.6rem;
+  border: 1px solid rgb(255 255 255 / 25%);
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 12px 34px rgb(16 185 129 / 35%);
+}
+
+.spin-reactor-btn:not(.busy, .is-spinning, [aria-busy="true"])::before {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .spin-reactor-btn:not(.busy, .is-spinning):hover {
+    box-shadow: 0 16px 40px rgb(16 185 129 / 48%);
+  }
+}
+
+.spin-reactor-btn:is(.busy, .is-spinning, [aria-busy="true"]) {
+  border-color: rgb(255 255 255 / 30%);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  box-shadow: 0 12px 38px rgb(245 158 11 / 45%);
+}
+
+.spin-reactor-btn:is(.busy, .is-spinning, [aria-busy="true"])::before {
+  border-top-color: #ffffff;
+}
+
+.spin-reactor-btn:is(.busy, .is-spinning, [aria-busy="true"]) > svg {
+  display: none;
+}
+
+/* 10.6 Reference palette (al-ilm-al-nafi-values/index.html) -----------------
+ * Green-black base, emerald #10B981 primary, amber #F59E0B secondary,
+ * white text; light projector mode on #f4f7f5. Retargets the design tokens
+ * so every component follows without per-component overrides. */
+:root {
+  color-scheme: dark;
+  --tuwaiq-obsidian: #050a08;
+  --tuwaiq-navy: #0a1410;
+  --tuwaiq-slate: #0e1c16;
+  --diriyah-gold: #f59e0b;
+  --diriyah-amber: #f59e0b;
+  --diriyah-sand: #fcd34d;
+  --ilm-emerald: #10b981;
+  --ilm-emerald-deep: #047857;
+
+  --bg-main: #050a08;
+  --bg-card: rgba(10, 20, 16, 0.86);
+  --bg-elevated: rgba(14, 28, 22, 0.92);
+  --text-main: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --border-line: rgba(255, 255, 255, 0.09);
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --surface-solid: #0a1410;
+  --surface-elevated-solid: #0e1c16;
+  --control-bg: rgba(255, 255, 255, 0.04);
+  --control-hover: rgba(16, 185, 129, 0.15);
+  --text-accent: #fbbf24;
+  --focus-ring: #34d399;
+  --selection-bg: rgba(16, 185, 129, 0.28);
+  --active-bg: rgba(16, 185, 129, 0.2);
+  --active-border: rgba(16, 185, 129, 0.4);
+  --scrim: rgba(3, 8, 6, 0.88);
+
+  --alm-surface: #0e1c16;
+  --alm-glass: rgb(10 20 16 / 94%);
+  --alm-reading: #0c1813;
+  --alm-hover: #13251d;
+  --alm-ink: #ffffff;
+  --alm-secondary: #c3d3cb;
+  --alm-muted: #9db2a8;
+  --alm-border: rgb(255 255 255 / 11%);
+  --alm-control-border: #4f6a5d;
+  --alm-specular: rgb(255 255 255 / 12%);
+  --alm-gold: #f59e0b;
+  --alm-gold-ink: #050a08;
+  --alm-selected: #12291f;
+  --alm-focus: #34d399;
+  --alm-track: #22362c;
+  --alm-scrim: rgb(3 8 6 / 82%);
+}
+
+body.projector-day {
+  color-scheme: light;
+  --bg-main: #f4f7f5;
+  --bg-card: #ffffff;
+  --bg-elevated: #e8f0ec;
+  --text-main: #062116;
+  --text-muted: rgba(6, 33, 22, 0.72);
+  --border-line: rgba(6, 78, 59, 0.15);
+  --glass-bg: rgba(6, 78, 59, 0.06);
+  --surface-solid: #ffffff;
+  --surface-elevated-solid: #f4f7f5;
+  --control-bg: rgba(6, 78, 59, 0.06);
+  --control-hover: rgba(6, 78, 59, 0.12);
+  --text-accent: #92400e;
+  --focus-ring: #047857;
+  --selection-bg: rgba(16, 185, 129, 0.24);
+  --active-bg: #d1fae5;
+  --active-border: #047857;
+  --scrim: rgba(6, 33, 22, 0.42);
+
+  --alm-surface: #ffffff;
+  --alm-glass: #ffffff;
+  --alm-reading: #fbfdfc;
+  --alm-hover: #e8f0ec;
+  --alm-ink: #062116;
+  --alm-secondary: #2c4a3d;
+  --alm-muted: #4b6a5c;
+  --alm-border: rgba(6, 78, 59, 0.18);
+  --alm-control-border: #6b8a7c;
+  --alm-specular: #ffffff;
+  --alm-gold: #92400e;
+  --alm-gold-ink: #ffffff;
+  --alm-selected: #e1f2e9;
+  --alm-focus: #047857;
+  --alm-track: #cfe0d7;
+  --alm-scrim: rgb(6 33 22 / 42%);
+}
+
+/* Reference backdrop: green-black with a faint 52px architectural grid */
+html body:not(.projector-day) {
+  background-color: #050a08;
+  background-image:
+    radial-gradient(900px 460px at 50% -8%, rgba(16, 185, 129, 0.1), transparent 62%),
+    linear-gradient(to right, rgba(255, 255, 255, 0.016) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.016) 1px, transparent 1px);
+  background-size: auto, 52px 52px, 52px 52px;
+}
+
+html body.projector-day {
+  background-color: #f4f7f5;
+  background-image:
+    radial-gradient(900px 460px at 50% -8%, rgba(16, 185, 129, 0.07), transparent 62%),
+    linear-gradient(to right, rgba(6, 78, 59, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(6, 78, 59, 0.04) 1px, transparent 1px);
+  background-size: auto, 52px 52px, 52px 52px;
+}
+
+.top-nav .brand-emblem {
+  background: rgb(16 185 129 / 10%);
+  border-color: rgb(16 185 129 / 30%);
+  color: #f59e0b;
+}
+
+/* Official school logo: transparent PNG straight on the page, no tile */
+.top-nav .brand-emblem.has-logo,
+body.projector-day .top-nav .brand-emblem.has-logo {
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.top-nav .brand-emblem.has-logo img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+
+.footer-logo-tile {
+  display: block;
+  inline-size: max-content;
+  margin: 0 auto 0.75rem;
+  padding: 0;
+  background: transparent;
+}
+
+.footer-logo-tile img {
+  display: block;
+  inline-size: 9rem;
+  block-size: 9rem;
+  object-fit: contain;
+}
+
+/* Logo recoloured to the site palette: emerald + amber star (night),
+ * deeper emerald + amber (day projector) — swap with the theme. */
+:is(.top-nav .brand-emblem.has-logo, .footer-logo-tile) img.logo-day {
+  display: none;
+}
+
+body.projector-day :is(.top-nav .brand-emblem.has-logo, .footer-logo-tile) img.logo-day {
+  display: block;
+}
+
+body.projector-day :is(.top-nav .brand-emblem.has-logo, .footer-logo-tile) img.logo-night {
+  display: none;
+}
+
+/* 10.7 Four steps as an inspiration gallery -------------------------------- */
+.exhibit-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.exhibit-step-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--step-accent, #d4af37) 30%, var(--alm-border));
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--step-accent, #d4af37) 13%, transparent), transparent 72%),
+    var(--alm-reading);
+  color: var(--alm-ink);
+  text-align: start;
+  overflow-wrap: anywhere;
+  scroll-margin-block: 6rem 2rem;
+}
+
+.exhibit-step-num {
+  display: grid;
+  place-items: center;
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
+  border-radius: 0.8rem;
+  font-size: 1.15rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--step-accent, #d4af37);
+  background: color-mix(in srgb, var(--step-accent, #d4af37) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--step-accent, #d4af37) 48%, transparent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--step-accent, #d4af37) 22%, transparent);
+}
+
+.exhibit-step-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-inline-size: 0;
+}
+
+.exhibit-step-kicker {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: var(--step-accent, #d4af37);
+  letter-spacing: 0;
+}
+
+.exhibit-step-text {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.8;
+  color: var(--alm-ink);
+}
+
+#studioModal .exhibit-step-card {
+  padding: 0.75rem 0.85rem;
+  gap: 0.65rem;
+}
+
+#studioModal .exhibit-step-num {
+  inline-size: 2.1rem;
+  block-size: 2.1rem;
+  font-size: 1rem;
+}
+
+#studioModal .exhibit-step-text {
+  font-size: 0.84rem;
+  line-height: 1.7;
+}
+
+body.projector-day :is(.exhibit-step-num, .exhibit-step-kicker) {
+  color: color-mix(in srgb, var(--step-accent, #d4af37) 62%, #102136);
+}
+
+body.projector-day .exhibit-step-num {
+  box-shadow: none;
+}
+
+:is(html.classroom-mode, body.classroom-mode) .exhibit-step-text {
+  font-size: 1.05rem;
+}
+
+@media (forced-colors: active) {
+  .exhibit-step-card,
+  .expo-value-chip {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* 10.9 Studio: cinematic staggered entrance (studioCardRise) --------------- */
+@keyframes studioCardRise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.studio-scroll-body.is-entering :is(
+  .studio-lyrics-box,
+  #modalExamplesGrid > *,
+  .studio-3col-grid:not(#modalExamplesGrid) > *
+) {
+  animation: studioCardRise 620ms var(--ease-out-expo, cubic-bezier(0.23, 1, 0.32, 1)) backwards;
+}
+
+.studio-scroll-body.is-entering .studio-lyrics-box { animation-delay: 60ms; }
+.studio-scroll-body.is-entering #modalExamplesGrid > :nth-child(1) { animation-delay: 210ms; }
+.studio-scroll-body.is-entering #modalExamplesGrid > :nth-child(2) { animation-delay: 270ms; }
+.studio-scroll-body.is-entering #modalExamplesGrid > :nth-child(3) { animation-delay: 330ms; }
+.studio-scroll-body.is-entering .studio-3col-grid:not(#modalExamplesGrid) > :nth-child(1) { animation-delay: 400ms; }
+.studio-scroll-body.is-entering .studio-3col-grid:not(#modalExamplesGrid) > :nth-child(2) { animation-delay: 460ms; }
+.studio-scroll-body.is-entering .studio-3col-grid:not(#modalExamplesGrid) > :nth-child(3) { animation-delay: 520ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spatial-orbit-stage .value-card-3d > :is(.vcard-header, .vcard-body, .vcard-footer, .vcard-glare) {
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+ * 11. EXHIBITION KIOSK · iPad Air 13" (M2) — 1366×1024 landscape / 1024×1366
+ * Touch hardening for a shared iPad + the attract-mode hint
+ * (behaviour lives in exhibition_kiosk.js).
+ * ========================================================================== */
+
+/* No double-tap zoom, no rubber-band bounce, no pull-to-refresh */
+html {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Visitors can still type in the search box and the visitor book */
+:is(input, textarea, [contenteditable="true"]) {
+  -webkit-touch-callout: default;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+img,
+svg {
+  -webkit-user-drag: none;
+}
+
+/* iPadOS Safari zooms the whole page into any field under 16px */
+.vision-search-wrap .vision-search-input,
+input[type="search"],
+input[type="text"],
+textarea {
+  font-size: max(16px, 1rem);
+}
+
+/* Comfortable touch targets on a 13" touch screen */
+@media (hover: none) and (pointer: coarse) {
+  :where(.filter-pill, .spa-nav-btn, .icon-btn, .modal-close, .mgr-btn, .story-action-btn, .comp-open-btn) {
+    min-block-size: 44px;
+  }
+
+  .glass-dock .spa-nav-btn {
+    min-block-size: 48px;
+    font-size: 0.95rem;
+  }
+}
+
+/* Attract-mode hint: floats above the dock while the iPad is idle */
+.attract-hint {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(max(1rem, env(safe-area-inset-bottom, 0px)) + 5.75rem);
+  z-index: calc(var(--z-dock, 40) + 1);
+  inline-size: max-content;
+  max-inline-size: calc(100% - 2rem);
+  margin-inline: auto;
+  padding: 0.85rem 1.6rem;
+  border-radius: 999px;
+  border: 1px solid rgb(16 185 129 / 55%);
+  background: #0a1410;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 800;
+  box-shadow: 0 0 0 6px rgb(16 185 129 / 10%), 0 18px 40px rgb(0 0 0 / 45%);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px);
+  transition: opacity 400ms ease, transform 400ms var(--ease-out-expo, ease-out), visibility 0s linear 400ms;
+}
+
+body.is-attract .attract-hint {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+  animation: attractBreath 2.8s ease-in-out 600ms infinite;
+}
+
+body.projector-day .attract-hint {
+  background: #ffffff;
+  color: #062116;
+  border-color: #047857;
+}
+
+@keyframes attractBreath {
+  0%, 100% { box-shadow: 0 0 0 6px rgb(16 185 129 / 10%), 0 18px 40px rgb(0 0 0 / 45%); }
+  50% { box-shadow: 0 0 0 12px rgb(16 185 129 / 18%), 0 18px 40px rgb(0 0 0 / 45%); }
+}
+
+/* ==========================================================================
+ * 12. SECTION BAR — in the header at the top, floating at the bottom on scroll
+ * ========================================================================== */
+:root {
+  --nav-glide: cubic-bezier(0.45, 0.05, 0.15, 1);
+}
+
+.top-nav .header-dock {
+  display: flex;
+  align-items: center;
+  flex: 0 1 auto;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border-line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 3%);
+  /* reappears at once, beneath the floating copy that has settled over it */
+  transition: none;
+}
+
+.top-nav .header-dock .spa-nav-btn {
+  min-inline-size: 0;
+  min-block-size: 2.65rem;
+  padding: 0.35rem 0.95rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+/* Header search shares the row with the section bar */
+.top-nav .vision-search-wrap {
+  flex: 1 1 13rem;
+  max-inline-size: 20rem;
+  transition: opacity 320ms ease 180ms, visibility 0s linear 0s;
+}
+
+/* Simplified header while scrolled: the glass bar is clipped down to a pill
+ * holding only the logo + school name. clip-path never changes layout, so the
+ * page content doesn't jump (iPad Safari has no scroll anchoring). The pill
+ * size comes from JS (--nav-pill-w / --nav-pill-h). */
+.top-nav {
+  clip-path: inset(0 0 0 0 round var(--radius-card, 1.5rem));
+  transition: clip-path 760ms var(--nav-glide);
+}
+
+body.nav-compact .top-nav {
+  clip-path: inset(
+    0 0 calc(100% - var(--nav-pill-h, 82px)) calc(100% - var(--nav-pill-w, 21rem))
+    round var(--radius-card, 1.5rem)
+  );
+  /* collapse a beat after the bar lifts off, so the two read as one motion */
+  transition-delay: 90ms;
+}
+
+body.nav-compact .top-nav .vision-search-wrap {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 160ms ease, visibility 0s linear 160ms;
+}
+
+/* The bar itself is handed over between the two copies; the floating copy
+ * does the glide (Web Animations in stage3_fable_upgrade.js). */
+body.dock-floating .top-nav .header-dock {
+  opacity: 0;
+  visibility: hidden;
+  /* hides only once the floating copy has faded in on top of it
+   * (90ms = HANDOFF_IN in stage3_fable_upgrade.js) */
+  transition: opacity 0s linear 90ms, visibility 0s linear 90ms;
+}
+
+.glass-dock.floating-dock {
+  visibility: hidden;
+  opacity: 0;
+}
+
+body.dock-floating .glass-dock.floating-dock {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* The header collapse + bar glide are part of the exhibit: keep them even when
+ * the device asks for reduced motion (the global reduce rule earlier in this
+ * file switches every transition off with !important, so they are restored the
+ * same way). */
+@media (prefers-reduced-motion: reduce) {
+  .top-nav {
+    transition: clip-path 760ms var(--nav-glide) !important;
+  }
+
+  body.nav-compact .top-nav {
+    transition-delay: 90ms !important;
+  }
+
+  body.dock-floating .top-nav .header-dock {
+    transition: opacity 0s linear 90ms, visibility 0s linear 90ms !important;
+  }
+
+  .top-nav .vision-search-wrap {
+    transition: opacity 320ms ease 180ms, visibility 0s linear 0s !important;
+  }
+
+  body.nav-compact .top-nav .vision-search-wrap {
+    transition: opacity 160ms ease, visibility 0s linear 160ms !important;
+  }
+}
+
+/* With the bar up in the header, the attract hint can sit lower */
+body:not(.dock-floating) .attract-hint {
+  inset-block-end: calc(max(1rem, env(safe-area-inset-bottom, 0px)) + 1.5rem);
+}
+
+/* Narrower screens (iPad portrait): the section bar gets its own centred row */
+@media (max-width: 1100px) {
+  .top-nav .header-dock {
+    order: 3;
+    margin-inline: auto;
+  }
+}
+
+/* iPad portrait (1024×1366): stack the hero copy above the group control */
+@media (max-width: 1100px) and (orientation: portrait) {
+  .hero-top-grid {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* In a column the 30rem flex-basis would become a height: size to content */
+  .hero-top-grid > :first-child {
+    flex: 0 0 auto;
+  }
+
+  #hero-section .filter-bar.group-segmented {
+    align-self: flex-start;
+  }
+}
+
+/* ==========================================================================
+ * 13. HOME — the exhibition's introduction, first screen before the cards
+ * ========================================================================== */
+#intro-section.spa-section {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* fills the first screen under the header (--intro-offset is measured in
+   * stage3_fable_upgrade.js; the fallback fits the iPad landscape header) */
+  min-block-size: calc(100svh - var(--intro-offset, 8.5rem));
+  padding-block: 1.5rem 2.5rem;
+  text-align: center;
+  isolation: isolate;
+}
+
+.intro-glow {
+  position: absolute;
+  inset: 6% 12% auto;
+  block-size: 62%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(16 185 129 / 15%), transparent);
+  filter: blur(36px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.intro-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  max-inline-size: 54rem;
+}
+
+.intro-emblem {
+  inline-size: 7.5rem;
+  block-size: auto;
+  filter: drop-shadow(0 0 26px rgb(16 185 129 / 32%));
+}
+
+.intro-school {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.intro-title {
+  margin: 0;
+  font-size: clamp(2.6rem, 5.4vw, 4.4rem);
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.intro-title .accent-span {
+  color: var(--ilm-emerald);
+}
+
+.intro-lead {
+  margin: 0.25rem 0 0;
+  max-inline-size: 48ch;
+  color: var(--text-muted);
+  font-size: clamp(1.08rem, 1.55vw, 1.28rem);
+  font-weight: 600;
+  line-height: 1.95;
+  text-wrap: balance;
+}
+
+.intro-motto {
+  margin: 0.35rem 0 0;
+  padding: 1rem 1.6rem;
+  max-inline-size: 44ch;
+  border: 1px solid rgb(245 158 11 / 30%);
+  border-radius: 1.25rem;
+  background: rgb(245 158 11 / 7%);
+  color: var(--text-main);
+  font-size: clamp(1.05rem, 1.45vw, 1.22rem);
+  font-weight: 800;
+  line-height: 1.85;
+  text-wrap: balance;
+}
+
+.intro-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-block-start: 0.75rem;
+  min-block-size: 3.6rem;
+  padding: 0.6rem 2.4rem;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #10b981 0%, #047857 100%);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 900;
+  box-shadow: 0 0 0 6px rgb(16 185 129 / 12%), 0 16px 40px rgb(16 185 129 / 30%);
+  cursor: pointer;
+  transition: transform 140ms ease-out, box-shadow 200ms ease;
+}
+
+.intro-cta:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .intro-cta:hover {
+    box-shadow: 0 0 0 8px rgb(16 185 129 / 16%), 0 18px 46px rgb(16 185 129 / 46%);
+  }
+}
+
+/* Gentle staggered entrance (switched off by the global reduced-motion rule) */
+@keyframes introRise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.intro-inner > * {
+  animation: introRise 720ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.intro-inner > :nth-child(2) { animation-delay: 70ms; }
+.intro-inner > :nth-child(3) { animation-delay: 140ms; }
+.intro-inner > :nth-child(4) { animation-delay: 230ms; }
+.intro-inner > :nth-child(5) { animation-delay: 320ms; }
+.intro-inner > :nth-child(6) { animation-delay: 420ms; }
+
+/* ==========================================================================
+ * 14. VALUE MESSAGE — one short audio control in the studio:
+ *     «تشغيل» ⇄ «إيقاف», with «إعادة» beside it once started
+ * ========================================================================== */
+.studio-message-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.studio-message-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.studio-message-label .vcard-icon-box {
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+  border-radius: 0.8rem;
+}
+
+.studio-message-label .vcard-icon-box svg {
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+}
+
+.studio-audio-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.audio-btn[hidden],
+.studio-audio-note[hidden] {
+  display: none;
+}
+
+/* shown only when a value has no audio file and the device no Arabic voice */
+.studio-audio-note {
+  margin: 0;
+  padding: 0.5rem 0.9rem;
+  border: 1px dashed rgb(245 158 11 / 40%);
+  border-radius: 0.8rem;
+  background: rgb(245 158 11 / 7%);
+  color: #fbbf24;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.audio-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: 2.9rem;
+  padding: 0.45rem 1.15rem;
+  border: 1px solid var(--border-line);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 5%);
+  color: var(--text-main);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease-out, background-color 180ms ease, box-shadow 200ms ease;
+}
+
+.audio-btn:active {
+  transform: scale(0.96);
+}
+
+/* white, so it reads on every value's accent colour; the glow carries the accent */
+.audio-btn--main {
+  min-inline-size: 7.5rem;
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #050b14;
+  font-weight: 900;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--card-accent, #10b981) 28%, transparent),
+    0 8px 22px color-mix(in srgb, var(--card-accent, #10b981) 30%, transparent);
+}
+
+/* play icon while idle / paused, pause icon while playing */
+.audio-btn--main .audio-icon-pause,
+.studio-audio-controls.is-playing .audio-btn--main .audio-icon-play {
+  display: none;
+}
+
+.studio-audio-controls.is-playing .audio-btn--main .audio-icon-pause {
+  display: inline;
+}
+
+/* the message text reads as plain text now (no word-by-word highlighting) */
+#editorialLyrics {
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+ * 15. SIX CARDS AT A TIME — stories + impact comparison on «الجميع»
+ *     (logic: paginateCards in stage3_fable_upgrade.js)
+ * ========================================================================== */
+.cards-more-area {
+  display: flex;
+  justify-content: center;
+  margin-block: 1.75rem 0.5rem;
+}
+
+.cards-more-area:empty {
+  display: none;
+}
+
+.cards-more-btn,
+.cards-fold-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: 3.1rem;
+  padding: 0.6rem 2rem;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease-out, box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.cards-more-btn {
+  border: 1px solid rgb(16 185 129 / 55%);
+  background: rgb(16 185 129 / 16%);
+  color: #ffffff;
+  box-shadow: 0 6px 22px rgb(16 185 129 / 22%);
+}
+
+.cards-fold-btn {
+  border: 1px solid var(--border-line);
+  background: rgb(255 255 255 / 5%);
+  color: var(--text-main);
+}
+
+.cards-more-btn:active,
+.cards-fold-btn:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .cards-more-btn:hover {
+    background: rgb(16 185 129 / 26%);
+  }
+}
+
+/* Section bottoms clear the floating section bar on the iPad */
+#examples-section,
+#comparison-section {
+  padding-block-end: 6rem;
+}
+

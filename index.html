@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="معرض القيم" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
+  <meta name="theme-color" content="#050a08" />
+  <link rel="icon" type="image/png" href="./assets/school-emblem.png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="manifest" href="./manifest.json" />
+  <title>معرض ترسيخ القيم — ثانوية العلم النافع الأهلية</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
+  <link rel="stylesheet" href="./astra_visionos.css?v=3.0" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=3.0" />
+
+  <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
+  <style>
+    :root {
+      --font-ui: 'Cairo', -apple-system, BlinkMacSystemFont, 'SF Pro Arabic', sans-serif;
+      --font-reading: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    html.theme-switching *,
+    html.theme-switching *::before,
+    html.theme-switching *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+
+    html,
+    body {
+      position: relative;
+      max-inline-size: 100vw;
+      overflow-x: hidden;
+      overflow-x: clip;
+    }
+
+    body {
+      background-image:
+        radial-gradient(960px 520px at 82% -6%, rgba(16, 185, 129, 0.11), transparent 62%),
+        radial-gradient(840px 480px at 14% 8%, rgba(212, 175, 55, 0.09), transparent 60%);
+    }
+
+    .astra-shell,
+    #hero-section,
+    #studioModal {
+      overflow-x: clip;
+    }
+
+    body.projector-day {
+      background-image:
+        radial-gradient(920px 480px at 80% -6%, rgba(16, 185, 129, 0.07), transparent 60%),
+        radial-gradient(820px 460px at 15% 8%, rgba(212, 175, 55, 0.09), transparent 58%);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Ambient Tuwaiq / Diriyah Glow */
+    .ambient-orb {
+      position: absolute;
+      inline-size: min(52rem, 88vw);
+      block-size: 24rem;
+      top: -8rem;
+      left: 50%;
+      transform: translateX(-50%);
+      border-radius: 999px;
+      filter: blur(120px);
+      opacity: 0.17;
+      pointer-events: none;
+      z-index: 0;
+      transition: background-color 600ms var(--ease-out-expo);
+    }
+
+    /* (The page-wide 52px reference grid lives on body in stage3_astra_upgrade.css.
+       A grid inside the preserve-3d stage would be depth-sorted over side cards.) */
+
+    /* Distinct 12-Card Jewel Surfaces (Dark & Day Projector Modes) */
+    body:not(.projector-day) .value-card-3d::before {
+      background: var(--card-surface, var(--bg-card));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+    }
+
+    body:not(.projector-day) .value-card-3d.is-center::before {
+      background: var(--card-surface, var(--bg-elevated));
+      border: 1.8px solid var(--card-accent);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.28),
+        0 24px 60px rgba(0, 0, 0, 0.7),
+        0 0 28px -2px color-mix(in srgb, var(--card-accent) 42%, transparent);
+    }
+
+    body.projector-day .value-card-3d::before {
+      background: linear-gradient(160deg,
+          color-mix(in srgb, var(--card-accent) 15%, #ffffff) 0%,
+          #fffdfa 100%);
+      border-color: color-mix(in srgb, var(--card-accent) 48%, rgba(9, 20, 38, 0.18));
+    }
+
+    /* 3D Card Interior Anatomy — exhibition size for iPad Air 13" (1366x1024) */
+    :root {
+      --stage-height: 24rem !important;
+      --card-height: 22rem !important;
+    }
+
+    #hero-section.spa-section {
+      padding-block: 0.35rem 1.75rem;
+    }
+
+    .spatial-orbit-stage {
+      block-size: 24rem !important;
+      min-block-size: 24rem !important;
+      margin-block: 0.45rem 0.65rem !important;
+    }
+
+    /* No overflow clipping on the 3D cards: it would flatten their interior
+       depth layers and clip the glass shadow drawn by ::before. */
+    .value-card-3d {
+      block-size: 22rem !important;
+      min-block-size: 22rem !important;
+      max-block-size: 22rem !important;
+      inline-size: min(23.5rem, 84vw) !important;
+      border-radius: 1.6rem !important;
+      padding: 1.5rem 1.5rem 1.35rem !important;
+      justify-content: space-between;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Full 12-Card Simultaneous Panoramic Grid Mode */
+    .values-panoramic-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr));
+      gap: 1.2rem;
+      margin-block: 1.25rem 1.5rem;
+    }
+
+    .value-grid-card {
+      position: relative;
+      border-radius: 1.6rem;
+      padding: 1.25rem 1.35rem 1.15rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--card-surface, var(--bg-card));
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 0.85rem;
+      min-block-size: 21.5rem;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 180ms var(--ease-out-expo), box-shadow 200ms ease, border-color 180ms ease;
+    }
+
+    body.projector-day .value-grid-card {
+      background: linear-gradient(160deg,
+          color-mix(in srgb, var(--card-accent, #D4AF37) 15%, #ffffff) 0%,
+          #fffdfa 100%);
+      border-color: color-mix(in srgb, var(--card-accent, #D4AF37) 48%, rgba(9, 20, 38, 0.18));
+    }
+
+    .value-grid-card.spin-roulette-active {
+      transform: translateY(-4px) scale(1.025);
+      border-color: #ffffff !important;
+      box-shadow: 0 0 0 2px var(--card-accent, #D4AF37), 0 24px 54px rgba(0, 0, 0, 0.55);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .value-grid-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--card-accent, #D4AF37);
+        box-shadow: 0 0 24px -4px color-mix(in srgb, var(--card-accent, #D4AF37) 35%, transparent), 0 20px 45px rgba(0, 0, 0, 0.6);
+      }
+    }
+
+    /* Card top: the value's icon, centred above the name */
+    .vcard-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .vcard-icon-box {
+      inline-size: 3.1rem;
+      block-size: 3.1rem;
+      border-radius: 0.95rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .vcard-icon-box svg {
+      inline-size: 1.6rem;
+      block-size: 1.6rem;
+    }
+
+    /* Badges still used by the studio header and the encyclopedia card */
+    .vcard-badges {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .vcard-group-pill {
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: var(--text-muted);
+    }
+
+    body.projector-day .vcard-group-pill {
+      background: rgba(9, 20, 38, 0.06);
+      border-color: rgba(9, 20, 38, 0.14);
+    }
+
+    .vcard-num {
+      font-size: 0.85rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+      padding: 0.2rem 0.55rem;
+      border-radius: 0.6rem;
+      background: rgba(0, 0, 0, 0.22);
+    }
+
+    body.projector-day .vcard-num {
+      background: rgba(9, 20, 38, 0.07);
+    }
+
+    /* Card centre: name, one-line description, short quote */
+    .vcard-body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.3rem;
+      margin-block: auto;
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+
+    .vcard-title {
+      margin: 0;
+      font-size: 2.05rem;
+      font-weight: 900;
+      line-height: 1.22;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    body.projector-day .vcard-title {
+      color: #0b1528;
+    }
+
+    .vcard-sub {
+      margin: 0.15rem 0 0.45rem;
+      font-size: 1.04rem;
+      font-weight: 700;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .vcard-quote {
+      margin: 0 auto;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: rgba(255, 255, 255, 0.82);
+      text-align: center;
+      max-inline-size: 94%;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    body.projector-day .vcard-quote {
+      color: rgba(11, 21, 40, 0.76);
+    }
+
+    /* Card bottom: one short call to action */
+    .vcard-footer {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-top: auto;
+      padding-top: 0.5rem;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .vcard-tap-hint {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-block-size: 2.5rem;
+      padding: 0.35rem 1.4rem;
+      border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--card-accent, #10b981) 55%, transparent);
+      background: color-mix(in srgb, var(--card-accent, #10b981) 15%, transparent);
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 800;
+      transition: background-color 200ms ease, box-shadow 200ms ease, transform 140ms ease-out;
+    }
+
+    .spatial-orbit-stage .value-card-3d.is-center .vcard-tap-hint {
+      background: color-mix(in srgb, var(--card-accent, #10b981) 26%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--card-accent, #10b981) 30%, transparent);
+    }
+
+    .value-card-3d:active .vcard-tap-hint,
+    .value-grid-card:active .vcard-tap-hint {
+      transform: scale(0.96);
+    }
+
+    /* Orbit Controls & Dots */
+    .orbit-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-block-start: 0.75rem;
+      border-block-start: 1px solid var(--border-line);
+    }
+
+    .orbit-nav-cluster {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .orbit-dots-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+    }
+
+    .orbit-dot {
+      inline-size: 0.65rem;
+      block-size: 0.65rem;
+      padding: 0;
+      border-radius: 999px;
+      border: 0;
+      background: rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      transition: inline-size 220ms var(--ease-out-expo), background-color 180ms ease;
+    }
+
+    body.projector-day .orbit-dot {
+      background: rgba(9, 20, 38, 0.22);
+    }
+
+    .orbit-dot.active {
+      inline-size: 1.9rem;
+      background: var(--dot-accent, var(--diriyah-gold));
+    }
+
+    /* Top Brand & Search Layout */
+    .brand-emblem {
+      inline-size: 3rem;
+      block-size: 3rem;
+      border-radius: 0.95rem;
+      background: linear-gradient(145deg, rgba(16, 185, 129, 0.22), rgba(212, 175, 55, 0.2));
+      border: 1px solid var(--active-border);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--diriyah-gold);
+      flex-shrink: 0;
+    }
+
+    .brand-titles {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .brand-school-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .brand-school-name {
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: var(--text-main);
+    }
+
+    .brand-branch-pill {
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.14);
+      border: 1px solid rgba(16, 185, 129, 0.38);
+      color: var(--best-ink);
+    }
+
+    .brand-project-sub {
+      margin: 0;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .top-nav {
+      margin-block: 0.65rem 0.9rem;
+    }
+
+    .vision-search-wrap {
+      position: relative;
+      flex: 1 1 17rem;
+      max-inline-size: 26rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .vision-search-wrap .vision-search-input {
+      padding-inline-start: 2.55rem;
+      padding-inline-end: 1rem;
+      min-block-size: 2.8rem;
+      /* 16px minimum: iPadOS Safari zooms the page into smaller fields */
+      font-size: max(16px, 1rem);
+    }
+
+    .vision-search-wrap:has(#clearSearchBtn:not(.hidden)) .vision-search-input {
+      padding-inline-end: 4.65rem;
+    }
+
+    .search-icon-start {
+      position: absolute;
+      inset-inline-start: 0.95rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      display: inline-flex;
+    }
+
+    .search-clear-btn {
+      position: absolute;
+      inset-inline-end: 0.55rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-line);
+      background: var(--control-bg);
+      color: var(--text-main);
+      font-size: 0.74rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Hero Header Grid */
+    .hero-top-grid {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .hero-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.3rem 0.85rem;
+      border-radius: 999px;
+      background: rgba(212, 175, 55, 0.12);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      color: var(--text-accent);
+      font-size: 0.78rem;
+      font-weight: 800;
+      margin-block-end: 0.6rem;
+    }
+
+    .hero-headline {
+      margin: 0;
+      font-size: clamp(1.75rem, 2.8vw, 2.65rem);
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .hero-headline .accent-span {
+      color: var(--ilm-emerald);
+    }
+
+    .hero-slogan {
+      margin: 0.45rem 0 0;
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      max-inline-size: 62ch;
+    }
+
+    /* Multi-Column Grids */
+    .stories-3col-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+      gap: 1.25rem;
+    }
+
+    .story-val-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .story-chip-icon svg {
+      inline-size: 1.05rem;
+      block-size: 1.05rem;
+      display: block;
+    }
+
+    .story-cat-chip {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .story-heading {
+      font-size: 1.15rem !important;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .story-body {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      flex: 1 1 auto;
+    }
+
+    .story-action-btn {
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-line);
+      background: var(--control-bg);
+      font-size: 0.8rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* Encyclopedia Section */
+    .encyc-grid-shell {
+      display: grid;
+      grid-template-columns: minmax(18rem, 0.36fr) minmax(0, 0.64fr);
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+
+    .encyc-hero-card {
+      border-radius: var(--radius-panel);
+      padding: 1.75rem;
+      border: 1px solid var(--border-line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.25rem;
+      color: #f8fafc;
+      box-shadow: var(--shadow-surface);
+    }
+
+    .encyc-right-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .encyc-two-cols {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.25rem;
+      flex: 1 1 auto;
+    }
+
+    .encyc-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .encyc-item-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      margin-block-end: 0.2rem;
+    }
+
+    .encyc-item-desc {
+      margin: 0;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+    }
+
+    .encyc-step-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      font-size: 0.86rem;
+      line-height: 1.7;
+      color: var(--text-main);
+    }
+
+    .encyc-step-num {
+      inline-size: 1.65rem;
+      block-size: 1.65rem;
+      border-radius: 0.55rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      font-weight: 900;
+      flex-shrink: 0;
+      margin-block-start: 0.1rem;
+    }
+
+    .encyc-pillars-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1.25rem;
+    }
+
+    /* Comparison Cards */
+    .comp-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 23rem), 1fr));
+      gap: 1.25rem;
+    }
+
+    .comp-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .comp-title-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .comp-icon {
+      inline-size: 2.75rem;
+      block-size: 2.75rem;
+      border-radius: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .comp-icon svg {
+      inline-size: 1.4rem;
+      block-size: 1.4rem;
+    }
+
+    .comp-name {
+      margin: 0;
+      font-size: 1.15rem !important;
+      font-weight: 900;
+    }
+
+    .comp-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .comp-open-btn {
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-line);
+      background: var(--control-bg);
+      font-size: 0.76rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .comp-box {
+      padding: 0.85rem 1rem;
+      border-radius: 0.95rem;
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+
+    .comp-box p {
+      margin: 0.25rem 0 0;
+      color: var(--text-main);
+    }
+
+    .comp-box-pos {
+      background: var(--best-bg);
+      border: 1px solid var(--best-border);
+    }
+
+    .comp-box-pos .comp-box-label {
+      font-weight: 800;
+      font-size: 0.8rem;
+      color: var(--best-ink);
+    }
+
+    .comp-box-neg {
+      background: var(--low-bg);
+      border: 1px solid var(--low-border);
+    }
+
+    .comp-box-neg .comp-box-label {
+      font-weight: 800;
+      font-size: 0.8rem;
+      color: var(--low-ink);
+    }
+
+    /* Studio Masterclass Modal Content */
+    .studio-scroll-body {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 1.5rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    .studio-top-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
+      align-items: stretch;
+    }
+
+    .studio-lyrics-box {
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+      background: var(--control-bg);
+      border: 1px solid var(--border-line);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .editorial-lyrics-text {
+      margin: 0;
+      font-size: clamp(1.15rem, 1.8vw, 1.5rem);
+      font-weight: 800;
+      line-height: 2;
+    }
+
+    .studio-3col-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1rem;
+    }
+
+    .studio-story-card {
+      padding: 1.1rem;
+      border-radius: 1.15rem;
+      background: var(--control-bg);
+      border: 1px solid var(--border-line);
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .studio-story-type {
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .studio-story-title {
+      margin: 0;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: var(--text-main);
+    }
+
+    .studio-story-body {
+      margin: 0;
+      font-size: 0.83rem;
+      line-height: 1.75;
+      color: var(--text-muted);
+    }
+
+    .studio-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      font-size: 0.84rem;
+      line-height: 1.7;
+      color: var(--text-main);
+    }
+
+    /* Studio player buttons (play / replay / Arabic speech) */
+    .mgr-btn {
+      min-block-size: 2.35rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--border-line);
+      background: var(--bg-card);
+      color: var(--text-main);
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 1023px) {
+
+      .encyc-grid-shell,
+      .encyc-two-cols,
+      .encyc-pillars-grid,
+      .studio-top-row,
+      .studio-3col-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="astra-shell">
+    <!-- ======================================================================
+         VISIONOS TOP SPATIAL NAVIGATION & INSTANT ARABIC SEARCH
+         ====================================================================== -->
+    <header class="top-nav" role="banner">
+      <a href="#hero-section" onclick="switchView('all'); return false;" class="nav-brand">
+        <span class="brand-emblem has-logo" aria-hidden="true">
+          <!-- Official school logo (symbol only; the name is written beside it),
+               recoloured to the site palette: night + day projector variants -->
+          <img class="logo-night" src="./assets/school-emblem.png" alt="" width="44" height="44" decoding="async" />
+          <img class="logo-day" src="./assets/school-emblem-day.png" alt="" width="44" height="44" decoding="async" />
+        </span>
+        <div class="brand-titles">
+          <div class="brand-school-row">
+            <span class="brand-school-name">مدارس العلم النافع الأهلية</span>
+          </div>
+        </div>
+      </a>
+
+      <!-- Section bar in the header (top of page). Once the visitor scrolls
+           down, the floating copy at the bottom of the page takes over. -->
+      <nav class="header-dock" aria-label="التنقل السريع بين أقسام المنصة">
+        <button type="button" class="spa-nav-btn active" data-view="all" onclick="switchView('all')" aria-current="page">
+          الرئيسية
+        </button>
+        <button type="button" class="spa-nav-btn" data-view="orbit" onclick="switchView('orbit')">
+          مدار القيم 3D
+        </button>
+        <button type="button" class="spa-nav-btn" data-view="stories" onclick="switchView('stories')">
+          ٣٦ قصة واقعية
+        </button>
+        <button type="button" class="spa-nav-btn" data-view="encyclopedia" onclick="switchView('encyclopedia')">
+          موسوعة الفوائد
+        </button>
+        <button type="button" class="spa-nav-btn" data-view="comparison" onclick="switchView('comparison')">
+          مقارنة الأثر
+        </button>
+      </nav>
+
+      <!-- Instant Normalized Arabic Search -->
+      <div class="vision-search-wrap" role="search">
+        <span class="search-icon-start" aria-hidden="true">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+          </svg>
+        </span>
+        <input
+          id="globalSearchInput"
+          type="search"
+          class="vision-search-input"
+          placeholder="ابحث في القيم والقصص..."
+          aria-label="ابحث في القيم والقصص الواقعية"
+        />
+        <button id="clearSearchBtn" type="button" class="search-clear-btn hidden">مسح</button>
+      </div>
+
+    </header>
+
+    <main id="mainContent">
+      <!-- ====================================================================
+           SECTION 0: HOME — the exhibition's introduction, before the cards
+           (wording from the school's announcement of the exhibition)
+           ==================================================================== -->
+      <section id="intro-section" class="spa-section" aria-labelledby="introTitle">
+        <div class="intro-glow" aria-hidden="true"></div>
+        <div class="intro-inner">
+          <img class="intro-emblem" src="./assets/school-emblem.png" alt="" width="120" height="120" decoding="async" />
+          <p class="intro-school">ثانوية العلم النافع الأهلية</p>
+          <h1 id="introTitle" class="intro-title">معرض <span class="accent-span">ترسيخ القيم</span></h1>
+          <p class="intro-lead">
+            مرحبًا بكم في معرض ترسيخ القيم، الذي يتبنّاه النشاط الطلابي والتوجيه الطلابي بمتابعة إدارة ثانوية العلم النافع.
+            يضم المعرض إبداعات طلابنا من لوحات ورسومات فنية، ومجسمات ووسائل تعليمية، ومقاطع فيديو وأعمال مرئية،
+            يجسّد كلٌّ منها قيمةً نعيشها.
+          </p>
+          <blockquote class="intro-motto">
+            «لا تجعل القيم مجرد كلمات نرددها، بل اجعلها إبداعًا نقدّمه وسلوكًا نعيشه وأثرًا نتركه»
+          </blockquote>
+          <button type="button" class="intro-cta" onclick="startExhibitionTour()">
+            ابدأ الجولة
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 1: 3D SPATIAL ORBIT STAGE & HIGH-SPEED SPIN REACTOR
+           ==================================================================== -->
+      <section id="hero-section" class="spa-section" style="position: relative;">
+        <div id="topAmbient" class="ambient-orb" style="background: #2DD4BF;"></div>
+
+        <div class="hero-top-grid">
+          <div>
+            <h2 class="hero-headline">
+              مشروع ترسيخ القيم <span class="accent-span">وتعزيز الهوية الوطنية</span>
+            </h2>
+            <p class="hero-slogan">
+              استعرض القيم باللمس الثلاثي الأبعاد، واستمع للرسائل الصوتية والقصص الملهمة.
+            </p>
+          </div>
+
+          <!-- One simple segmented control (reference design) -->
+          <div class="filter-bar group-segmented" role="group" aria-label="تصنيف مجموعات القيم">
+            <button type="button" id="tab-all" onclick="switchGroup('all')" class="filter-pill active">
+              جميع القيم (١٢)
+            </button>
+            <button type="button" id="tab-A" onclick="switchGroup('A')" class="filter-pill">
+              قيم المعرض (٦)
+            </button>
+            <button type="button" id="tab-B" onclick="switchGroup('B')" class="filter-pill">
+              قيم التميز والريادة (٦)
+            </button>
+          </div>
+        </div>
+
+        <!-- Retired in exhibition mode (kept hidden for script compatibility) -->
+        <div id="todayFocusBanner" class="today-focus-banner hidden" hidden aria-hidden="true">
+          <div class="today-focus-info">
+            <span id="todayFocusValueTag" class="brand-branch-pill">ممارسة اليوم</span>
+            <p id="todayFocusStepText" class="today-focus-text"></p>
+          </div>
+          <div class="today-focus-actions">
+            <button type="button" id="completeTodayFocusBtn" onclick="completeTodayFocusStep()" class="filter-pill active">
+              ✓ أتممت ممارسة اليوم
+            </button>
+            <button type="button" id="clearTodayFocusBtn" onclick="clearTodayFocusStep()" class="filter-pill">
+              تغيير
+            </button>
+          </div>
+        </div>
+
+        <!-- 60Hz Spatial 3D Coverflow / Orbit Stage -->
+        <div id="stage3D" class="spatial-orbit-stage" role="region" aria-label="مدار بطاقات القيم الثلاثي الأبعاد">
+          <div id="cardsWrapper" class="spatial-orbit-track"></div>
+        </div>
+
+        <!-- Simultaneous 12-Card Panoramic Grid Stage -->
+        <div id="allValuesGridStage" class="values-panoramic-grid hidden" role="region" aria-label="شبكة جميع بطاقات القيم معاً"></div>
+
+        <!-- One simple control row (reference design): arrows + dots · SPIN -->
+        <div class="orbit-toolbar">
+          <div class="orbit-nav-cluster">
+            <button type="button" onclick="stepCard(-1)" class="icon-btn filter-pill" aria-label="القيمة السابقة">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m9 18 6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" onclick="stepCard(1)" class="icon-btn filter-pill" aria-label="القيمة التالية">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="m15 18-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div id="dotsBar" class="orbit-dots-bar" role="group" aria-label="التنقل السريع بين بطاقات القيم"></div>
+          </div>
+
+          <button type="button" id="spinBtn" onclick="triggerWheelSpin()" class="spin-reactor-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56" stroke-linecap="round" />
+              <path d="M21 3v5h-5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span id="spinText">تدوير عشوائي وفتح القيمة (SPIN)</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 2: 36 REAL-LIFE STORIES GALLERY (HERITAGE · SCHOOL · 2030)
+           ==================================================================== -->
+      <section id="examples-section" class="spa-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">معرض القصص الواقعية وتجسيد القيم</h2>
+            <p class="section-description">
+              لكل قيمة من القيم الاثنتي عشرة ثلاث قصص ملهمة: من السيرة والتاريخ الإسلامي، ومن واقع طلاب ثانوية العلم النافع، ومن منجزات المملكة ورؤية 2030.
+            </p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
+            <button type="button" id="randomStoryBtn" onclick="openRandomStory()" class="filter-pill">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>قصة ملهمة عشوائية</span>
+            </button>
+            <span id="searchStatsBadge" class="filter-pill active" style="pointer-events: none;">36 قصة معروضة</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-block-end: 1.5rem;">
+          <div id="examplesFilterBar" class="filter-bar" role="group" aria-label="تصفية حسب القيمة"></div>
+        </div>
+
+        <div id="examplesCardsGrid" class="stories-3col-grid"></div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 3: BENEFITS & DAILY PRACTICAL STEPS ENCYCLOPEDIA
+           ==================================================================== -->
+      <section id="encyclopedia-section" class="spa-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">موسوعة الفوائد وخطوات التطبيق اليومي</h2>
+            <p class="section-description">
+              استكشف الثمرات النفسية والعلمية والوطنية لكل قيمة، وأربع ممارسات عملية يومية قابلة للتطبيق الفوري داخل المدرسة والمجتمع.
+            </p>
+          </div>
+        </div>
+
+        <div id="encycSelector" class="filter-bar" style="margin-block-end: 1.5rem;" role="group" aria-label="اختيار القيمة في الموسوعة"></div>
+
+        <div class="encyc-grid-shell">
+          <!-- Highlighted Value Identity Card -->
+          <div id="encycMainCard" class="encyc-hero-card spotlight-surface">
+            <div>
+              <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-block-end: 1.2rem;">
+                <div id="encycIconBox" class="vcard-icon-box"></div>
+                <span id="encycBadge" class="vcard-group-pill" style="color: #fff;">القيمة 01</span>
+              </div>
+              <h3 id="encycTitle" style="margin: 0; font-size: 2rem; font-weight: 900;">التسامح</h3>
+              <p id="encycSubtitle" style="margin: 0.35rem 0 0; font-size: 0.95rem; font-weight: 700; opacity: 0.9;"></p>
+              <p id="encycFullText" style="margin: 1rem 0 0; padding-block-start: 1rem; border-block-start: 1px solid rgba(255,255,255,0.14); font-size: 0.92rem; line-height: 1.85; opacity: 0.92;"></p>
+            </div>
+
+            <div style="padding: 1rem 1.15rem; border-radius: 1.1rem; background: rgba(0,0,0,0.28); border: 1px solid rgba(255,255,255,0.12);">
+              <div style="font-size: 0.76rem; font-weight: 800; color: var(--diriyah-sand); margin-block-end: 0.35rem;">الشاهد الشرعي والتأصيل</div>
+              <p id="encycEvidence" style="margin: 0; font-size: 0.88rem; font-weight: 700; line-height: 1.75;"></p>
+            </div>
+
+            <button type="button" onclick="openCurrentEncycAudio()" class="spin-reactor-btn" style="inline-size: 100%; font-size: 0.95rem;">
+              <span>فتح استوديو القيمة</span>
+            </button>
+          </div>
+
+          <!-- Benefits + 4 Practical Steps + 3 National/Educational Pillars -->
+          <div class="encyc-right-stack">
+            <div class="encyc-two-cols">
+              <div class="surface-card spotlight-surface">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-block-end: 1rem;">
+                  <h4 style="margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--best-ink);">الثمرات والفوائد الـ ٣ الكبرى</h4>
+                  <span class="brand-branch-pill">نفسي • علمي • وطني</span>
+                </div>
+                <ul id="encycBenefitsList" class="encyc-list"></ul>
+              </div>
+
+              <div class="surface-card spotlight-surface">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-block-end: 1rem;">
+                  <h4 style="margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--text-accent);">٤ خطوات لتجسيد القيمة سلوكاً</h4>
+                  <span class="vcard-group-pill">✨ إلهام سلوكي</span>
+                </div>
+                <ul id="encycStepsList" class="encyc-list" tabindex="-1"></ul>
+              </div>
+            </div>
+
+            <div class="surface-card spotlight-surface">
+              <div class="encyc-pillars-grid">
+                <div>
+                  <div style="font-size: 0.8rem; font-weight: 800; color: var(--best-ink); margin-block-end: 0.35rem;">١. الركيزة الشرعية والوطنية</div>
+                  <p id="encycP1" style="margin: 0; font-size: 0.84rem; line-height: 1.75; color: var(--text-muted);"></p>
+                </div>
+                <div>
+                  <div style="font-size: 0.8rem; font-weight: 800; color: var(--text-accent); margin-block-end: 0.35rem;">٢. التطبيق في ثانوية العلم النافع</div>
+                  <p id="encycP2" style="margin: 0; font-size: 0.84rem; line-height: 1.75; color: var(--text-muted);"></p>
+                </div>
+                <div>
+                  <div style="font-size: 0.8rem; font-weight: 800; color: #38bdf8; margin-block-end: 0.35rem;">٣. الأثر في رؤية السعودية 2030</div>
+                  <p id="encycP3" style="margin: 0; font-size: 0.84rem; line-height: 1.75; color: var(--text-muted);"></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================================
+           SECTION 4: IMPACT COMPARISON (WITH VALUE VS WITHOUT VALUE)
+           ==================================================================== -->
+      <section id="comparison-section" class="spa-section">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">مقارنة الأثر: حياتنا مع القيم مقابل غيابها</h2>
+            <p class="section-description">
+              مقارنة واقعية مباشرة تبرز كيف تصنع كل قيمة فرقاً جوهرياً في شخصية الطالب وبيئة الفصل ومستقبل الوطن.
+            </p>
+          </div>
+          <div id="comparisonFilterBar" class="filter-bar" role="group" aria-label="تصفية مقارنات الأثر">
+            <button type="button" class="filter-pill active" data-comp-group="all" aria-pressed="true">جميع القيم (١٢)</button>
+            <button type="button" class="filter-pill" data-comp-group="A" aria-pressed="false">قيمنا الأساسية (٦)</button>
+            <button type="button" class="filter-pill" data-comp-group="B" aria-pressed="false">قيم التميز والريادة (٦)</button>
+          </div>
+        </div>
+
+        <div id="comparisonGrid" class="comp-cards-grid"></div>
+      </section>
+    </main>
+
+    <!-- Footer (Strictly Free of Principal/Counselor Personal Names) -->
+    <footer style="padding-block: 2rem 1rem; border-block-start: 1px solid var(--border-line); text-align: center; color: var(--text-muted); font-size: 0.84rem;">
+      <span class="footer-logo-tile">
+        <img class="logo-night" src="./assets/school-logo.png" alt="شعار مدارس العلم النافع الأهلية" width="132" height="132" loading="lazy" decoding="async" />
+        <img class="logo-day" src="./assets/school-logo-day.png" alt="شعار مدارس العلم النافع الأهلية" width="132" height="132" loading="lazy" decoding="async" />
+      </span>
+      <strong style="color: var(--text-main);">مدارس العلم النافع الأهلية — ثانوية العلم النافع الأهلية</strong>
+      <span> • مشاركة في معرض ترسيخ القيم • مشروع ترسيخ القيم وتعزيز الهوية الوطنية • معاً .. نبني جيلاً متمسكاً بقيمه، وفخوراً بوطنه</span>
+    </footer>
+  </div>
+
+  <!-- ========================================================================
+       FLOATING SECTION DOCK — slides up from the bottom once the page is
+       scrolled (the header copy is used at the top of the page)
+       ======================================================================== -->
+  <nav class="glass-dock floating-dock" aria-label="التنقل السريع بين أقسام المنصة" aria-hidden="true" inert>
+    <button type="button" class="spa-nav-btn active" data-view="all" onclick="switchView('all')" aria-current="page">
+      الرئيسية
+    </button>
+    <button type="button" class="spa-nav-btn" data-view="orbit" onclick="switchView('orbit')">
+      مدار القيم 3D
+    </button>
+    <button type="button" class="spa-nav-btn" data-view="stories" onclick="switchView('stories')">
+      ٣٦ قصة واقعية
+    </button>
+    <button type="button" class="spa-nav-btn" data-view="encyclopedia" onclick="switchView('encyclopedia')">
+      موسوعة الفوائد
+    </button>
+    <button type="button" class="spa-nav-btn" data-view="comparison" onclick="switchView('comparison')">
+      مقارنة الأثر
+    </button>
+  </nav>
+
+  <!-- ========================================================================
+       FULLSCREEN VALUE MASTERCLASS & WORD-BY-WORD SYNCED AUDIO STUDIO
+       ======================================================================== -->
+  <section id="studioModal" class="studio-modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div id="modalAura" class="ambient-orb"></div>
+
+    <div class="studio-panel">
+      <div class="studio-header">
+        <div style="display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;">
+          <span id="modalNum" class="vcard-num" style="font-size: 0.95rem; padding: 0.35rem 0.75rem;">01</span>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+              <h2 id="modalTitle" class="studio-title">التسامح</h2>
+            </div>
+            <p id="modalTagline" style="margin: 0.2rem 0 0; font-size: 0.85rem; color: var(--text-muted);"></p>
+          </div>
+        </div>
+
+        <div class="studio-actions">
+          <button type="button" onclick="navigateModal(-1)" class="filter-pill">▶ السابقة</button>
+          <button type="button" onclick="navigateModal(1)" class="filter-pill">التالية ◀</button>
+          <button type="button" onclick="closeStudio()" class="modal-close filter-pill" aria-label="إغلاق الاستوديو">✕</button>
+        </div>
+      </div>
+
+      <div class="studio-scroll-body">
+        <!-- Row 1: the value's message + one short audio control
+             (play ⇄ pause, and replay beside it once started) -->
+        <div class="studio-top-row">
+          <div id="modalMessageBox" class="studio-lyrics-box">
+            <div class="studio-message-head">
+              <div class="studio-message-label">
+                <span id="modalIconWrap" class="vcard-icon-box"></span>
+                <span>رسالة القيمة</span>
+              </div>
+
+              <div id="studioAudioControls" class="studio-audio-controls" role="group" aria-label="الاستماع لرسالة القيمة">
+                <button type="button" id="audioPlayBtn" class="audio-btn audio-btn--main" onclick="toggleAudioPlayback()" aria-label="تشغيل رسالة القيمة">
+                  <svg class="audio-icon-play" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6a.8.8 0 0 0 1.2.7l10.6-6.8a.8.8 0 0 0 0-1.4L9.2 4.5A.8.8 0 0 0 8 5.2Z" fill="currentColor"/></svg>
+                  <svg class="audio-icon-pause" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/></svg>
+                  <span id="playStateText">تشغيل</span>
+                </button>
+                <button type="button" id="audioReplayBtn" class="audio-btn" onclick="replayAudio()" aria-label="إعادة رسالة القيمة من البداية" hidden>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9" stroke-linecap="round"/><path d="M4 4.5V9h4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <span>إعادة</span>
+                </button>
+              </div>
+            </div>
+            <p id="audioNote" class="studio-audio-note" role="status" hidden></p>
+
+            <p id="editorialLyrics" class="editorial-lyrics-text"></p>
+
+            <div class="studio-evidence" style="margin: 0;">
+              <span style="display: block; font-size: 0.76rem; font-weight: 800; color: var(--text-accent); margin-block-end: 0.2rem;">التأصيل الشرعي للقيمة:</span>
+              <p id="modalEvidenceText" style="margin: 0; font-size: 0.9rem; font-weight: 700;"></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: 3 Real-Life Stories -->
+        <div>
+          <h3 style="margin: 0 0 0.75rem; font-size: 1rem; font-weight: 900; color: var(--text-accent);">القصص والأمثلة الواقعية الثلاث لتجسيد القيمة:</h3>
+          <div id="modalExamplesGrid" class="studio-3col-grid"></div>
+        </div>
+
+        <!-- Row 3: Benefits + 4 Practical Steps + Comparison -->
+        <div class="studio-3col-grid">
+          <div class="studio-story-card">
+            <div style="font-size: 0.9rem; font-weight: 900; color: var(--best-ink); margin-block-end: 0.4rem;">الثمرات والفوائد التربوية:</div>
+            <ul id="modalBenefitsList" class="studio-list"></ul>
+          </div>
+
+          <div id="studioPracticeSection" tabindex="-1" class="studio-story-card">
+            <div style="font-size: 0.9rem; font-weight: 900; color: var(--text-accent); margin-block-end: 0.4rem;">✨ ٤ خطوات لتجسيد القيمة في حياتنا:</div>
+            <ul id="modalStepsList" class="studio-list"></ul>
+          </div>
+
+          <div class="studio-story-card" style="justify-content: space-between; gap: 0.75rem;">
+            <div class="comp-box comp-box-pos">
+              <div class="comp-box-label">✓ عند تطبيق القيمة:</div>
+              <p id="modalWithValue"></p>
+            </div>
+            <div class="comp-box comp-box-neg">
+              <div class="comp-box-label">✕ عند غياب القيمة:</div>
+              <p id="modalWithoutValue"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================================
+       IMMERSIVE STORY READER MODAL + STORY-TO-ACTION BRIDGE
+       ======================================================================== -->
+  <div id="storyReaderModal" class="manager-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="storyReaderTitle">
+    <div class="manager-panel reader-panel">
+      <div class="manager-header">
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            <span id="storyReaderMeta" class="brand-branch-pill">من واقع ثانوية العلم النافع</span>
+            <span id="storyReaderCounter" class="vcard-group-pill" dir="ltr">1 / 36</span>
+          </div>
+          <h3 id="storyReaderTitle" class="studio-title" style="font-size: 1.35rem; margin-block-start: 0.35rem;"></h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+          <button type="button" id="readerPrevBtn" onclick="stepStoryReader(-1)" class="filter-pill" aria-label="القصة السابقة" title="القصة السابقة">▶</button>
+          <button type="button" id="readerNextBtn" onclick="stepStoryReader(1)" class="filter-pill" aria-label="القصة التالية" title="القصة التالية">◀</button>
+          <button type="button" id="readerFontDec" onclick="stepReaderFont(-1)" class="filter-pill" aria-label="تصغير حجم نص القصة">أ-</button>
+          <button type="button" id="readerFontInc" onclick="stepReaderFont(1)" class="filter-pill" aria-label="تكبير حجم نص القصة">أ+</button>
+          <button type="button" onclick="closeStoryReader()" class="modal-close filter-pill" aria-label="إغلاق قارئ القصة">✕</button>
+        </div>
+      </div>
+
+      <div class="manager-body">
+        <div id="storyReaderBody" class="reader-body-text"></div>
+        <aside id="storyReaderInsight" class="reader-insight-card" aria-label="إضاءة تربوية وسؤال للحوار">
+          <div class="reader-insight-label">💡 إضاءة تربوية وسؤال للتأمل والحوار</div>
+          <p id="storyReaderInsightText" class="reader-insight-text"></p>
+        </aside>
+      </div>
+
+      <div class="manager-footer reader-action-bridge">
+        <button type="button" id="readerMarkReadBtn" onclick="listenToReaderValue()" class="filter-pill">
+          🎧 استمع لرسالة القيمة الصوتية
+        </button>
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+          <button type="button" id="readerToPracticeBtn" onclick="jumpReaderToPractice()" class="filter-pill active">
+            ✨ خطوات تجسيد القيمة في الموسوعة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Single Polite Screen-Reader Live Region -->
+  <div id="almAnnouncer" class="alm-sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <audio id="realAudioPlayer" preload="none"></audio>
+
+  <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
+  <script src="./opus_content.js?v=3.0"></script>
+  <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
+  <script src="./fable_engine.js?v=3.0"></script>
+  <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
+  <script src="./stage3_fable_upgrade.js?v=3.0"></script>
+  <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
+  <script src="./exhibition_kiosk.js?v=3.0"></script>
+</body>
+</html>
