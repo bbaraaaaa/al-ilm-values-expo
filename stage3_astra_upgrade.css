@@ -2381,6 +2381,47 @@ body:not(.projector-day) :is(
 }
 
 /* ==========================================================================
+ * 18b. «المصدر» — a link under each verse / hadith, at the far left, to the
+ *      verse in the KSU e-Mushaf or the hadith's page in the Dorar
+ *      encyclopedia (renderEvidenceSource() in fable_engine.js)
+ * ========================================================================== */
+.evidence-source {
+  margin: 0.45rem 0 0;
+  text-align: end; /* the far left in this right-to-left page */
+  line-height: 1;
+}
+
+.evidence-source[hidden] {
+  display: none !important;
+}
+
+.evidence-source a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-block-size: 2.25rem; /* comfortable to tap on the iPad */
+  padding: 0.3rem 0.85rem;
+  border: 1px solid rgb(212 175 55 / 40%);
+  border-radius: 999px;
+  background: rgb(212 175 55 / 8%);
+  color: var(--diriyah-sand, #e7cf8f);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.evidence-source a:hover {
+  background: rgb(212 175 55 / 16%);
+  border-color: rgb(212 175 55 / 70%);
+}
+
+.evidence-source a:focus-visible {
+  outline: 2px solid var(--diriyah-sand, #e7cf8f);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
  * 19. DEVICE PERFORMANCE LEVELS — html[data-perf] is set by perf_tier.js
  *     high   (iPad, capable computers, newest phones): everything above.
  *     medium (most phones, Android tablets, older laptops): no live blur
