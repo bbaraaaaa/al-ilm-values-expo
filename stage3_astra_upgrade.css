@@ -2171,3 +2171,43 @@ body:not(.dock-floating) .attract-hint {
   padding-block-end: 6rem;
 }
 
+/* ==========================================================================
+ * 16. OPEN WINDOW = FROZEN PAGE (value studio, story reader)
+ *     body { overflow: hidden } alone did nothing: <html> has overflow-x:
+ *     clip, so the page kept scrolling behind the window. Lock the root
+ *     itself; the page keeps its scroll position. (The page behind is also
+ *     made inert by stage3_fable_upgrade.js.)
+ * ========================================================================== */
+html:has(> body.modal-open) {
+  overflow: hidden !important;
+}
+
+/* No sideways jump when the PC scrollbar hides: the freed width (measured in
+ * stage3_fable_upgrade.js as --lock-gutter, on the side the scrollbar is on)
+ * is filled for the page and for the open window. iPad scrollbars overlay
+ * the page, so there the gutter is 0. */
+html[data-gutter-side="right"]:has(> body.modal-open) {
+  padding-right: var(--lock-gutter, 0px);
+}
+
+html[data-gutter-side="left"]:has(> body.modal-open) {
+  padding-left: var(--lock-gutter, 0px);
+}
+
+html[data-gutter-side="right"] body.modal-open :is(.studio-modal, #storyReaderModal) {
+  right: var(--lock-gutter, 0px);
+}
+
+html[data-gutter-side="left"] body.modal-open :is(.studio-modal, #storyReaderModal) {
+  left: var(--lock-gutter, 0px);
+}
+
+body.modal-open :is(.studio-modal, #storyReaderModal) {
+  overscroll-behavior: contain;
+}
+
+body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+

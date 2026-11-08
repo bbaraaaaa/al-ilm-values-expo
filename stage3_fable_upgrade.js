@@ -1388,6 +1388,44 @@
     true
   );
 
+  // While a window (value studio / story reader) is open, the page behind it
+  // can't be reached at all — no keyboard focus, no screen reader — on top of
+  // the scroll lock in CSS (section 16 of stage3_astra_upgrade.css).
+  (function lockPageBehindWindows() {
+    const behind = () =>
+      [document.querySelector('.top-nav'), $('mainContent'), document.querySelector('footer')].filter(Boolean);
+    let locked = false;
+    const root = document.documentElement;
+
+    // Width of the PC scrollbar (0 on iPad) and which side it is on, measured
+    // while the page is unlocked, so CSS can fill that space when it hides.
+    function measureGutter() {
+      if (document.body.classList.contains('modal-open')) return;
+      const gutter = Math.max(0, window.innerWidth - root.clientWidth);
+      const probe = document.createElement('div');
+      probe.style.cssText = 'position:fixed;left:0;right:0;top:0;height:0;visibility:hidden;pointer-events:none';
+      document.body.appendChild(probe);
+      const side = probe.getBoundingClientRect().left > 0 ? 'left' : 'right';
+      probe.remove();
+      root.style.setProperty('--lock-gutter', `${gutter}px`);
+      root.dataset.gutterSide = side;
+    }
+
+    const sync = () => {
+      const open = document.body.classList.contains('modal-open');
+      if (open === locked) return;
+      locked = open;
+      behind().forEach((el) => {
+        el.inert = open;
+      });
+    };
+    new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('resize', measureGutter, { passive: true });
+    window.addEventListener('load', measureGutter);
+    measureGutter();
+    sync();
+  })();
+
   // ==========================================================================
   // 8. VALUE STUDIO: open / close wrappers (the voice message itself — one
   // play ⇄ pause control + replay — lives in AudioStudio in fable_engine.js)

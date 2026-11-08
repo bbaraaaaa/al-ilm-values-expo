@@ -1304,7 +1304,10 @@
         VALUES.filter((v) => !this.diskAvailableIds.has(v.id)).map(async (v) => {
           try {
             const res = await fetch(v.file || `./audio/${v.id}.mp3`, { method: 'HEAD', cache: 'no-store' });
-            if (res.ok) this.diskAvailableIds.add(v.id);
+            // Must really be audio: some hosts (Cloudflare Pages without a
+            // 404.html) answer a missing file with the home page and 200 OK.
+            const type = res.headers.get('content-type') || '';
+            if (res.ok && /^audio\//i.test(type)) this.diskAvailableIds.add(v.id);
           } catch (_) {}
         })
       );
@@ -1466,9 +1469,11 @@
         player.onended = finished;
         player.onerror = () => {
           if (session !== this._playSessionId) return;
-          // File missing or unreadable: fall back to the Arabic voice / preview.
+          // File missing or unreadable: fall back to the Arabic voice / preview
+          // (and don't restart it if the visitor already paused).
           this.source = this.arabicVoice() ? 'speech' : 'silent';
-          this.playFromStart();
+          if (this.status === 'playing') this.playFromStart();
+          else this.setStatus('idle');
         };
         player.play().catch((err) => {
           if (session === this._playSessionId && err?.name !== 'AbortError') this.setStatus('idle');
