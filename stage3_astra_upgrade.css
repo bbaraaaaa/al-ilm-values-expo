@@ -2381,6 +2381,27 @@ body:not(.projector-day) :is(
 }
 
 /* ==========================================================================
+ * 18b. VERSE / HADITH REFERENCE — on its own line at the far left
+ *      (value window «التأصيل الشرعي» and the encyclopedia; the text is
+ *      split by renderEvidence() in fable_engine.js)
+ * ========================================================================== */
+.evidence-source,
+:where(.studio-quote, .studio-evidence) cite.evidence-source {
+  display: block;
+  margin-block-start: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.6;
+  text-align: end; /* the far left in this right-to-left page */
+}
+
+.evidence-source[hidden] {
+  display: none !important;
+}
+
+/* ==========================================================================
  * 19. DEVICE PERFORMANCE LEVELS — html[data-perf] is set by perf_tier.js
  *     high   (iPad, capable computers, newest phones): everything above.
  *     medium (most phones, Android tablets, older laptops): no live blur
