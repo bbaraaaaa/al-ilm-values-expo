@@ -625,8 +625,10 @@
     const floatingDock = document.querySelector('.glass-dock.floating-dock');
     if (!nav || !brand || !headerDock || !floatingDock) return;
 
-    const FLOAT_AFTER = 160; // px scrolled before the bar moves down
-    const DOCK_BEFORE = 80; // px from the top before it moves back up
+    // The bar folds and glides down on the very first scroll, and comes back
+    // only once the page is back at the top (small gap so it never flickers).
+    const FLOAT_AFTER = 12; // px scrolled before the bar moves down
+    const DOCK_BEFORE = 4; // px from the top before it moves back up
     // Motion language: a soft lift (anticipation) → long, even travel → a small
     // overshoot that settles (soft landing). Duration grows with the distance.
     const EASE_LIFT = 'cubic-bezier(0.3, 0, 0.2, 1)';

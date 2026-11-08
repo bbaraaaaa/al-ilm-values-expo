@@ -1773,6 +1773,16 @@ body.projector-day .attract-hint {
   transition: clip-path 760ms var(--nav-glide);
 }
 
+/* Keep the header pinned on short laptop windows too (astra_visionos.css
+ * unpins it under 800px tall). It folds to a small logo pill when scrolled,
+ * so it no longer costs space — and without this the pill scrolled away. */
+@media (min-width: 1024px) and (max-height: 800px) {
+  .top-nav {
+    position: sticky;
+    inset-block-start: max(0.75rem, env(safe-area-inset-top, 0px));
+  }
+}
+
 body.nav-compact .top-nav {
   clip-path: inset(
     0 0 calc(100% - var(--nav-pill-h, 82px)) calc(100% - var(--nav-pill-w, 21rem))
