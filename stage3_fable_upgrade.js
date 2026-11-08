@@ -815,6 +815,30 @@
       };
     }
 
+    // Phones and short landscape screens: there is no room for the bar in the
+    // header, so it lives at the bottom as a tab bar all the time and the
+    // header only folds to its logo pill (same breakpoint as CSS section 18).
+    const compactMQ = window.matchMedia('(max-width: 640px), (max-height: 500px)');
+    const isCompact = () => compactMQ.matches;
+
+    function applyCompactState() {
+      stopGlide();
+      const y = window.scrollY;
+      if (isCompact()) {
+        floating = true;
+        document.body.classList.add('dock-floating');
+        document.body.classList.toggle('nav-compact', y > FLOAT_AFTER);
+        setInteractive(true);
+      } else {
+        floating = y > FLOAT_AFTER;
+        document.body.classList.toggle('dock-floating', floating);
+        document.body.classList.toggle('nav-compact', floating);
+        setInteractive(floating);
+      }
+      measurePill();
+    }
+    compactMQ.addEventListener?.('change', applyCompactState);
+
     let ticking = false;
     window.addEventListener(
       'scroll',
@@ -824,6 +848,12 @@
         requestAnimationFrame(() => {
           ticking = false;
           const y = window.scrollY;
+          if (isCompact()) {
+            const fold = y > FLOAT_AFTER;
+            if (fold && !document.body.classList.contains('nav-compact')) measurePill();
+            document.body.classList.toggle('nav-compact', fold ? true : y >= DOCK_BEFORE && document.body.classList.contains('nav-compact'));
+            return;
+          }
           if (floating) {
             if (y < DOCK_BEFORE) goUp();
           } else if (y > FLOAT_AFTER) {
@@ -849,9 +879,14 @@
       const hero = document.getElementById('hero-section');
       if (!hero) return;
       if (document.body.dataset.activeView !== 'all') window.AppRouter?.switchView('all', false);
+      // Leave room for the logo pill only where the header stays pinned
+      // (on phones it scrolls away with the page).
+      const navStyle = getComputedStyle(nav);
+      const pinned = navStyle.position === 'sticky' || navStyle.position === 'fixed';
       const pillH = parseFloat(nav.style.getPropertyValue('--nav-pill-h')) || 82;
-      const navTop = parseFloat(getComputedStyle(nav).top) || 0;
-      const top = hero.getBoundingClientRect().top + window.scrollY - (navTop + pillH + 12);
+      const navTop = parseFloat(navStyle.top) || 0;
+      const room = pinned ? navTop + pillH + 12 : 12;
+      const top = hero.getBoundingClientRect().top + window.scrollY - room;
       glideScrollTo(Math.max(0, top));
     };
 
@@ -867,12 +902,7 @@
     measurePill();
     measureIntro();
     document.fonts?.ready.then(measureIntro); // header height settles with the font
-    setInteractive(false);
-    if (window.scrollY > FLOAT_AFTER) {
-      floating = true;
-      document.body.classList.add('dock-floating', 'nav-compact');
-      setInteractive(true);
-    }
+    applyCompactState();
   })();
 
 
@@ -1463,6 +1493,7 @@
       const open = document.body.classList.contains('modal-open');
       if (open === locked) return;
       locked = open;
+      root.classList.toggle('modal-locked', open);
       behind().forEach((el) => {
         el.inert = open;
       });

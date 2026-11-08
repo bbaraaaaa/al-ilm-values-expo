@@ -8,6 +8,15 @@
 (() => {
   'use strict';
 
+  // Older TV / school-display browsers (Chrome < 86, Safari < 14) lack
+  // replaceChildren(), which the site uses to redraw lists. Tiny stand-in.
+  if (!Element.prototype.replaceChildren) {
+    Element.prototype.replaceChildren = function replaceChildren(...nodes) {
+      while (this.firstChild) this.removeChild(this.firstChild);
+      nodes.forEach((n) => this.append(n));
+    };
+  }
+
   const DATA = window.AL_ILM_DATA || {};
   const VALUES = Array.isArray(DATA.values) ? DATA.values : [];
   const ICONS = DATA.icons || {};

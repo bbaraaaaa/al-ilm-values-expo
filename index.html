@@ -19,8 +19,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
-  <link rel="stylesheet" href="./astra_visionos.css?v=4.2" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=4.2" />
+  <link rel="stylesheet" href="./astra_visionos.css?v=4.4" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=4.4" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -316,6 +316,9 @@
       min-block-size: 2.5rem;
       padding: 0.35rem 1.4rem;
       border-radius: 999px;
+      /* fixed fallbacks first, for older TV browsers without color-mix() */
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.1);
       border: 1px solid color-mix(in srgb, var(--card-accent, #10b981) 55%, transparent);
       background: color-mix(in srgb, var(--card-accent, #10b981) 15%, transparent);
       color: #ffffff;
@@ -1165,20 +1168,21 @@
        scrolled (the header copy is used at the top of the page)
        ======================================================================== -->
   <nav class="glass-dock floating-dock" aria-label="التنقل السريع بين أقسام المنصة" aria-hidden="true" inert>
+    <!-- short labels (nav-short) are used on phones, where the bar is a tab bar -->
     <button type="button" class="spa-nav-btn active" data-view="all" onclick="switchView('all')" aria-current="page">
-      الرئيسية
+      <span class="nav-long">الرئيسية</span><span class="nav-short" aria-hidden="true">الرئيسية</span>
     </button>
-    <button type="button" class="spa-nav-btn" data-view="orbit" onclick="switchView('orbit')">
-      مدار القيم 3D
+    <button type="button" class="spa-nav-btn" data-view="orbit" onclick="switchView('orbit')" aria-label="مدار القيم 3D">
+      <span class="nav-long">مدار القيم 3D</span><span class="nav-short" aria-hidden="true">القيم</span>
     </button>
-    <button type="button" class="spa-nav-btn" data-view="stories" onclick="switchView('stories')">
-      ٣٦ قصة واقعية
+    <button type="button" class="spa-nav-btn" data-view="stories" onclick="switchView('stories')" aria-label="٣٦ قصة واقعية">
+      <span class="nav-long">٣٦ قصة واقعية</span><span class="nav-short" aria-hidden="true">القصص</span>
     </button>
-    <button type="button" class="spa-nav-btn" data-view="encyclopedia" onclick="switchView('encyclopedia')">
-      موسوعة الفوائد
+    <button type="button" class="spa-nav-btn" data-view="encyclopedia" onclick="switchView('encyclopedia')" aria-label="موسوعة الفوائد">
+      <span class="nav-long">موسوعة الفوائد</span><span class="nav-short" aria-hidden="true">الموسوعة</span>
     </button>
-    <button type="button" class="spa-nav-btn" data-view="comparison" onclick="switchView('comparison')">
-      مقارنة الأثر
+    <button type="button" class="spa-nav-btn" data-view="comparison" onclick="switchView('comparison')" aria-label="مقارنة الأثر">
+      <span class="nav-long">مقارنة الأثر</span><span class="nav-short" aria-hidden="true">المقارنة</span>
     </button>
   </nav>
 
@@ -1323,12 +1327,12 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=4.2"></script>
+  <script src="./opus_content.js?v=4.4"></script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=4.2"></script>
+  <script src="./fable_engine.js?v=4.4"></script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=4.2"></script>
+  <script src="./stage3_fable_upgrade.js?v=4.4"></script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=4.2"></script>
+  <script src="./exhibition_kiosk.js?v=4.4"></script>
 </body>
 </html>

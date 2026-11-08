@@ -1886,6 +1886,7 @@ body:not(.dock-floating) .attract-hint {
   place-items: center;
   /* fills the first screen under the header (--intro-offset is measured in
    * stage3_fable_upgrade.js; the fallback fits the iPad landscape header) */
+  min-block-size: calc(100vh - var(--intro-offset, 8.5rem)); /* older browsers */
   min-block-size: calc(100svh - var(--intro-offset, 8.5rem));
   padding-block: 1.5rem 2.5rem;
   text-align: center;
@@ -2195,7 +2196,9 @@ body:not(.dock-floating) .attract-hint {
  *     itself; the page keeps its scroll position. (The page behind is also
  *     made inert by stage3_fable_upgrade.js.)
  * ========================================================================== */
-html:has(> body.modal-open) {
+/* html.modal-locked is set by stage3_fable_upgrade.js while a window is
+ * open (a class instead of :has(), so older TV/display browsers lock too) */
+html.modal-locked {
   overflow: hidden !important;
 }
 
@@ -2203,11 +2206,11 @@ html:has(> body.modal-open) {
  * stage3_fable_upgrade.js as --lock-gutter, on the side the scrollbar is on)
  * is filled for the page and for the open window. iPad scrollbars overlay
  * the page, so there the gutter is 0. */
-html[data-gutter-side="right"]:has(> body.modal-open) {
+html.modal-locked[data-gutter-side="right"] {
   padding-right: var(--lock-gutter, 0px);
 }
 
-html[data-gutter-side="left"]:has(> body.modal-open) {
+html.modal-locked[data-gutter-side="left"] {
   padding-left: var(--lock-gutter, 0px);
 }
 
@@ -2245,5 +2248,125 @@ body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
 .value-card-3d::before {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+/* The header and the floating bar too: they were 92% opaque, so the blur
+ * was barely visible, yet it was recomputed on every frame of the fold, the
+ * glide and every scroll under them (dropped frames on the iPad, and far
+ * worse on TVs and school displays with weak graphics). Near-opaque glass
+ * without the blur looks the same and costs nothing. */
+.top-nav,
+.glass-dock.floating-dock {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  background-color: rgb(12 25 19 / 96%) !important;
+}
+
+.glass-dock.floating-dock {
+  transition: none; /* its motion is driven by Web Animations only */
+}
+
+/* ==========================================================================
+ * 18. EVERY SCREEN — phones, tablets, laptops, desktops, TVs, school displays
+ *     (checked with tests/devices_audit.py across 14 screen sizes)
+ * ========================================================================== */
+.nav-short {
+  display: none;
+}
+
+/* Large screens (desktop monitors, TVs, school displays): the layout is
+ * sized in rem, so scaling the root size keeps the iPad proportions — a 4K
+ * TV shows the same page as a 1536px laptop, only sharper — instead of a
+ * small column in the middle. min() keeps ultra-wide but short screens
+ * from growing taller than they are. */
+@media (min-width: 1537px) {
+  html {
+    font-size: clamp(16px, min(calc(100vw / 96), calc(100vh / 54)), 44px);
+  }
+}
+
+/* Phones and short landscape screens: the header keeps only the logo and
+ * the search, and the section bar is a bottom tab bar with short labels
+ * (stage3_fable_upgrade.js keeps it there on these screens). */
+@media (max-width: 640px), (max-height: 500px) {
+  .top-nav .header-dock {
+    display: none !important;
+  }
+
+  body .glass-dock.floating-dock {
+    inset-inline: 0.5rem;
+    inline-size: auto;
+    max-inline-size: none;
+    justify-content: space-between;
+    overflow: visible;
+  }
+
+  body .glass-dock.floating-dock .spa-nav-btn {
+    flex: 1 1 0 !important;
+    min-inline-size: 0 !important;
+    padding: 0.45rem 0.2rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .nav-long {
+    display: none;
+  }
+
+  .nav-short {
+    display: inline;
+  }
+
+  /* group filter: buttons keep their label on one line and wrap as a whole */
+  #hero-section .filter-bar.group-segmented {
+    max-inline-size: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-self: stretch;
+  }
+
+  #hero-section .group-segmented .filter-pill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  /* arrows + 12 dots fit a 360px phone; SPIN goes to its own row */
+  .orbit-toolbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 0.75rem;
+  }
+
+  #dotsBar.orbit-dots-bar {
+    gap: 0.45rem;
+  }
+
+  #dotsBar .orbit-dot::after {
+    inset: -18px -4px;
+  }
+
+  /* value window header: title, then one row of compact buttons */
+  #studioModal .studio-header {
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  #studioModal .studio-actions {
+    flex-direction: row !important;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+
+  #studioModal .studio-actions .filter-pill {
+    min-block-size: 2.6rem;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.82rem;
+  }
+
+  /* a little less space above the intro on small screens */
+  .intro-emblem {
+    inline-size: 5.5rem;
+  }
 }
 
