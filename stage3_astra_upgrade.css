@@ -2270,9 +2270,6 @@ body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
  * 18. EVERY SCREEN — phones, tablets, laptops, desktops, TVs, school displays
  *     (checked with tests/devices_audit.py across 14 screen sizes)
  * ========================================================================== */
-.nav-short {
-  display: none;
-}
 
 /* Large screens (desktop monitors, TVs, school displays): the layout is
  * sized in rem, so scaling the root size keeps the iPad proportions — a 4K
@@ -2286,7 +2283,7 @@ body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
 }
 
 /* Phones and short landscape screens: the header keeps only the logo and
- * the search, and the section bar is a bottom tab bar with short labels
+ * the search, and the section bar is a full-width bottom tab bar
  * (stage3_fable_upgrade.js keeps it there on these screens). */
 @media (max-width: 640px), (max-height: 500px) {
   .top-nav .header-dock {
@@ -2306,14 +2303,6 @@ body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
     min-inline-size: 0 !important;
     padding: 0.45rem 0.2rem !important;
     font-size: 0.8rem !important;
-  }
-
-  .nav-long {
-    display: none;
-  }
-
-  .nav-short {
-    display: inline;
   }
 
   /* group filter: buttons keep their label on one line and wrap as a whole */
