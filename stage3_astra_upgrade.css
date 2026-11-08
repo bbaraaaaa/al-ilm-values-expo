@@ -2276,6 +2276,17 @@ body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
   transition: none; /* its motion is driven by Web Animations only */
 }
 
+/* The windows (value, story reader, manager) are solid. Without the frosted
+ * blur, their 92%-opaque glass let the page behind show through faintly —
+ * the big name of the value card could be read behind the story cards.
+ * Same colour as before (the glass over the dimmed page), now opaque. */
+body:not(.projector-day) :is(
+  .studio-panel, .manager-panel, .reader-panel, .pledge-panel,
+  .studio-modal > .modal-content, .manager-modal > .modal-content
+) {
+  background-color: rgb(13 26 21);
+}
+
 /* ==========================================================================
  * 18. EVERY SCREEN — phones, tablets, laptops, desktops, TVs, school displays
  *     (checked with tests/devices_audit.py across 14 screen sizes)
