@@ -84,19 +84,22 @@
     `https://quran.ksu.edu.sa/index.php?l=ar#aya=${sura}_${aya}&m=hafs&qaree=husary&trans=ar_mu`;
   const KSU = 'المصحف الإلكتروني بجامعة الملك سعود';
   const DORAR = 'الموسوعة الحديثية — الدرر السنية';
-  // `recite`: the cited verse recited by Sheikh Yasser Al-Dosari, one file per
-  // verse (SSSAAA.mp3) in audio/quran/dosari — see the README there.
+  // `recite`: Sheikh Yasser Al-Dosari reciting exactly the displayed words —
+  // quoted/SSSAAA.mp3 is the quoted part of the verse, cut at the word
+  // boundaries (At-Tawba 119 is shown whole: the whole verse), all at the
+  // same loudness as the value messages (-16 LUFS).
+  // How the clips were made and checked: audio/quran/dosari/README.txt.
   const EVIDENCE_SOURCES = {
-    tasamuh: { url: KSU_AYA(24, 22), site: KSU, recite: '024022' },
+    tasamuh: { url: KSU_AYA(24, 22), site: KSU, recite: 'quoted/024022' },
     watani: { url: 'https://dorar.net/h/rT3SDt3u', site: DORAR }, // جامع الترمذي 3926
-    taawun: { url: KSU_AYA(5, 2), site: KSU, recite: '005002' },
+    taawun: { url: KSU_AYA(5, 2), site: KSU, recite: 'quoted/005002' },
     azeema: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR }, // صحيح مسلم 2664
-    amana: { url: KSU_AYA(4, 58), site: KSU, recite: '004058' },
-    indibat: { url: KSU_AYA(4, 103), site: KSU, recite: '004103' },
-    itqan: { url: KSU_AYA(27, 88), site: KSU, recite: '027088' },
-    ihtiram: { url: KSU_AYA(49, 11), site: KSU, recite: '049011' },
+    amana: { url: KSU_AYA(4, 58), site: KSU, recite: 'quoted/004058' },
+    indibat: { url: KSU_AYA(4, 103), site: KSU, recite: 'quoted/004103' },
+    itqan: { url: KSU_AYA(27, 88), site: KSU, recite: 'quoted/027088' },
+    ihtiram: { url: KSU_AYA(49, 11), site: KSU, recite: 'quoted/049011' },
     masooliya: { url: 'https://dorar.net/h/J4fhEcBq', site: DORAR }, // صحيح البخاري 893
-    sidq: { url: KSU_AYA(9, 119), site: KSU, recite: '009119' },
+    sidq: { url: KSU_AYA(9, 119), site: KSU, recite: 'quoted/009119' },
     ihsan: { url: 'https://dorar.net/h/zJB1WCUU', site: DORAR }, // صحيح مسلم 1955
     tumooh: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR } // صحيح مسلم 2664
   };
