@@ -74,27 +74,29 @@
   // «المصدر» under each value's verse / hadith (value window + encyclopedia).
   // Verses open at the exact verse in the King Saud University e-Mushaf
   // (a government university; the King Fahd Complex's own e-Mushaf is still
-  // "coming soon"). Hadiths open their own page in the Dorar hadith
-  // encyclopedia, at the book and number cited: no government site links to
-  // a single hadith yet (alifta.gov.sa and hadith.gov.sa have no hadith pages).
-  // Checked 8 Nov 2026 — see the committee's verification report.
+  // "coming soon"). Hadiths open their own page, at the book and number
+  // cited, on «الحديث النبوي» of the General Presidency of Scholarly Research
+  // and Ifta (sunna.alifta.gov.sa). Checked 8 Nov 2026 — every page shows the
+  // cited number; see the committee's verification report.
   const KSU_AYA = (sura, aya) =>
     `https://quran.ksu.edu.sa/index.php?l=ar#aya=${sura}_${aya}&m=hafs&qaree=husary&trans=ar_mu`;
+  const IFTA_HADITH = (bookId, mainId) =>
+    `https://sunna.alifta.gov.sa/BookToc/ViewMatnPage?bookId=${bookId}&mainId=${mainId}`;
   const KSU = 'المصحف الإلكتروني بجامعة الملك سعود';
-  const DORAR = 'الموسوعة الحديثية — الدرر السنية';
+  const IFTA = 'الحديث النبوي — الرئاسة العامة للبحوث العلمية والإفتاء';
   const EVIDENCE_SOURCES = {
     tasamuh: { url: KSU_AYA(24, 22), site: KSU },
-    watani: { url: 'https://dorar.net/h/rT3SDt3u', site: DORAR }, // سنن الترمذي 3926
+    watani: { url: IFTA_HADITH(4, 102879), site: IFTA }, // جامع الترمذي 3926
     taawun: { url: KSU_AYA(5, 2), site: KSU },
-    azeema: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR }, // صحيح مسلم 2664
+    azeema: { url: IFTA_HADITH(2, 19679), site: IFTA }, // صحيح مسلم 2664
     amana: { url: KSU_AYA(4, 58), site: KSU },
     indibat: { url: KSU_AYA(4, 103), site: KSU },
     itqan: { url: KSU_AYA(27, 88), site: KSU },
     ihtiram: { url: KSU_AYA(49, 11), site: KSU },
-    masooliya: { url: 'https://dorar.net/h/J4fhEcBq', site: DORAR }, // صحيح البخاري 893
+    masooliya: { url: IFTA_HADITH(1, 1473), site: IFTA }, // صحيح البخاري 893
     sidq: { url: KSU_AYA(9, 119), site: KSU },
-    ihsan: { url: 'https://dorar.net/h/zJB1WCUU', site: DORAR }, // صحيح مسلم 1955
-    tumooh: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR } // صحيح مسلم 2664
+    ihsan: { url: IFTA_HADITH(2, 17598), site: IFTA }, // صحيح مسلم 1955
+    tumooh: { url: IFTA_HADITH(2, 19679), site: IFTA } // صحيح مسلم 2664
   };
 
   const renderEvidenceSource = (afterId, valueId) => {
