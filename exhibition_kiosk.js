@@ -100,17 +100,25 @@
   }
 
   function onActivity() {
-    if (performance.now() < ignoreActivityUntil) return;
     exitAttract();
     scheduleIdle();
     keepScreenAwake();
   }
 
+  // A real touch, click or key always counts — even right after the reset.
   ['pointerdown', 'touchstart', 'keydown', 'wheel', 'input'].forEach((type) =>
     window.addEventListener(type, onActivity, { capture: true, passive: true })
   );
-  // Scrolling a long story counts as reading, not idling.
-  window.addEventListener('scroll', onActivity, { capture: true, passive: true });
+  // Scrolling a long story counts as reading, not idling — but the reset's
+  // own scroll to the top must not count as a visitor.
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (performance.now() < ignoreActivityUntil) return;
+      onActivity();
+    },
+    { capture: true, passive: true }
+  );
 
   // --------------------------------------------------------------------------
   // Keep the screen on during the exhibition (Screen Wake Lock API)

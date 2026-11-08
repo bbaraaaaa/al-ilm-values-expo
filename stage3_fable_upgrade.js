@@ -1419,6 +1419,44 @@
         el.inert = open;
       });
     };
+    // iPad Safari ignores overflow: hidden for finger swipes: a swipe still
+    // scrolled the page under the open window, and Safari's address bar then
+    // showed/hid, which made the window jump. While a window is open, a swipe
+    // is let through only when it scrolls the window's own content and that
+    // content still has room to move in that direction.
+    const WINDOW_SCROLLERS = '.studio-scroll-body, #storyReaderModal';
+    let touchStartY = 0;
+    let touchScroller = null;
+    document.addEventListener(
+      'touchstart',
+      (event) => {
+        if (!locked || event.touches.length !== 1) return;
+        touchStartY = event.touches[0].clientY;
+        touchScroller = event.target.closest?.(WINDOW_SCROLLERS) || null;
+      },
+      { passive: true }
+    );
+    document.addEventListener(
+      'touchmove',
+      (event) => {
+        if (!locked || event.touches.length !== 1) return;
+        const el = touchScroller;
+        if (!el || !el.isConnected) {
+          event.preventDefault(); // swipe outside the window's scroll area
+          return;
+        }
+        const y = event.touches[0].clientY;
+        const dy = y - touchStartY; // movement since the last touchmove
+        touchStartY = y;
+        if (!dy) return;
+        const atTop = el.scrollTop <= 0;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        // finger down = content wants to go up; finger up = content goes down
+        if ((dy > 0 && atTop) || (dy < 0 && atBottom)) event.preventDefault();
+      },
+      { passive: false }
+    );
+
     new MutationObserver(sync).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     window.addEventListener('resize', measureGutter, { passive: true });
     window.addEventListener('load', measureGutter);
