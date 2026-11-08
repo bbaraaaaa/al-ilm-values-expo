@@ -601,12 +601,18 @@
     orbit.syncDots = syncJewelsState;
   }
 
-  // Keep nav buttons free of invalid tab attributes while preserving aria-current="page"
+  // The section bar never filters the page: every section always stays on it,
+  // and a bar button glides to its section (goToSection, in setupSectionDock
+  // below). Old calls such as switchView('stories') or a #stories link land
+  // on that section the same way.
   if (window.AppRouter?.switchView) {
     const origSwitchView = window.AppRouter.switchView.bind(window.AppRouter);
     window.AppRouter.switchView = function (view, shouldScroll = true) {
-      const res = origSwitchView(view, shouldScroll);
+      const res = origSwitchView('all', false); // always the whole page
       $$('.spa-nav-btn[data-view]').forEach((btn) => btn.removeAttribute('aria-selected'));
+      if (view && view !== 'all') window.goToSection?.(view, !shouldScroll);
+      else if (shouldScroll) window.goToSection?.('all');
+      else window.refreshSectionSpy?.();
       return res;
     };
     window.switchView = (v) => window.AppRouter.switchView(v, true);
@@ -617,19 +623,27 @@
   // speed differs between Safari and Chrome). Ease in-out, length from the
   // distance; a touch, wheel or key during the glide hands control back.
   let glideRaf = 0;
-  function glideScrollTo(targetY) {
-    cancelAnimationFrame(glideRaf);
+  let glideStop = null;
+  function glideScrollTo(targetY, onDone) {
+    if (glideStop) glideStop(); // a new glide replaces the running one
     const startY = window.scrollY;
     const maxY = document.documentElement.scrollHeight - window.innerHeight;
     const endY = Math.max(0, Math.min(targetY, maxY));
     const dist = endY - startY;
-    if (Math.abs(dist) < 2) return;
-    const ms = Math.min(1100, Math.max(600, 420 + Math.abs(dist) * 0.45));
+    if (Math.abs(dist) < 2) {
+      onDone?.();
+      return;
+    }
+    const ms = Math.min(1200, Math.max(600, 420 + Math.abs(dist) * 0.45));
     const ease = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
     const stop = () => {
       cancelAnimationFrame(glideRaf);
       ['wheel', 'touchstart', 'keydown'].forEach((type) => window.removeEventListener(type, stop, true));
+      if (glideStop === stop) glideStop = null;
+      onDone?.();
+      onDone = null; // finished or interrupted: report once
     };
+    glideStop = stop;
     ['wheel', 'touchstart', 'keydown'].forEach((type) =>
       window.addEventListener(type, stop, { capture: true, passive: true })
     );
@@ -848,6 +862,7 @@
         requestAnimationFrame(() => {
           ticking = false;
           const y = window.scrollY;
+          spySection();
           if (isCompact()) {
             const fold = y > FLOAT_AFTER;
             if (fold && !document.body.classList.contains('nav-compact')) measurePill();
@@ -872,29 +887,82 @@
       document.documentElement.style.setProperty('--intro-offset', `${Math.round(introTop)}px`);
     }
 
-    // «ابدأ الجولة» on the home intro: one smooth scroll down to the cards. The
-    // header shrinks to its logo pill on the way (and the bar glides to the
-    // bottom), so the cards are lined up just below that pill.
-    window.startExhibitionTour = () => {
-      const hero = document.getElementById('hero-section');
-      if (!hero) return;
-      if (document.body.dataset.activeView !== 'all') window.AppRouter?.switchView('all', false);
-      // Leave room for the logo pill only where the header stays pinned
-      // (on phones it scrolls away with the page).
+    // ---- Section bar = in-page navigation --------------------------------
+    // Every section stays on the page. A bar button glides to its section,
+    // lining it up just below the folded logo pill (or the top of the screen
+    // on phones, where the header scrolls away). While scrolling, the button
+    // of the section on screen lights up in both copies of the bar.
+    const SECTION_IDS = {
+      all: 'intro-section',
+      orbit: 'hero-section',
+      stories: 'examples-section',
+      encyclopedia: 'encyclopedia-section',
+      comparison: 'comparison-section'
+    };
+    const VIEWS = Object.keys(SECTION_IDS);
+    let spyHold = false; // while a bar glide runs, its target stays lit
+    let spyCurrent = 'all';
+
+    function headerRoom() {
       const navStyle = getComputedStyle(nav);
       const pinned = navStyle.position === 'sticky' || navStyle.position === 'fixed';
       const pillH = parseFloat(nav.style.getPropertyValue('--nav-pill-h')) || 82;
       const navTop = parseFloat(navStyle.top) || 0;
-      const room = pinned ? navTop + pillH + 12 : 12;
-      const top = hero.getBoundingClientRect().top + window.scrollY - room;
-      glideScrollTo(Math.max(0, top));
+      return pinned ? navTop + pillH + 12 : 12;
+    }
+
+    function setActiveSection(view) {
+      spyCurrent = view;
+      $$('.spa-nav-btn[data-view]').forEach((btn) => {
+        const on = btn.dataset.view === view;
+        btn.classList.toggle('active', on);
+        if (on) btn.setAttribute('aria-current', 'true');
+        else btn.removeAttribute('aria-current');
+      });
+    }
+
+    function spySection() {
+      if (spyHold) return;
+      const line = window.scrollY + headerRoom() + 80;
+      let current = 'all';
+      VIEWS.forEach((view) => {
+        const el = document.getElementById(SECTION_IDS[view]);
+        if (el && el.offsetParent !== null && el.getBoundingClientRect().top + window.scrollY <= line) current = view;
+      });
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+      if (atBottom && window.scrollY > 0) current = VIEWS[VIEWS.length - 1];
+      if (current !== spyCurrent) setActiveSection(current);
+    }
+    window.refreshSectionSpy = () => {
+      spyCurrent = null;
+      spySection();
     };
+
+    window.goToSection = (view, instant = false) => {
+      if (!SECTION_IDS[view]) view = 'all';
+      setActiveSection(view);
+      const el = document.getElementById(SECTION_IDS[view]);
+      const y = view === 'all' || !el ? 0 : Math.max(0, el.getBoundingClientRect().top + window.scrollY - headerRoom());
+      if (instant) {
+        window.scrollTo(0, y);
+        return;
+      }
+      spyHold = true;
+      glideScrollTo(y, () => {
+        spyHold = false;
+        spySection();
+      });
+    };
+
+    // «ابدأ الجولة» on the home intro: one smooth glide down to the cards.
+    window.startExhibitionTour = () => window.goToSection('orbit');
 
     window.addEventListener(
       'resize',
       () => {
         if (!floating) measurePill();
         measureIntro();
+        spySection();
       },
       { passive: true }
     );
@@ -903,6 +971,7 @@
     measureIntro();
     document.fonts?.ready.then(measureIntro); // header height settles with the font
     applyCompactState();
+    window.refreshSectionSpy();
   })();
 
 
