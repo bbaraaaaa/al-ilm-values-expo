@@ -1890,6 +1890,20 @@ body:not(.dock-floating) .attract-hint {
   isolation: isolate;
 }
 
+/* Hidden in the other views. (The id rule above made it display:grid even
+ * when hidden, so every other view opened under a full screen of blank
+ * space — it looked like the section never opened.) */
+#intro-section.spa-section.spa-hidden {
+  display: none !important;
+}
+
+/* Switching views: the old sections leave at once and only the new one
+ * fades in (@starting-style), so the new section is never pushed below the
+ * screen by sections that are still fading out. */
+.spa-section.spa-hidden {
+  transition: none !important;
+}
+
 .intro-glow {
   position: absolute;
   inset: 6% 12% auto;
