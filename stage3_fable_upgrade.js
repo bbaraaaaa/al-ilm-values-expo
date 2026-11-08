@@ -630,9 +630,9 @@
     // Motion language: a soft lift (anticipation) → long, even travel → a small
     // overshoot that settles (soft landing). Duration grows with the distance.
     const EASE_LIFT = 'cubic-bezier(0.3, 0, 0.2, 1)';
-    const EASE_TRAVEL = 'cubic-bezier(0.45, 0.05, 0.15, 1)';
+    // Gentle middle so the bar never moves more than ~50px in one 60Hz frame.
+    const EASE_TRAVEL = 'cubic-bezier(0.4, 0, 0.2, 1)';
     const EASE_SETTLE = 'cubic-bezier(0.33, 0, 0.2, 1)';
-    const LIFT_GLOW = '0 0 0 1px rgb(16 185 129 / 28%), 0 28px 60px rgb(16 185 129 / 24%)';
     // Hand-over between the two copies. The floating copy sits above the header
     // (z-index) and covers the header copy exactly, so the swap happens while
     // one of them is fully opaque and never dips through half-transparency:
@@ -645,8 +645,6 @@
     let floating = false;
     let glide = null;
     let glideTimer = 0;
-    let cascade = [];
-    let restShadow = 'none';
 
     // This glide is part of the exhibit, so it plays even when the device asks
     // for reduced motion (the kiosk iPad's settings belong to the school, not to
@@ -671,8 +669,7 @@
     }
 
     const T = (x, y, s) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${s.toFixed(4)})`;
-    const liftShadow = () => (restShadow === 'none' ? LIFT_GLOW : `${restShadow}, ${LIFT_GLOW}`);
-    const durationFor = (dist) => Math.round(Math.min(1080, Math.max(760, 560 + dist * 0.42)));
+    const durationFor = (dist) => Math.round(Math.min(1200, Math.max(860, 640 + dist * 0.45)));
 
     // Where the floating bar must be to sit exactly over the header bar. The
     // header copy is only hidden (its layout box stays), so it can be measured.
@@ -693,8 +690,6 @@
 
     function stopGlide() {
       clearTimeout(glideTimer);
-      cascade.forEach((anim) => anim.cancel());
-      cascade = [];
       if (glide) {
         glide.onfinish = null;
         glide.cancel();
@@ -702,23 +697,6 @@
       }
     }
 
-    // As the bar lands, its buttons switch on one after another (right → left).
-    function lightUpButtons(startAt) {
-      cascade = Array.from(floatingDock.querySelectorAll('.spa-nav-btn')).map((btn, i) =>
-        btn.animate(
-          [
-            { opacity: 0.45, transform: 'translateY(5px)' },
-            { opacity: 1, transform: 'none' }
-          ],
-          {
-            duration: 420,
-            delay: startAt + i * 55,
-            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
-            fill: 'backwards'
-          }
-        )
-      );
-    }
 
     function goDown() {
       const reversing = Boolean(glide);
@@ -730,36 +708,34 @@
       setInteractive(true);
 
       const p = headerPose();
-      const lift = liftShadow();
       let ms;
       let frames;
       if (reversing) {
         ms = durationFor(p.dist);
         frames = [
-          { transform: from, opacity: 1, boxShadow: lift, easing: EASE_TRAVEL },
-          { transform: T(0, 7, 1.012), opacity: 1, boxShadow: lift, offset: 0.84, easing: EASE_SETTLE },
-          { transform: T(0, 0, 1), opacity: 1, boxShadow: restShadow }
+          { transform: from, opacity: 1, easing: EASE_TRAVEL },
+          { transform: T(0, 7, 1.012), opacity: 1, offset: 0.84, easing: EASE_SETTLE },
+          { transform: T(0, 0, 1), opacity: 1 }
         ];
       } else {
         ms = HANDOFF_IN + durationFor(p.dist);
         const inAt = HANDOFF_IN / ms;
         frames = [
           // 0) fade in exactly over the header bar (which hides beneath it)
-          { transform: T(p.dx, p.dy, p.s), opacity: 0, boxShadow: restShadow, easing: 'linear' },
-          { transform: T(p.dx, p.dy, p.s), opacity: 1, boxShadow: restShadow, offset: inAt, easing: EASE_LIFT },
+          { transform: T(p.dx, p.dy, p.s), opacity: 0, easing: 'linear' },
+          { transform: T(p.dx, p.dy, p.s), opacity: 1, offset: inAt, easing: EASE_LIFT },
           // 1) lift off slightly
-          { transform: T(p.dx, p.dy - 10, p.s * 1.035), opacity: 1, boxShadow: lift, offset: inAt + 0.14, easing: EASE_TRAVEL },
+          { transform: T(p.dx, p.dy - 10, p.s * 1.035), opacity: 1, offset: inAt + 0.14, easing: EASE_TRAVEL },
           // 2) long even travel, landing a few px past the dock…
-          { transform: T(0, 8, 1.015), opacity: 1, boxShadow: lift, offset: 0.87, easing: EASE_SETTLE },
+          { transform: T(0, 8, 1.015), opacity: 1, offset: 0.87, easing: EASE_SETTLE },
           // 3) …and settling softly into place
-          { transform: T(0, 0, 1), opacity: 1, boxShadow: restShadow }
+          { transform: T(0, 0, 1), opacity: 1 }
         ];
       }
       glide = floatingDock.animate(frames, { duration: ms });
       glide.onfinish = () => {
         glide = null;
       };
-      if (!reversing) lightUpButtons(Math.round(ms * 0.7));
     }
 
     function goUp() {
@@ -774,26 +750,25 @@
       const travel = durationFor(p.dist) - 80;
       const ms = travel + HANDOFF_OUT;
       const settledAt = travel / ms;
-      const lift = liftShadow();
       // visibility stays 'visible' in every frame so the bar can keep flying
       // after the page hands control back to the header copy.
       const path = reversing
         ? [
-            { transform: from, boxShadow: lift, easing: EASE_TRAVEL },
-            { transform: T(p.dx, p.dy - 7, p.s * 1.012), boxShadow: lift, offset: settledAt * 0.84, easing: EASE_SETTLE }
+            { transform: from, easing: EASE_TRAVEL },
+            { transform: T(p.dx, p.dy - 7, p.s * 1.012), offset: settledAt * 0.84, easing: EASE_SETTLE }
           ]
         : [
             // 1) a small dip before taking off upwards
-            { transform: from, boxShadow: restShadow, easing: EASE_LIFT },
-            { transform: T(0, 9, 1.02), boxShadow: lift, offset: settledAt * 0.12, easing: EASE_TRAVEL },
+            { transform: from, easing: EASE_LIFT },
+            { transform: T(0, 9, 1.02), offset: settledAt * 0.12, easing: EASE_TRAVEL },
             // 2) rise past the header slot a little…
-            { transform: T(p.dx, p.dy - 9, p.s * 1.02), boxShadow: lift, offset: settledAt * 0.86, easing: EASE_SETTLE }
+            { transform: T(p.dx, p.dy - 9, p.s * 1.02), offset: settledAt * 0.86, easing: EASE_SETTLE }
           ];
       const frames = [
         ...path,
         // 3) …settle exactly over the slot, then fade away over the header copy
-        { transform: T(p.dx, p.dy, p.s), boxShadow: restShadow, offset: settledAt, easing: 'linear' },
-        { transform: T(p.dx, p.dy, p.s), boxShadow: restShadow, opacity: 0 }
+        { transform: T(p.dx, p.dy, p.s), offset: settledAt, easing: 'linear' },
+        { transform: T(p.dx, p.dy, p.s), opacity: 0 }
       ].map((f) => ({ opacity: 1, visibility: 'visible', ...f }));
       glide = floatingDock.animate(frames, { duration: ms, fill: 'forwards' });
       // The header copy reappears beneath the settled floating copy.
@@ -859,7 +834,6 @@
     measurePill();
     measureIntro();
     document.fonts?.ready.then(measureIntro); // header height settles with the font
-    restShadow = getComputedStyle(floatingDock).boxShadow || 'none';
     setInteractive(false);
     if (window.scrollY > FLOAT_AFTER) {
       floating = true;

@@ -1738,11 +1738,22 @@ body.projector-day .attract-hint {
   transition: none;
 }
 
-.top-nav .header-dock .spa-nav-btn {
-  min-inline-size: 0;
-  min-block-size: 2.65rem;
-  padding: 0.35rem 0.95rem;
-  font-size: 0.9rem;
+/* Both copies of the bar (header + floating) share ONE exact inner layout,
+ * so the hand-over between them during the glide is invisible: same padding,
+ * gap, button size and text. (They used to differ — the floating copy was
+ * taller with bigger text — so labels jumped when the copies swapped.) */
+:is(.top-nav .header-dock, .glass-dock.floating-dock) {
+  gap: 0.25rem !important;
+  padding: 0.3rem !important;
+  border-width: 1px !important;
+}
+
+:is(.top-nav .header-dock, .glass-dock.floating-dock) .spa-nav-btn {
+  min-inline-size: 0 !important;
+  min-block-size: 2.75rem !important;
+  padding: 0.4rem 1rem !important;
+  font-size: 0.92rem !important;
+  line-height: 1.5 !important;
   white-space: nowrap;
 }
 
