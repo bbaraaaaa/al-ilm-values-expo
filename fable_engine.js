@@ -333,6 +333,7 @@
       this.target = 0;
       this.velocity = 0;
       this.lastRenderedNearest = -1;
+      this.ambientIndex = -1;
       this.cardWidth = 0;
       this.buildDots();
       this.updateTransforms(false);
@@ -476,20 +477,34 @@
       for (let i = 0; i < len; i++) {
         const cardObj = this.cards[i];
         const el = cardObj.element;
+        // Last written state: only touch the DOM when something really changes
+        // (rewriting classes/attributes on 12 cards every frame forced extra
+        // style work during swipes and the SPIN).
+        const s = cardObj.applied || (cardObj.applied = {});
         const rel = this.shortestDelta(this.position, i);
         const absRel = Math.abs(rel);
 
         if (absRel > maxVisibleDist) {
-          el.classList.add('is-offstage');
-          el.classList.remove('is-center', 'is-prev', 'is-next', 'is-moving');
-          el.style.opacity = '0';
-          el.style.filter = 'none';
-          el.setAttribute('aria-hidden', 'true');
-          el.inert = true;
+          if (s.offstage !== true) {
+            s.offstage = true;
+            el.classList.add('is-offstage');
+            el.classList.remove('is-center', 'is-prev', 'is-next', 'is-moving');
+            el.style.opacity = '0';
+            el.style.filter = 'none';
+            el.setAttribute('aria-hidden', 'true');
+            el.inert = true;
+            s.center = s.prev = s.next = s.moving = false;
+            s.opacity = s.filter = null;
+          }
           continue;
         }
 
-        el.classList.remove('is-offstage');
+        if (s.offstage !== false) {
+          s.offstage = false;
+          el.classList.remove('is-offstage');
+          el.removeAttribute('aria-hidden');
+          el.inert = false;
+        }
         const pose = this.poseFor(rel, spacing);
 
         // Focus zone (|rel| < 0.35): fully opaque and filter-free. Opacity < 1 or
@@ -498,32 +513,50 @@
         const sideDepth = Math.max(0, absRel - 0.35);
         const edgeFade = Math.min(1, Math.max(0, (maxVisibleDist - absRel) / 0.6));
         const opacity = (inFocus ? 1 : Math.max(0.45, 1 - sideDepth * 0.12)) * edgeFade;
-        // Depth-of-field isolation (blur + brightness) for the side cards.
-        const blurPx = inFocus ? 0 : Math.min(4.5, (absRel - 0.25) * 1.85);
         const brightness = inFocus ? 1 : Math.max(minBrightness, 1 - sideDepth * 0.2);
+        // Depth-of-field blur only once the deck rests (it eases in through the
+        // CSS filter transition). A blur whose radius changes every frame is
+        // re-rendered from scratch each frame and made the motion stutter.
+        // While moving, depth is shown with opacity alone (no filter at all, so
+        // every frame is a pure GPU transform/opacity change); the blur and the
+        // dimming ease back in from `none` once the deck rests.
+        const blurPx = Math.min(4.5, (absRel - 0.25) * 1.85);
+        const filter = inFocus || isMoving ? 'none' : `blur(${blurPx.toFixed(1)}px) brightness(${brightness.toFixed(2)})`;
+        const shownOpacity = isMoving && !inFocus ? opacity * brightness : opacity;
+        const opacityText = shownOpacity >= 0.999 ? '1' : shownOpacity.toFixed(3);
+        const zIndex = 500 - Math.round(absRel * 100);
 
         el.style.transform = this.composeTransform(pose);
-        el.style.opacity = opacity >= 0.999 ? '1' : opacity.toFixed(3);
-        el.style.filter = inFocus ? 'none' : `blur(${blurPx.toFixed(2)}px) brightness(${brightness.toFixed(3)})`;
-        el.style.zIndex = String(500 - Math.round(absRel * 100));
+        if (s.opacity !== opacityText) el.style.opacity = s.opacity = opacityText;
+        if (s.filter !== filter) el.style.filter = s.filter = filter;
+        if (s.z !== zIndex) el.style.zIndex = String((s.z = zIndex));
 
+        if (s.moving !== isMoving) el.classList.toggle('is-moving', (s.moving = isMoving));
+        // During the SPIN the centre highlight (glowing border) stays put until
+        // the wheel stops: re-painting it on every card that flew past was
+        // costly and looked busy. Swipes and arrows update it live.
+        if (state.isSpinning && isMoving) continue;
         const isCenter = i === nearest;
-        el.classList.toggle('is-center', isCenter);
-        el.classList.toggle('is-prev', i === this.wrapIndex(nearest - 1));
-        el.classList.toggle('is-next', i === this.wrapIndex(nearest + 1));
-        el.classList.toggle('is-moving', isMoving);
-        el.removeAttribute('aria-hidden');
-        el.inert = false;
+        const isPrev = i === this.wrapIndex(nearest - 1);
+        const isNext = i === this.wrapIndex(nearest + 1);
+        if (s.center !== isCenter) el.classList.toggle('is-center', (s.center = isCenter));
+        if (s.prev !== isPrev) el.classList.toggle('is-prev', (s.prev = isPrev));
+        if (s.next !== isNext) el.classList.toggle('is-next', (s.next = isNext));
       }
 
       if (nearest !== this.lastRenderedNearest) {
         this.lastRenderedNearest = nearest;
+        this.syncDots(nearest);
+      }
+
+      // The big blurred glow behind the deck takes the centre card's colour only
+      // once the deck rests (re-colouring a 120px blur on every passing card
+      // during a swipe or SPIN was the heaviest part of the motion).
+      if (!isMoving && nearest !== this.ambientIndex) {
+        this.ambientIndex = nearest;
         const activeVal = this.cards[nearest]?.value;
         const ambient = $('topAmbient');
-        if (ambient && activeVal) {
-          ambient.style.background = activeVal.accent || '#10B981';
-        }
-        this.syncDots(nearest);
+        if (ambient && activeVal) ambient.style.background = activeVal.accent || '#10B981';
       }
     },
 
@@ -710,7 +743,9 @@
         ? candidates[Math.floor(Math.random() * candidates.length)]
         : currentIdx;
 
-      const extraRevolutions = 5 * len;
+      // Two full turns, then the chosen card. (Five turns in 2.6s started at
+      // ~1.7 cards per frame, so the cards flickered instead of moving.)
+      const extraRevolutions = 2 * len;
       const forwardDelta = ((chosenIdx - currentIdx) % len + len) % len;
       const totalTravel = extraRevolutions + forwardDelta;
       const endPos = Math.round(startPos) + totalTravel;
@@ -720,8 +755,9 @@
 
       const frame = (now) => {
         const t = Math.min(1, (now - startTime) / duration);
-        // Quartic physical deceleration curve: 1 - (1 - t)^4
-        const eased = 1 - Math.pow(1 - t, 4);
+        // Wheel curve: short smooth speed-up, then a long soft slow-down
+        // (cubic-bezier 0.32, 0, 0.12, 1), peaking well under one card a frame.
+        const eased = spinEase(t);
         this.position = startPos + (endPos - startPos) * eased;
 
         const currentWhole = Math.floor(this.position);
@@ -747,6 +783,21 @@
       this.rafId = requestAnimationFrame(frame);
     }
   });
+
+  // cubic-bezier(0.32, 0, 0.12, 1) as a function of time t ∈ [0, 1].
+  function spinEase(t) {
+    const x1 = 0.32, y1 = 0, x2 = 0.12, y2 = 1;
+    const bez = (a, b, s) => 3 * a * s * (1 - s) * (1 - s) + 3 * b * s * s * (1 - s) + s * s * s;
+    const dBez = (a, b, s) => 3 * a * (1 - s) * (1 - s) + 6 * (b - a) * s * (1 - s) + 3 * (1 - b) * s * s;
+    let s = t;
+    for (let i = 0; i < 8; i++) {
+      const dx = bez(x1, x2, s) - t;
+      const d = dBez(x1, x2, s);
+      if (Math.abs(dx) < 1e-5 || !d) break;
+      s = Math.min(1, Math.max(0, s - dx / d));
+    }
+    return bez(y1, y2, s);
+  }
 
   window.switchGroup = (grp) => OrbitPhysics.buildDeck(grp);
   window.stepCard = (dir) => OrbitPhysics.step(dir);
@@ -870,7 +921,7 @@
     }
 
     OrbitPhysics.spinToRandom(
-      2600,
+      3200,
       (progress) => SpinSynthesizer.playTick(progress),
       (chosenVal) => {
         SpinSynthesizer.playGoldResolve();

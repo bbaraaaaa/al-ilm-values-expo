@@ -2212,3 +2212,22 @@ body.modal-open :is(.studio-scroll-body, .manager-body, #storyReaderBody) {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ==========================================================================
+ * 17. MOTION BUDGET — smooth animation on the iPad
+ *     Frosted-glass blur (backdrop-filter) is recomputed every frame anything
+ *     above or below it moves. It sat on ~70 surfaces (every 3D card, 36 story
+ *     cards, 12 comparison cards, the windows), so the SPIN, the cards and the
+ *     value window stuttered. Keep it only on the header and the floating
+ *     section bar, which really sit over moving content; everything else is
+ *     already ~90% opaque on a dark page, so it looks the same.
+ * ========================================================================== */
+:is(
+  .surface-card, .story-card, .comparison-card, .value-grid-card,
+  .studio-panel, .manager-panel, .reader-panel,
+  .studio-modal > .modal-content, .manager-modal > .modal-content
+),
+.value-card-3d::before {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+

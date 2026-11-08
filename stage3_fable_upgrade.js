@@ -964,6 +964,22 @@
       card.hidden = hide;
       card.classList.toggle('hidden', hide);
     });
+
+    // The six cards just revealed by «عرض المزيد» rise in softly, one after
+    // another (Web Animations: transform + opacity only, so it stays smooth).
+    if (page.revealFrom != null) {
+      const from = page.revealFrom;
+      page.revealFrom = null;
+      cards.slice(from, Math.min(limit, total)).forEach((card, i) => {
+        card.animate?.(
+          [
+            { opacity: 0, transform: 'translate3d(0, 16px, 0)' },
+            { opacity: 1, transform: 'none' }
+          ],
+          { duration: 460, delay: i * 55, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' }
+        );
+      });
+    }
     if (!active || total <= PAGE_SIZE) return { shown: total, total };
 
     const button = document.createElement('button');
@@ -973,6 +989,7 @@
       button.className = 'cards-more-btn';
       button.textContent = `عرض المزيد من ${words.plural} (+${toArabicNumber(next)})`;
       button.addEventListener('click', () => {
+        page.revealFrom = page.limit;
         page.limit += PAGE_SIZE;
         rerender();
       });
