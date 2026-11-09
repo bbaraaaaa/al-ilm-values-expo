@@ -2,6 +2,11 @@
 <html dir="rtl" lang="ar">
 <head>
   <meta charset="UTF-8" />
+  <!-- Same policy as the Cloudflare headers (_headers), here so the GitHub and
+       Firebase copies are covered too (a <meta> policy cannot hold
+       frame-ancestors; the hosts that allow headers send that one). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -20,9 +25,9 @@
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
   <!-- Device performance level (sets html[data-perf]) before the styles apply -->
-  <script src="./perf_tier.js?v=5.8"></script>
-  <link rel="stylesheet" href="./astra_visionos.css?v=5.8" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.8" />
+  <script src="./perf_tier.js?v=5.9"></script>
+  <link rel="stylesheet" href="./astra_visionos.css?v=5.9" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.9" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -940,6 +945,7 @@
           <p class="intro-school">ثانوية العلم النافع الأهلية</p>
           <h1 id="introTitle" class="intro-title">معرض <span class="accent-span">ترسيخ القيم</span></h1>
           <div class="intro-credits" role="group" aria-label="فريق العمل">
+            <p><span class="intro-credits-role">إشراف:</span> رائد النشاط <span class="intro-credits-name">الأستاذ عبدالإله هوساوي</span>، والمرشد الطلابي <span class="intro-credits-name">الأستاذ عبدالرحمن الهذلي</span></p>
             <p><span class="intro-credits-role">تصميم الموقع وتطويره:</span> <span class="intro-credits-name">براء زمزمي</span></p>
             <p><span class="intro-credits-role">أفكار ومقترحات:</span> <span class="intro-credits-name">عمر غندورة</span>، <span class="intro-credits-name">عبدالإله الشريف</span>، <span class="intro-credits-name">فيصل الزهراني</span>، <span class="intro-credits-name">عبدالله اللقماني</span></p>
           </div>
@@ -1337,12 +1343,12 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=5.8"></script>
+  <script src="./opus_content.js?v=5.9"></script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=5.8"></script>
+  <script src="./fable_engine.js?v=5.9"></script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=5.8"></script>
+  <script src="./stage3_fable_upgrade.js?v=5.9"></script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=5.8"></script>
+  <script src="./exhibition_kiosk.js?v=5.9"></script>
 </body>
 </html>

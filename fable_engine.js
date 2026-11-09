@@ -536,9 +536,11 @@
     tumooh: '«الطموح أن ترى نفسك في قمم المجد ثم تمشي إليها بخطى واثقة؛ وهمّتك سقف إنجازك، ووطنك ينتظر عطاءك الكبير.»'
   };
 
-  // Short, single call to action at the bottom of every value card.
+  // Short, single call to action at the bottom of every value card. On the
+  // card ring it is a real button for the keyboard / a TV remote (only the
+  // centre card's is in the Tab order — updateTransforms keeps it so).
   const cardShowcaseFooterHTML = (val, extraCtaAttrs = '') => `
-      <div class="vcard-footer" ${extraCtaAttrs}>
+      <div class="vcard-footer" ${extraCtaAttrs}${extraCtaAttrs ? ` role="button" tabindex="-1" aria-label="عرض قيمة ${escapeHTML(val.name)}"` : ''}>
         <span class="vcard-tap-hint">اضغط للعرض</span>
       </div>
     `;
@@ -739,6 +741,12 @@
             e.stopPropagation();
             if (!state.isSpinning) window.openStudio(val.id);
           });
+          // Enter / Space (keyboard, TV remote OK button) act like a tap
+          ctaBtn.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            ctaBtn.click();
+          });
         }
 
         frag.appendChild(card);
@@ -770,7 +778,7 @@
           const subText = HERO_CARD_SUBS[val.id] || val.sub;
           const quoteText = HERO_CARD_QUOTES[val.id] || `«${val.text}»`;
           return `
-            <article class="value-grid-card spotlight-surface${expoCls}" data-grid-idx="${idx}" data-grid-id="${escapeHTML(val.id)}" style="--card-accent:${escapeHTML(val.accent)}; --card-surface:${escapeHTML(val.surface)}; --spot-color:${escapeHTML(val.accent)}28;">
+            <article class="value-grid-card spotlight-surface${expoCls}" data-grid-idx="${idx}" data-grid-id="${escapeHTML(val.id)}" role="button" tabindex="0" aria-label="عرض قيمة ${escapeHTML(val.name)}" style="--card-accent:${escapeHTML(val.accent)}; --card-surface:${escapeHTML(val.surface)}; --spot-color:${escapeHTML(val.accent)}28;">
               <div class="vcard-header">
                 <div class="vcard-icon-box" style="color:${escapeHTML(val.accent)}; border-color:${escapeHTML(val.accent)}45; background:${escapeHTML(val.accent)}18;">
                   ${getIconSVG(val.id)}
@@ -791,6 +799,14 @@
         if (state.isSpinning) return;
         const card = e.target.closest('[data-grid-id]');
         if (card) window.openStudio(card.dataset.gridId);
+      };
+      // keyboard / TV remote: Enter or Space on a focused card opens it
+      gridEl.onkeydown = (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const card = e.target.closest('[data-grid-id]');
+        if (!card || state.isSpinning) return;
+        e.preventDefault();
+        window.openStudio(card.dataset.gridId);
       };
     },
 
@@ -966,9 +982,22 @@
         const isCenter = i === nearest;
         const isPrev = i === this.wrapIndex(nearest - 1);
         const isNext = i === this.wrapIndex(nearest + 1);
-        if (s.center !== isCenter) el.classList.toggle('is-center', (s.center = isCenter));
+        if (s.center !== isCenter) {
+          el.classList.toggle('is-center', (s.center = isCenter));
+          // only the centre card's «اضغط للعرض» is in the Tab order; if it had
+          // the focus when the ring turned, the focus follows the new centre
+          const cta = s.cta || (s.cta = el.querySelector('[data-open-studio]'));
+          if (cta) {
+            if (!isCenter && document.activeElement === cta) this.focusNewCentre = true;
+            cta.tabIndex = isCenter ? 0 : -1;
+          }
+        }
         if (s.prev !== isPrev) el.classList.toggle('is-prev', (s.prev = isPrev));
         if (s.next !== isNext) el.classList.toggle('is-next', (s.next = isNext));
+      }
+      if (this.focusNewCentre) {
+        this.focusNewCentre = false;
+        this.cards[nearest]?.element.querySelector('[data-open-studio]')?.focus({ preventScroll: true });
       }
 
       // The dots follow the cards, except mid-SPIN: a dot changing width on

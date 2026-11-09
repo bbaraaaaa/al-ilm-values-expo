@@ -1727,7 +1727,18 @@
         studioReturnFocus && studioReturnFocus.isConnected ? studioReturnFocus : null;
       studioReturnFocus = null;
       const res = originalCloseStudio.apply(this, args);
-      targetFocus?.focus?.({ preventScroll: true });
+      // The page stays inert for a moment after the window closes; a focus()
+      // during that moment is refused and the focus fell to the page body
+      // (keyboard / TV remote users lost their place). Wait until it is live.
+      const restore = (tries = 0) => {
+        if (!targetFocus?.isConnected) return;
+        if (targetFocus.closest('[inert]') && tries < 45) {
+          requestAnimationFrame(() => restore(tries + 1));
+          return;
+        }
+        targetFocus.focus?.({ preventScroll: true });
+      };
+      restore();
       return res;
     };
   }
@@ -1835,6 +1846,37 @@
       io.observe(group);
     });
     document.documentElement.classList.add('rv-ready');
+
+    // Safety net: the observer reports on rendered frames, so a jump past a
+    // section with no frame in between (a slow device, an instant jump) could
+    // leave its title waiting until scrolled back to. On each scroll frame,
+    // what is in view starts its entrance and what was already passed is
+    // simply shown — nothing ever stays invisible.
+    let sweeping = false;
+    const sweep = () => {
+      sweeping = false;
+      groups.forEach((group) => {
+        if (group.classList.contains('rv-on') || group.classList.contains('rv-done')) return;
+        const r = group.getBoundingClientRect();
+        if (!r.width && !r.height) return; // in a view that is not shown
+        if (r.bottom < 0) {
+          io.unobserve(group);
+          group.classList.add('rv-done');
+        } else if (r.top < window.innerHeight) {
+          io.unobserve(group);
+          reveal(group);
+        }
+      });
+    };
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (sweeping) return;
+        sweeping = true;
+        requestAnimationFrame(sweep);
+      },
+      { passive: true }
+    );
 
     // Later filtering (after the first entrance): when the set of cards on
     // show changes — rebuilt (stories) or shown / hidden (comparison) — they
