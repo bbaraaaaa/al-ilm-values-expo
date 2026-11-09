@@ -89,20 +89,23 @@
   // boundaries (At-Tawba 119 is shown whole: the whole verse), all at the
   // same loudness as the value messages (-16 LUFS).
   // How the clips were made and checked: audio/quran/dosari/README.txt.
+  // `hadith`: the hadith read aloud (audio/hadith/<id>.mp3) — a generated voice
+  // (Gemini TTS «Sadaltager»), never used for the Quran. See audio/hadith/README.txt.
   const EVIDENCE_SOURCES = {
     tasamuh: { url: KSU_AYA(24, 22), site: KSU, recite: 'quoted/024022' },
-    watani: { url: 'https://dorar.net/h/rT3SDt3u', site: DORAR }, // جامع الترمذي 3926
+    watani: { url: 'https://dorar.net/h/rT3SDt3u', site: DORAR, hadith: 'e-watani' }, // جامع الترمذي 3926
     taawun: { url: KSU_AYA(5, 2), site: KSU, recite: 'quoted/005002' },
-    azeema: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR }, // صحيح مسلم 2664
+    azeema: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR, hadith: 'e-azeema' }, // صحيح مسلم 2664
     amana: { url: KSU_AYA(4, 58), site: KSU, recite: 'quoted/004058' },
     indibat: { url: KSU_AYA(4, 103), site: KSU, recite: 'quoted/004103' },
     itqan: { url: KSU_AYA(27, 88), site: KSU, recite: 'quoted/027088' },
     ihtiram: { url: KSU_AYA(49, 11), site: KSU, recite: 'quoted/049011' },
-    masooliya: { url: 'https://dorar.net/h/J4fhEcBq', site: DORAR }, // صحيح البخاري 893
+    masooliya: { url: 'https://dorar.net/h/J4fhEcBq', site: DORAR, hadith: 'e-masooliya' }, // صحيح البخاري 893
     sidq: { url: KSU_AYA(9, 119), site: KSU, recite: 'quoted/009119' },
-    ihsan: { url: 'https://dorar.net/h/zJB1WCUU', site: DORAR }, // صحيح مسلم 1955
-    tumooh: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR } // صحيح مسلم 2664
+    ihsan: { url: 'https://dorar.net/h/zJB1WCUU', site: DORAR, hadith: 'e-ihsan' }, // صحيح مسلم 1955
+    tumooh: { url: 'https://dorar.net/h/Ov16uqG0', site: DORAR, hadith: 'e-azeema' } // صحيح مسلم 2664
   };
+  const HADITH_VOICE_NOTE = 'صوت مولَّد بالذكاء الاصطناعي';
 
   // ---- The verse's recitation: a small «تشغيل ⇄ إيقاف» + «إعادة», the same
   // control as the value message, sized like «المصدر». One shared player, so
@@ -190,22 +193,30 @@
       ctl.classList.toggle('is-playing', this.isPlaying);
       const label = ctl.querySelector('.recite-state');
       if (label) label.textContent = this.isPlaying ? 'إيقاف' : 'تشغيل';
-      ctl.querySelector('[data-recite="toggle"]')?.setAttribute('aria-label', this.isPlaying ? 'إيقاف تلاوة الآية' : 'تشغيل تلاوة الآية');
+      // the toggle is the control itself for the small in-text hadith buttons
+      const toggle = ctl.matches('[data-recite="toggle"]') ? ctl : ctl.querySelector('[data-recite="toggle"]');
+      const what = ctl.dataset.what || 'تلاوة الآية';
+      toggle?.setAttribute('aria-label', `${this.isPlaying ? 'إيقاف' : 'تشغيل'} ${what}`);
       const replay = ctl.querySelector('[data-recite="replay"]');
       if (replay) replay.hidden = status === 'idle';
     }
   });
 
-  const buildReciteControls = (code) => {
+  // verse: Sheikh Yasser Al-Dosari's recitation; hadith: the generated reading
+  const buildReciteControls = (src) => {
+    const isVerse = Boolean(src.recite);
+    const what = isVerse ? 'تلاوة الآية' : 'قراءة الحديث';
+    const credit = isVerse ? `بصوت ${RECITER}` : HADITH_VOICE_NOTE;
     const box = document.createElement('span');
     box.className = 'studio-audio-controls recite-controls';
     box.setAttribute('role', 'group');
-    box.setAttribute('aria-label', `تلاوة الآية بصوت ${RECITER}`);
-    box.dataset.src = `./audio/quran/dosari/${code}.mp3`;
+    box.setAttribute('aria-label', isVerse ? `تلاوة الآية بصوت ${RECITER}` : `قراءة الحديث (${HADITH_VOICE_NOTE})`);
+    box.dataset.what = what;
+    box.dataset.src = isVerse ? `./audio/quran/dosari/${src.recite}.mp3` : `./audio/hadith/${src.hadith}.mp3`;
     box.innerHTML =
-      `<button type="button" class="audio-btn audio-btn--main audio-btn--sm" data-recite="toggle" aria-label="تشغيل تلاوة الآية">${ICON_PLAY}${ICON_PAUSE}<span class="recite-state">تشغيل</span></button>` +
-      `<button type="button" class="audio-btn audio-btn--sm" data-recite="replay" aria-label="إعادة التلاوة من البداية" hidden>${ICON_REPLAY}<span>إعادة</span></button>` +
-      `<span class="recite-credit">بصوت ${RECITER}</span>`;
+      `<button type="button" class="audio-btn audio-btn--main audio-btn--sm" data-recite="toggle" aria-label="تشغيل ${what}">${ICON_PLAY}${ICON_PAUSE}<span class="recite-state">تشغيل</span></button>` +
+      `<button type="button" class="audio-btn audio-btn--sm" data-recite="replay" aria-label="إعادة ${what} من البداية" hidden>${ICON_REPLAY}<span>إعادة</span></button>` +
+      `<span class="recite-credit">${credit}</span>`;
     box.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-recite]');
       if (!btn) return;
@@ -230,7 +241,7 @@
     line.hidden = !src;
     line.replaceChildren();
     if (!src) return;
-    if (src.recite) line.append(buildReciteControls(src.recite));
+    if (src.recite || src.hadith) line.append(buildReciteControls(src));
     const link = document.createElement('a');
     link.href = src.url;
     link.target = '_blank';
@@ -240,6 +251,110 @@
     link.innerHTML =
       '<span>المصدر</span><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5M14 4h6v6M20 4l-9 9"/></svg>';
     line.append(link);
+  };
+
+  // ---- Hadiths inside the texts (encyclopedia, benefits, stories, situation
+  // feedback): a small round ▶ right after the closing » of each Prophetic
+  // saying plays its reading (audio/hadith/h-*.mp3) through the same single
+  // player. Added wherever such text appears, including text rendered later.
+  const arNorm = (s) =>
+    String(s)
+      .replace(/[ؐ-ًؚ-ٰٟۖ-ۭـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .replace(/ئ/g, 'ي')
+      .replace(/ؤ/g, 'و')
+      .replace(/\s+/g, ' ');
+  const INLINE_HADITHS = [
+    ['h-bunyan', 'المؤمن للمؤمن كالبنيان'],
+    ['h-adwamuha', 'أحب الأعمال إلى الله أدومها'],
+    ['h-yutqinahu', 'إذا عمل أحدكم عملا أن يتقنه'],
+    ['h-tumaanina', 'فإن الصدق طمأنينة'],
+    ['h-tarahu', 'أن تعبد الله كأنك تراه'],
+    ['h-uhud', 'إن رأيتمونا تخطفنا الطير'],
+    ['h-ruma', 'من يشتري بئر رومة'],
+    ['h-sujud', 'فأعني على نفسك بكثرة السجود'],
+    ['h-shadid', 'ليس الشديد بالصرعة'],
+    ['h-kafa', 'كفى بالمرء كذبا'],
+    ['h-awn', 'في عون العبد'],
+    ['h-ghash', 'من غشنا فليس منا'],
+    ['h-ihris', 'احرص على ما ينفعك']
+  ].map(([id, key]) => ({ id, key: arNorm(key) }));
+  // the «التأصيل» boxes have their own player under the text
+  const HADITH_SKIP = '#modalEvidenceText, #encycEvidence, .evidence-source, button, input, textarea, script, style, [contenteditable]';
+
+  const makeHadithButton = (id) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hadith-play';
+    btn.dataset.recite = 'toggle';
+    btn.dataset.what = 'قراءة الحديث';
+    btn.dataset.src = `./audio/hadith/${id}.mp3`;
+    btn.title = `استمع للحديث (${HADITH_VOICE_NOTE})`;
+    btn.setAttribute('aria-label', 'تشغيل قراءة الحديث');
+    btn.innerHTML = ICON_PLAY + ICON_PAUSE;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // never also opens the card / story it sits in
+      QuranRecite.toggle(btn);
+    });
+    return btn;
+  };
+
+  const decorateHadiths = (root) => {
+    if (!root || !root.querySelectorAll) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) =>
+        node.nodeValue.includes('»') && !node.parentElement?.closest(HADITH_SKIP) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    for (const node of nodes) {
+      let text = node.nodeValue;
+      let cursor = node;
+      const re = /«([^»]+)»/g;
+      let m;
+      const cuts = [];
+      while ((m = re.exec(text))) {
+        const q = arNorm(m[1]);
+        const hit = INLINE_HADITHS.find((h) => q.includes(h.key));
+        if (hit) cuts.push({ end: m.index + m[0].length, id: hit.id });
+      }
+      // split from the last match backwards so earlier offsets stay valid
+      for (let i = cuts.length - 1; i >= 0; i--) {
+        const { end, id } = cuts[i];
+        const next = cursor.nextSibling;
+        if (end === text.length && next?.classList?.contains('hadith-play')) continue; // already there
+        const rest = cursor.splitText(end);
+        rest.parentNode.insertBefore(makeHadithButton(id), rest);
+        text = cursor.nodeValue;
+      }
+    }
+  };
+  window.decorateHadiths = decorateHadiths;
+
+  const startHadithDecorator = () => {
+    decorateHadiths(document.body);
+    let queued = new Set();
+    let raf = 0;
+    new MutationObserver((records) => {
+      for (const r of records) {
+        if (r.type === 'childList') {
+          r.addedNodes.forEach((n) => queued.add(n.nodeType === 3 ? n.parentElement : n));
+        } else if (r.type === 'characterData') {
+          queued.add(r.target.parentElement);
+        }
+      }
+      // a reading whose text was replaced stops with it
+      if (QuranRecite.ctl && !QuranRecite.ctl.isConnected) QuranRecite.stop();
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const roots = [...queued].filter((el) => el && el.isConnected && !el.closest?.('.hadith-play'));
+        queued = new Set();
+        roots.forEach(decorateHadiths);
+      });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
   };
 
   // ==========================================================================
@@ -1832,6 +1947,8 @@
     SearchAndFilter.init();
     window.initSpotlightShader();
     await AudioStudio.init();
+
+    startHadithDecorator();
 
     // Restore hash route if present
     const initialHash = (window.location.hash || '').replace('#', '').trim();

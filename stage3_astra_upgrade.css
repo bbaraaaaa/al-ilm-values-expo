@@ -2425,6 +2425,62 @@ body:not(.projector-day) :is(
   line-height: 1.4;
 }
 
+/* the small round ▶ after each hadith inside the texts (decorateHadiths in fable_engine.js) */
+.hadith-play {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.85rem;
+  block-size: 1.85rem;
+  margin-inline: 0.3rem 0.1rem;
+  padding: 0;
+  border: 1px solid rgb(212 175 55 / 45%);
+  border-radius: 50%;
+  background: rgb(212 175 55 / 10%);
+  color: var(--diriyah-sand, #e7cf8f);
+  vertical-align: middle;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.hadith-play::after {
+  /* a finger-sized tap area around the small circle */
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+
+.hadith-play svg {
+  inline-size: 15px;
+  block-size: 15px;
+}
+
+.hadith-play .audio-icon-pause,
+.hadith-play.is-playing .audio-icon-play {
+  display: none;
+}
+
+.hadith-play.is-playing .audio-icon-pause {
+  display: inline;
+}
+
+.hadith-play.is-playing {
+  border-color: var(--diriyah-sand, #e7cf8f);
+  background: var(--diriyah-sand, #e7cf8f);
+  color: #050b14;
+}
+
+.hadith-play:hover {
+  border-color: rgb(212 175 55 / 75%);
+}
+
+.hadith-play:focus-visible {
+  outline: 2px solid var(--diriyah-sand, #e7cf8f);
+  outline-offset: 2px;
+}
+
 .evidence-source[hidden] {
   display: none !important;
 }

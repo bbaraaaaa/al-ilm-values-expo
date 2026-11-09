@@ -1371,6 +1371,7 @@
   window.closeStoryReader = () => {
     const modal = $('storyReaderModal');
     if (!modal) return;
+    window.QuranRecite?.stop(); // a hadith read inside the story stops with it
 
     // Resolve and restore focus BEFORE setting aria-hidden="true"
     let targetFocus = readerReturnFocus;
