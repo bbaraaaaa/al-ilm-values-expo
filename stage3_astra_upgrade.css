@@ -1960,6 +1960,39 @@ body.projector-day .attract-hint {
   color: var(--ilm-emerald);
 }
 
+/* Who made the site — the principal asked for the names at the top of the
+ * site, so they sit right under the exhibition's title */
+.intro-credits {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0.1rem 0 0;
+  padding: 0.6rem 1.4rem;
+  border: 1px solid rgb(16 185 129 / 24%);
+  border-radius: 1rem;
+  background: rgb(16 185 129 / 6%);
+}
+
+.intro-credits p {
+  margin: 0;
+  color: var(--text-main);
+  font-size: clamp(0.95rem, 1.25vw, 1.08rem);
+  font-weight: 700;
+  line-height: 1.7;
+  text-wrap: balance;
+}
+
+.intro-credits-role {
+  color: var(--ilm-emerald);
+  font-weight: 900;
+}
+
+/* a name never breaks across two lines on a phone */
+.intro-credits-name {
+  white-space: nowrap;
+}
+
 .intro-lead {
   margin: 0.25rem 0 0;
   max-inline-size: 48ch;
@@ -2030,6 +2063,7 @@ body.projector-day .attract-hint {
 .intro-inner > :nth-child(4) { animation-delay: 230ms; }
 .intro-inner > :nth-child(5) { animation-delay: 320ms; }
 .intro-inner > :nth-child(6) { animation-delay: 420ms; }
+.intro-inner > :nth-child(7) { animation-delay: 500ms; }
 
 /* ==========================================================================
  * 14. VALUE MESSAGE — one short audio control in the studio:
