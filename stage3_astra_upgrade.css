@@ -1939,7 +1939,7 @@ body.projector-day .attract-hint {
 .intro-emblem {
   inline-size: 7.5rem;
   block-size: auto;
-  filter: drop-shadow(0 0 26px rgb(16 185 129 / 32%));
+  filter: drop-shadow(0 0 26px rgb(30 160 190 / 34%)); /* teal, like the school emblem */
 }
 
 .intro-school {
