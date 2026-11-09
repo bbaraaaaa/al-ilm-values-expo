@@ -119,11 +119,20 @@
   const ICON_REPLAY =
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.6-5.9" stroke-linecap="round"/><path d="M4 4.5V9h4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+  // «0:04» — the clock under the verse. Western digits like every media
+  // player: at this size the Arabic zero «٠» is a dot and «٠:٠٣» reads as «·:·٣».
+  const arClock = (sec) => {
+    const s = Math.max(0, Math.floor(Number.isFinite(sec) ? sec : 0));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  };
+
   const QuranRecite = (window.QuranRecite = {
     audio: null,
     ctl: null, // the control box of the verse being played
     status: 'idle', // 'idle' | 'playing' | 'paused'
     isPlaying: false,
+    raf: 0,
+    shownSec: -1, // the whole second last written on the clock
 
     player() {
       if (!this.audio) {
@@ -131,8 +140,62 @@
         this.audio.preload = 'none';
         this.audio.addEventListener('ended', () => this.setStatus('idle'));
         this.audio.addEventListener('error', () => this.setStatus('idle'));
+        // the bar is right as soon as the length is known and after every seek
+        this.audio.addEventListener('loadedmetadata', () => this.paint());
+        this.audio.addEventListener('seeked', () => this.paint());
       }
       return this.audio;
+    },
+
+    // Progress as --p (0–1): on the control (the ring of the small in-text
+    // hadith button) and on its bar under the verse / hadith. Drawn every
+    // frame while playing; the bar moves with transforms only (no layout).
+    paint() {
+      const ctl = this.ctl;
+      const a = this.audio;
+      if (!ctl || !a) return;
+      const d = a.duration;
+      const known = Number.isFinite(d) && d > 0;
+      const p = known ? Math.min(1, a.currentTime / d).toFixed(4) : '0';
+      ctl.style.setProperty('--p', p);
+      const bar = ctl.reciteBar;
+      if (!bar) return;
+      bar.style.setProperty('--p', p);
+      const sec = Math.floor(a.currentTime);
+      const total = known ? String(Math.round(d)) : '';
+      if (sec === this.shownSec && bar.dataset.total === total) return;
+      this.shownSec = sec;
+      bar.dataset.total = total;
+      bar.querySelector('.recite-time--now').textContent = arClock(a.currentTime);
+      bar.querySelector('.recite-time--total').textContent = known ? arClock(d) : '';
+      const track = bar.querySelector('.recite-track');
+      track.setAttribute('aria-valuemax', total || '0');
+      track.setAttribute('aria-valuenow', String(sec));
+      track.setAttribute('aria-valuetext', known ? `${arClock(a.currentTime)} من ${arClock(d)}` : arClock(a.currentTime));
+    },
+
+    loop() {
+      cancelAnimationFrame(this.raf);
+      const step = () => {
+        this.paint();
+        this.raf = this.status === 'playing' ? requestAnimationFrame(step) : 0;
+      };
+      this.raf = requestAnimationFrame(step);
+    },
+
+    // tap / drag on the bar (fraction 0–1 from the right) and the arrow keys
+    seekTo(ctl, fraction) {
+      const a = this.audio;
+      const d = a?.duration;
+      if (this.ctl !== ctl || !Number.isFinite(d) || d <= 0) return;
+      a.currentTime = Math.min(d - 0.05, Math.max(0, fraction * d));
+      this.paint();
+    },
+
+    seekBy(ctl, seconds) {
+      const d = this.audio?.duration;
+      if (this.ctl !== ctl || !Number.isFinite(d) || d <= 0) return;
+      this.seekTo(ctl, (this.audio.currentTime + seconds) / d);
     },
 
     load(ctl) {
@@ -197,12 +260,31 @@
       const toggle = ctl.matches('[data-recite="toggle"]') ? ctl : ctl.querySelector('[data-recite="toggle"]');
       const what = ctl.dataset.what || 'تلاوة الآية';
       toggle?.setAttribute('aria-label', `${this.isPlaying ? 'إيقاف' : 'تشغيل'} ${what}`);
-      const replay = ctl.querySelector('[data-recite="replay"]');
-      if (replay) replay.hidden = status === 'idle';
+      // once it has started: the progress line grows out of the button and
+      // «إعادة» shows (ring on the small hadith button); at the end / on stop
+      // it all folds back (CSS section 20.1)
+      ctl.classList.toggle('is-started', status !== 'idle');
+      // the verse / hadith text lights up while it is being read
+      ctl.closest?.('.evidence-source')?.previousElementSibling?.classList.toggle('is-reciting', this.isPlaying);
+      if (this.isPlaying) {
+        this.loop();
+      } else {
+        cancelAnimationFrame(this.raf);
+        this.raf = 0;
+        this.shownSec = -1;
+        if (status === 'paused') this.paint();
+      }
     }
   });
 
-  // verse: Sheikh Yasser Al-Dosari's recitation; hadith: the generated reading
+  // The player of a verse / hadith, one row:
+  //   idle:     [▶ تشغيل] بصوت الشيخ …                              [المصدر]
+  //   playing:  [‖ إيقاف] ━━━━━━━━●──────────────── [↻ إعادة]      [المصدر]
+  // On «تشغيل» the progress line grows out of the button and pushes «إعادة»
+  // across to «المصدر»; the credit moves up into the line's caption with the
+  // clock (so «صوت مولَّد بالذكاء الاصطناعي» stays in view). At the end it all
+  // folds back. The line fills from right to left; tap / drag it to jump, or
+  // use the arrow keys (← forward, → back in this right-to-left page).
   const buildReciteControls = (src) => {
     const isVerse = Boolean(src.recite);
     const what = isVerse ? 'تلاوة الآية' : 'قراءة الحديث';
@@ -215,14 +297,52 @@
     box.dataset.src = isVerse ? `./audio/quran/dosari/${src.recite}.mp3` : `./audio/hadith/${src.hadith}.mp3`;
     box.innerHTML =
       `<button type="button" class="audio-btn audio-btn--main audio-btn--sm" data-recite="toggle" aria-label="تشغيل ${what}">${ICON_PLAY}${ICON_PAUSE}<span class="recite-state">تشغيل</span></button>` +
-      `<button type="button" class="audio-btn audio-btn--sm" data-recite="replay" aria-label="إعادة ${what} من البداية" hidden>${ICON_REPLAY}<span>إعادة</span></button>` +
-      `<span class="recite-credit">${credit}</span>`;
+      `<span class="recite-fold recite-fold--credit"><span class="recite-fold__in"><span class="recite-credit">${credit}</span></span></span>` +
+      '<span class="recite-bar">' +
+      `<span class="recite-bar__caption" aria-hidden="true"><span class="recite-bar__credit">${credit}</span>` +
+      '<span class="recite-time"><span class="recite-time--now">0:00</span> / <span class="recite-time--total">0:00</span></span></span>' +
+      `<span class="recite-track" role="slider" tabindex="0" aria-label="موضع ${what}" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">` +
+      '<span class="recite-track__fill"></span><span class="recite-track__head"><span class="recite-track__knob"></span></span></span>' +
+      '</span>' +
+      `<span class="recite-fold recite-fold--replay"><span class="recite-fold__in"><button type="button" class="audio-btn audio-btn--sm" data-recite="replay" aria-label="إعادة ${what} من البداية">${ICON_REPLAY}<span>إعادة</span></button></span></span>`;
     box.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-recite]');
       if (!btn) return;
       if (btn.dataset.recite === 'replay') QuranRecite.replay(box);
       else QuranRecite.toggle(box);
     });
+
+    // jumping: the whole height of the line's area is the touch strip
+    const bar = box.querySelector('.recite-bar');
+    const track = box.querySelector('.recite-track');
+    const fractionAt = (e) => {
+      const r = track.getBoundingClientRect();
+      return r.width ? (r.right - e.clientX) / r.width : 0;
+    };
+    bar.addEventListener('pointerdown', (e) => {
+      if (QuranRecite.ctl !== box || !box.classList.contains('is-started')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      bar.setPointerCapture?.(e.pointerId);
+      box.classList.add('is-seeking');
+      QuranRecite.seekTo(box, fractionAt(e));
+    });
+    bar.addEventListener('pointermove', (e) => {
+      if (bar.hasPointerCapture?.(e.pointerId)) QuranRecite.seekTo(box, fractionAt(e));
+    });
+    const endSeek = () => box.classList.remove('is-seeking');
+    bar.addEventListener('pointerup', endSeek);
+    bar.addEventListener('pointercancel', endSeek);
+    bar.addEventListener('lostpointercapture', endSeek);
+    track.addEventListener('keydown', (e) => {
+      const step = { ArrowLeft: 2, ArrowUp: 2, ArrowRight: -2, ArrowDown: -2, PageUp: 5, PageDown: -5 }[e.key];
+      if (step) QuranRecite.seekBy(box, step);
+      else if (e.key === 'Home') QuranRecite.seekTo(box, 0);
+      else if (e.key === 'End') QuranRecite.seekTo(box, 1);
+      else return;
+      e.preventDefault();
+    });
+    box.reciteBar = bar;
     return box;
   };
 
@@ -241,7 +361,8 @@
     line.hidden = !src;
     line.replaceChildren();
     if (!src) return;
-    if (src.recite || src.hadith) line.append(buildReciteControls(src));
+    const controls = src.recite || src.hadith ? buildReciteControls(src) : null;
+    if (controls) line.append(controls);
     const link = document.createElement('a');
     link.href = src.url;
     link.target = '_blank';

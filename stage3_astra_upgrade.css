@@ -2611,3 +2611,620 @@ html[data-perf="low"] .top-nav.is-folded {
   transition-duration: 520ms;
 }
 
+/* ==========================================================================
+ * 20. MOTION — one motion language for the whole site
+ *     - Tokens (20.0): every new motion uses the same durations and curves;
+ *       entrances decelerate, exits are faster and accelerate away.
+ *     - Staging: one hero moves at a time (a section's title first, its cards
+ *       after it), never two focal points at once.
+ *     - Everything that moves every frame uses transform / opacity only.
+ *     - html[data-perf="low"] (light devices) and the classroom mode skip the
+ *       decorative parts; the controls always work.
+ *     - Each rule keeps its motion in --mt (transition) / --ma (animation), so
+ *       20.9 can keep it when the device asks for reduced motion — it is part
+ *       of the exhibit, like the section bar glide (section 12).
+ * ========================================================================== */
+
+/* --- 20.0 tokens ---------------------------------------------------------- */
+@property --mt {
+  syntax: "*";
+  inherits: false;
+}
+
+@property --ma {
+  syntax: "*";
+  inherits: false;
+}
+
+:root {
+  --motion-instant: 110ms;   /* press feedback */
+  --motion-fast: 200ms;      /* exits, small fades */
+  --motion-normal: 320ms;    /* state changes */
+  --motion-deliberate: 520ms; /* things that grow or travel */
+  --motion-epic: 760ms;      /* entrances of a whole section */
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-expressive: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-reveal: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* a real spring (overshoot, settle) where the browser can draw one */
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    --motion-ease-spring: linear(
+      0, 0.009, 0.035 2.1%, 0.141 4.4%, 0.723 12.9%, 0.938 16.7%, 1.017 20.2%,
+      1.042 23%, 1.047 26.3%, 1.018 33.1%, 0.994 40.7%, 1.001 55.4%, 1
+    );
+  }
+}
+
+/* --- 20.1 the verse / hadith player (buildReciteControls in fable_engine.js), one row:
+ *     idle     [▶ تشغيل] بصوت الشيخ …                         [المصدر]
+ *     playing  [‖ إيقاف] ━━━━━━●───────────── [↻ إعادة]  [المصدر]
+ *     On «تشغيل» the line grows out of the button, pushing «إعادة» across to
+ *     «المصدر»; the credit moves up into the line's caption beside the clock.
+ *     At the end it folds back (faster) and the row is as it was. */
+.evidence-source {
+  container-type: inline-size;
+}
+
+.evidence-source > .recite-controls {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  gap: 0;
+  min-inline-size: 0;
+}
+
+/* the credit and «إعادة» fold to zero width (grid track 1fr ⇄ 0fr) */
+.recite-fold {
+  display: grid;
+  grid-template-columns: 1fr;
+  flex: none;
+  min-inline-size: 0;
+}
+
+.recite-fold__in {
+  min-inline-size: 0;
+  overflow: hidden;
+  /* room for the button's ring and focus outline inside the clip */
+  padding: 4px;
+  margin: -4px;
+  white-space: nowrap;
+}
+
+.recite-fold--credit {
+  margin-inline-start: 0.6rem;
+  --mt:
+    grid-template-columns 440ms var(--motion-ease-expressive) 60ms,
+    margin 440ms var(--motion-ease-expressive) 60ms,
+    opacity var(--motion-normal) ease 160ms,
+    visibility 0s;
+  transition: var(--mt);
+}
+
+.recite-controls.is-started .recite-fold--credit {
+  grid-template-columns: 0fr;
+  margin-inline-start: 0;
+  opacity: 0;
+  visibility: hidden;
+  --mt:
+    grid-template-columns 380ms var(--motion-ease-expressive),
+    margin 380ms var(--motion-ease-expressive),
+    opacity 160ms ease,
+    visibility 0s linear 380ms;
+}
+
+.recite-fold--replay {
+  grid-template-columns: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.85);
+  --mt:
+    grid-template-columns 400ms var(--motion-ease-expressive),
+    margin 400ms var(--motion-ease-expressive),
+    opacity var(--motion-fast) ease,
+    transform 280ms var(--motion-ease-accelerate),
+    visibility 0s linear 400ms;
+  transition: var(--mt);
+}
+
+.recite-controls.is-started .recite-fold--replay {
+  grid-template-columns: 1fr;
+  margin-inline-start: 0.7rem;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  --mt:
+    grid-template-columns 600ms var(--motion-ease-expressive),
+    margin 600ms var(--motion-ease-expressive),
+    opacity var(--motion-normal) ease 140ms,
+    transform 560ms var(--motion-ease-spring) 100ms,
+    visibility 0s;
+}
+
+/* the line: zero wide when idle, then it takes all the room up to «إعادة» */
+.recite-bar {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 0 1 0px;
+  align-self: stretch;
+  min-inline-size: 0;
+  overflow-x: clip; /* nothing spills out while it grows (the knob's glow may, up and down) */
+  opacity: 0;
+  visibility: hidden;
+  cursor: pointer;
+  touch-action: none;
+  --mt:
+    flex-grow 480ms cubic-bezier(0.65, 0, 0.35, 1),
+    margin 480ms cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 240ms ease 180ms,
+    visibility 0s linear 480ms;
+  transition: var(--mt);
+}
+
+.recite-controls.is-started .recite-bar {
+  flex-grow: 1;
+  margin-inline-start: 0.85rem;
+  opacity: 1;
+  visibility: visible;
+  --mt:
+    flex-grow 640ms var(--motion-ease-expressive),
+    margin 640ms var(--motion-ease-expressive),
+    opacity 300ms ease 60ms,
+    visibility 0s;
+}
+
+.recite-bar__caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-inline-size: 0;
+  padding-inline: 1px 2px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.recite-bar__credit {
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+}
+
+.recite-time {
+  flex: none;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+.recite-time--now {
+  color: var(--diriyah-sand, #e7cf8f);
+}
+
+.recite-track {
+  position: relative;
+  block-size: 12px;
+  margin-inline: 7px; /* the knob stays whole at both ends */
+  outline: none;
+}
+
+.recite-track::before,
+.recite-track__fill {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: 4px;
+  margin-block-start: -2px;
+  border-radius: 999px;
+}
+
+.recite-track::before {
+  background: rgb(255 255 255 / 12%);
+}
+
+.recite-track__fill {
+  background: linear-gradient(to left, var(--card-accent, #10b981), var(--diriyah-sand, #e7cf8f));
+  transform-origin: right center;
+  transform: scaleX(var(--p, 0));
+}
+
+/* moved by p × the line's width, so the knob rides the end of the fill */
+.recite-track__head {
+  position: absolute;
+  inset: 0;
+  transform: translateX(calc(var(--p, 0) * -100%));
+  pointer-events: none;
+}
+
+.recite-track__knob {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 0;
+  inline-size: 12px;
+  block-size: 12px;
+  margin-block-start: -6px;
+  margin-inline-start: -6px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--card-accent, #10b981) 38%, transparent),
+    0 0 14px rgb(231 207 143 / 55%);
+  --mt: transform 240ms var(--motion-ease-spring);
+  transition: var(--mt);
+}
+
+.recite-controls.is-seeking .recite-track__knob,
+.recite-track:focus-visible .recite-track__knob {
+  transform: scale(1.35);
+}
+
+.recite-track:focus-visible::before {
+  outline: 2px solid var(--diriyah-sand, #e7cf8f);
+  outline-offset: 5px;
+}
+
+/* narrow rows (phones): «إيقاف» and «إعادة» as their icons so the line has
+ * room, «المصدر» under the player, and the credit on its own line */
+@container (max-width: 30rem) {
+  .recite-controls {
+    flex-wrap: wrap !important;
+    row-gap: 0.45rem;
+  }
+
+  .evidence-source > .recite-controls {
+    flex-basis: 100%;
+  }
+
+  .recite-fold--replay [data-recite="replay"] {
+    min-inline-size: 2.25rem;
+    padding-inline: 0.55rem;
+  }
+
+  .recite-fold--replay [data-recite="replay"] > span {
+    display: none;
+  }
+
+  .recite-controls.is-started [data-recite="toggle"] {
+    min-inline-size: 2.25rem;
+    padding-inline: 0.55rem;
+  }
+
+  .recite-controls.is-started [data-recite="toggle"] .recite-state {
+    display: none;
+  }
+
+  .recite-controls.is-started .recite-bar {
+    margin-inline-start: 0.6rem;
+  }
+
+  .recite-controls.is-started .recite-fold--replay {
+    margin-inline-start: 0.5rem;
+  }
+
+  .recite-fold--credit,
+  .recite-controls.is-started .recite-fold--credit {
+    order: 5;
+    flex-basis: 100%;
+    grid-template-columns: 1fr;
+    margin-inline-start: 0;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .recite-bar__credit {
+    visibility: hidden;
+  }
+}
+
+/* --- 20.2 the small round ▶ in the texts: a ring fills around it */
+.hadith-play::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(var(--diriyah-sand, #e7cf8f) calc(var(--p, 0) * 360deg), rgb(231 207 143 / 16%) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  opacity: 0;
+  transform: scale(0.8);
+  --mt: opacity var(--motion-fast) ease, transform var(--motion-normal) var(--motion-ease-accelerate);
+  transition: var(--mt);
+  pointer-events: none;
+}
+
+.hadith-play.is-started::before {
+  opacity: 1;
+  transform: none;
+  --mt: opacity 240ms ease, transform 420ms var(--motion-ease-spring);
+}
+
+/* --- 20.3 play ⇄ pause: the icon springs in; a soft ring breathes while playing */
+@keyframes iconSpring {
+  from {
+    opacity: 0;
+    transform: scale(0.45) rotate(-25deg);
+  }
+}
+
+:is(.audio-btn--main, .hadith-play) :is(.audio-icon-play, .audio-icon-pause) {
+  --ma: iconSpring 420ms var(--motion-ease-spring);
+  animation: var(--ma);
+}
+
+.audio-btn--main {
+  position: relative;
+}
+
+@keyframes playingRing {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.16, 1.42);
+  }
+}
+
+.studio-audio-controls.is-playing .audio-btn--main::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border: 2px solid color-mix(in srgb, var(--card-accent, #10b981) 65%, #ffffff);
+  border-radius: inherit;
+  --ma: playingRing 1.9s var(--motion-ease-reveal) infinite;
+  animation: var(--ma);
+  pointer-events: none;
+}
+
+/* --- 20.4 the verse / hadith text lights up while it is read */
+#modalEvidenceText,
+#encycEvidence {
+  --mt: color 600ms ease, text-shadow 600ms ease;
+  transition: var(--mt);
+}
+
+:is(#modalEvidenceText, #encycEvidence).is-reciting {
+  color: #fff7df;
+  text-shadow: 0 0 16px rgb(231 207 143 / 42%);
+}
+
+:is(.studio-evidence, div):has(> :is(#modalEvidenceText, #encycEvidence)) {
+  --mt: box-shadow 600ms ease;
+  transition: var(--mt);
+}
+
+:is(.studio-evidence, div):has(> .is-reciting) {
+  box-shadow:
+    0 0 0 1px rgb(231 207 143 / 34%),
+    0 0 30px rgb(231 207 143 / 12%);
+}
+
+/* --- 20.5 the home title: one sweep of light across «ترسيخ القيم» (right to left) */
+@keyframes introSheen {
+  from {
+    background-position: 0% 0;
+  }
+  to {
+    background-position: 100% 0;
+  }
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  html:not([data-perf="low"]) .intro-title .accent-span {
+    background-image: linear-gradient(105deg, var(--ilm-emerald) 0%, var(--ilm-emerald) 43%, #e9fff6 50%, var(--ilm-emerald) 57%, var(--ilm-emerald) 100%);
+    background-size: 260% 100%;
+    background-position: 0% 0;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    --ma: introSheen 1700ms cubic-bezier(0.45, 0, 0.2, 1) 950ms both;
+    animation: var(--ma);
+  }
+}
+
+/* --- 20.6 reveal on scroll (setupReveal in stage3_fable_upgrade.js): a
+ *     section's title comes in word by word, then its description and
+ *     filters; the cards wait for the title (one focal point at a time) */
+@keyframes rvWord {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.5em, 0);
+  }
+}
+
+@keyframes rvFade {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+}
+
+@keyframes rvCard {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 26px, 0) scale(0.985);
+  }
+}
+
+html.rv-ready .rv-word {
+  display: inline-block;
+}
+
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group:not(.rv-on, .rv-done) :is(.rv-word, .rv-fade),
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group.rv-cards:not(.rv-on, .rv-done) > *,
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group.rv-self:not(.rv-on, .rv-done) {
+  opacity: 0;
+}
+
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group.rv-on .rv-word {
+  --ma: rvWord 720ms var(--motion-ease-reveal) calc(var(--i, 0) * 70ms) backwards;
+  animation: var(--ma);
+}
+
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group.rv-on .rv-fade {
+  --ma: rvFade 720ms var(--motion-ease-reveal) var(--rv-after, 0ms) backwards;
+  animation: var(--ma);
+}
+
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group.rv-self.rv-on {
+  --ma: rvFade 720ms var(--motion-ease-reveal) 120ms backwards;
+  animation: var(--ma);
+}
+
+html.rv-ready:not([data-perf="low"]) body:not(.classroom-mode) .rv-group.rv-cards.rv-on > * {
+  --ma: rvCard 800ms var(--motion-ease-reveal) calc(220ms + var(--i, 0) * 75ms) backwards;
+  animation: var(--ma);
+}
+
+/* --- 20.7 one sliding highlight (setupSlidePills in stage3_fable_upgrade.js):
+ *     in the section bar (both copies) and the short filter rows, the active
+ *     background glides to the tapped / current button instead of jumping */
+.has-slide-pill:not(.glass-dock) {
+  position: relative;
+}
+
+.slide-pill {
+  position: absolute;
+  inset-block-start: 0;
+  left: 0; /* physical: placed from the offsetLeft of the active button */
+  z-index: 0;
+  inline-size: var(--sp-w, 0px);
+  block-size: var(--sp-h, 0px);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  transform: translate3d(var(--sp-x, 0px), var(--sp-y, 0px), 0);
+  pointer-events: none;
+  --mt:
+    transform 480ms var(--motion-ease-expressive),
+    inline-size 480ms var(--motion-ease-expressive),
+    block-size 480ms var(--motion-ease-expressive),
+    opacity var(--motion-fast) ease;
+  transition: var(--mt);
+}
+
+.slide-pill.no-anim {
+  --mt: none;
+  transition: none;
+}
+
+.slide-pill--nav {
+  border-color: var(--active-border);
+  background: var(--active-bg);
+}
+
+/* the little emerald line under the current section rides along too */
+.slide-pill--nav::after {
+  content: "";
+  position: absolute;
+  inset-inline: 35%;
+  inset-block-end: 0.25rem;
+  block-size: 2px;
+  border-radius: 999px;
+  background: var(--ilm-emerald);
+}
+
+.slide-pill--filter {
+  border-color: var(--best-border);
+  background: var(--best-bg);
+}
+
+#hero-section .group-segmented > .slide-pill {
+  border-color: rgb(16 185 129 / 40%);
+  background: rgb(16 185 129 / 20%);
+}
+
+/* the buttons themselves drop their own highlight; their text colour follows */
+.has-slide-pill > :is(.spa-nav-btn, .filter-pill):is(.active, [aria-pressed="true"], [aria-current="page"]) {
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
+.has-slide-pill > .spa-nav-btn::before {
+  display: none !important;
+}
+
+.has-slide-pill > :is(.spa-nav-btn, .filter-pill) {
+  --mt: transform var(--motion-instant) var(--motion-ease-expressive), color var(--motion-normal) ease;
+  transition: var(--mt);
+}
+
+/* --- 20.8 the value window: arrives with a clear rise, leaves faster */
+.studio-modal {
+  --mt: opacity var(--motion-fast) var(--motion-ease-accelerate), visibility 0s linear 220ms;
+  transition: var(--mt);
+}
+
+.studio-modal.active {
+  --mt: opacity 280ms var(--motion-ease-decelerate), visibility 0s;
+}
+
+.studio-modal > .studio-panel {
+  transform: translate3d(0, 22px, 0) scale(0.965);
+  --mt: transform 220ms var(--motion-ease-accelerate);
+  transition: var(--mt);
+}
+
+.studio-modal.active > .studio-panel {
+  transform: none;
+  --mt: transform 460ms var(--motion-ease-expressive);
+}
+
+/* a tactile press on every filter / section button (released on a spring) */
+:is(.filter-pill, .spa-nav-btn):active:not(:disabled, [aria-disabled="true"]) {
+  transform: scale(0.96);
+}
+
+/* --- light devices: no breathing ring, no icon spring, no sliding curve */
+html[data-perf="low"] .studio-audio-controls.is-playing .audio-btn--main::after {
+  content: none;
+}
+
+html[data-perf="low"] :is(.audio-btn--main, .hadith-play) :is(.audio-icon-play, .audio-icon-pause) {
+  --ma: none;
+  animation: none;
+}
+
+/* --- 20.9 reduced-motion devices keep this motion (the global reduce rule
+ *     in section 9 removes every transition / animation with !important) */
+@media (prefers-reduced-motion: reduce) {
+  .recite-fold,
+  .recite-bar,
+  .recite-track__knob,
+  #modalEvidenceText,
+  #encycEvidence,
+  :is(.studio-evidence, div):has(> :is(#modalEvidenceText, #encycEvidence)),
+  .slide-pill,
+  .has-slide-pill > :is(.spa-nav-btn, .filter-pill),
+  .studio-modal,
+  .studio-modal > .studio-panel {
+    transition: var(--mt, none) !important;
+  }
+
+  .hadith-play::before {
+    transition: var(--mt, none) !important;
+  }
+
+  .studio-audio-controls.is-playing .audio-btn--main::after {
+    animation: var(--ma, none) !important;
+  }
+
+  :is(.audio-btn--main, .hadith-play) :is(.audio-icon-play, .audio-icon-pause),
+  .intro-title .accent-span,
+  .rv-word,
+  .rv-fade,
+  .rv-group.rv-self,
+  .rv-group.rv-cards > * {
+    animation: var(--ma, none) !important;
+  }
+}

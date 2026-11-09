@@ -1127,6 +1127,14 @@
     comparison: { limit: PAGE_SIZE, sig: '' }
   };
 
+  // «عرض المزيد» / «طي» re-render the grid with their own entrance: tell the
+  // filter re-render motion (setupReveal) to stay out of it; the mark is
+  // cleared after this task even if the grid was not rebuilt.
+  function markOwnEntrance(grid) {
+    grid.dataset.rvSkip = '1';
+    setTimeout(() => delete grid.dataset.rvSkip, 0);
+  }
+
   function paginateCards(key, grid, cards, active, sig, words, rerender) {
     const page = pager[key];
     if (page.sig !== sig) {
@@ -1177,6 +1185,7 @@
       button.addEventListener('click', () => {
         page.revealFrom = page.limit;
         page.limit += PAGE_SIZE;
+        markOwnEntrance(grid);
         rerender();
       });
     } else {
@@ -1184,6 +1193,7 @@
       button.textContent = `طي ${words.plural} (العودة إلى ${toArabicNumber(PAGE_SIZE)})`;
       button.addEventListener('click', () => {
         page.limit = PAGE_SIZE;
+        markOwnEntrance(grid);
         rerender();
         const section = grid.closest('section');
         if (section) {
@@ -1725,6 +1735,195 @@
   $('storyReaderModal')?.addEventListener('click', (event) => {
     if (event.target === $('storyReaderModal')) window.closeStoryReader();
   });
+
+  // ==========================================================================
+  // 8b. REVEAL ON SCROLL — the first time each part of the page comes into
+  //     view: the section titles appear word by word, their description and
+  //     filters follow, and the cards of each grid rise in one after another.
+  //     Opacity + transform only (smooth on the iPad); light devices
+  //     (html[data-perf="low"]) and the classroom mode show everything at
+  //     once (CSS section 20). Nothing is hidden unless this ran.
+  // ==========================================================================
+  (function setupReveal() {
+    if (!('IntersectionObserver' in window)) return;
+
+    // each word in its own span, so the words can come in one by one
+    // (whole words only: the letters of a word stay joined)
+    const splitWords = (el) => {
+      if (el.dataset.rvSplit) return 0;
+      el.dataset.rvSplit = '1';
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      let i = 0;
+      nodes.forEach((node) => {
+        if (!node.nodeValue.trim()) return;
+        const frag = document.createDocumentFragment();
+        node.nodeValue.split(/(\s+)/).forEach((part) => {
+          if (!part) return;
+          if (/^\s+$/.test(part)) {
+            frag.append(part);
+            return;
+          }
+          const word = document.createElement('span');
+          word.className = 'rv-word';
+          word.style.setProperty('--i', String(Math.min(i++, 12)));
+          word.textContent = part;
+          frag.append(word);
+        });
+        node.replaceWith(frag);
+      });
+      return i;
+    };
+
+    const groups = [];
+    document.querySelectorAll('.section-header, .hero-top-grid').forEach((head) => {
+      let words = 0;
+      head.querySelectorAll('.section-title, .hero-headline').forEach((t) => {
+        words = Math.max(words, splitWords(t));
+      });
+      const after = Math.min(words, 12) * 70 + 140; // the rest follows the title
+      head.querySelectorAll('.section-description, .hero-slogan, .filter-bar, .filter-pill#randomStoryBtn, #searchStatsBadge').forEach((el) => {
+        if (el.closest('.rv-fade')) return;
+        el.classList.add('rv-fade');
+        el.style.setProperty('--rv-after', `${after}ms`);
+      });
+      groups.push(head);
+    });
+    ['examplesFilterBar', 'encycSelector'].forEach((id) => {
+      const el = $(id);
+      if (el) {
+        el.classList.add('rv-self');
+        groups.push(el);
+      }
+    });
+    [$('examplesCardsGrid'), $('comparisonGrid'), document.querySelector('.encyc-grid-shell')].forEach((el) => {
+      if (el) {
+        el.classList.add('rv-cards');
+        groups.push(el);
+      }
+    });
+
+    const reveal = (group) => {
+      if (group.classList.contains('rv-on') || group.classList.contains('rv-done')) return;
+      if (group.classList.contains('rv-cards')) {
+        [...group.children].forEach((card, i) => card.style.setProperty('--i', String(Math.min(i, 8))));
+      }
+      group.classList.add('rv-on');
+      // once it is done the classes go, so later re-renders (filters,
+      // «عرض المزيد») show at once and never replay this entrance
+      const words = group.querySelectorAll('.rv-word').length;
+      const length = group.classList.contains('rv-cards') ? 8 * 75 + 900 : Math.min(words, 12) * 70 + 1100;
+      setTimeout(() => {
+        group.classList.remove('rv-on');
+        group.classList.add('rv-done');
+      }, length);
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          io.unobserve(entry.target);
+          reveal(entry.target);
+        });
+      },
+      { rootMargin: '0px 0px -8% 0px', threshold: 0 }
+    );
+    groups.forEach((group) => {
+      group.classList.add('rv-group');
+      io.observe(group);
+    });
+    document.documentElement.classList.add('rv-ready');
+
+    // Later filtering (after the first entrance): when the set of cards on
+    // show changes — rebuilt (stories) or shown / hidden (comparison) — they
+    // come in quickly, one after another. Typing in the search or tinting a
+    // word keeps the same cards, so nothing moves. «عرض المزيد» / «طي» mark
+    // the grid (data-rv-skip) because they have their own entrance.
+    [$('examplesCardsGrid'), $('comparisonGrid')].forEach((grid) => {
+      if (!grid) return;
+      const shown = () => [...grid.children].filter((card) => !card.hidden && card.getClientRects().length);
+      const signature = (cards) => cards.map((card) => card.textContent.trim().slice(0, 40)).join('|');
+      let last = signature(shown());
+      new MutationObserver(() => {
+        const cards = shown();
+        const sig = signature(cards);
+        const changed = sig !== last;
+        last = sig;
+        if (grid.dataset.rvSkip) {
+          delete grid.dataset.rvSkip;
+          return;
+        }
+        if (!changed || !grid.classList.contains('rv-done')) return;
+        if (document.documentElement.dataset.perf === 'low' || document.body.classList.contains('classroom-mode')) return;
+        cards.slice(0, 9).forEach((card, i) =>
+          card.animate?.(
+            [
+              { opacity: 0, transform: 'translate3d(0, 14px, 0)' },
+              { opacity: 1, transform: 'none' }
+            ],
+            { duration: 420, delay: i * 45, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' }
+          )
+        );
+      }).observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
+    });
+  })();
+
+  // ==========================================================================
+  // 8c. ONE SLIDING HIGHLIGHT — in the section bar (both copies) and the short
+  //     filter rows, the active background is one piece that glides to the
+  //     tapped / current button instead of jumping (CSS section 20.7).
+  // ==========================================================================
+  (function setupSlidePills() {
+    const bars = [
+      ...document.querySelectorAll('.top-nav .header-dock, .glass-dock.floating-dock'),
+      document.querySelector('#hero-section .group-segmented'),
+      $('comparisonFilterBar')
+    ].filter(Boolean);
+    const isActive = (b) =>
+      b.classList.contains('active') || b.getAttribute('aria-pressed') === 'true' || b.getAttribute('aria-current') === 'page';
+
+    bars.forEach((bar) => {
+      const pill = document.createElement('span');
+      pill.className = `slide-pill ${bar.matches('.header-dock, .floating-dock') ? 'slide-pill--nav' : 'slide-pill--filter'} no-anim`;
+      pill.setAttribute('aria-hidden', 'true');
+      bar.prepend(pill);
+      bar.classList.add('has-slide-pill');
+
+      let raf = 0;
+      let placed = false;
+      const place = () => {
+        raf = 0;
+        const btn = [...bar.querySelectorAll(':scope > button')].find(isActive);
+        if (!btn || !btn.offsetWidth) {
+          pill.style.opacity = '0';
+          return;
+        }
+        pill.style.opacity = '';
+        pill.style.setProperty('--sp-x', `${btn.offsetLeft}px`);
+        pill.style.setProperty('--sp-y', `${btn.offsetTop}px`);
+        pill.style.setProperty('--sp-w', `${btn.offsetWidth}px`);
+        pill.style.setProperty('--sp-h', `${btn.offsetHeight}px`);
+        if (!placed) {
+          // the first placement is instant; every move after it glides
+          placed = true;
+          requestAnimationFrame(() => requestAnimationFrame(() => pill.classList.remove('no-anim')));
+        }
+      };
+      const queue = () => {
+        if (!raf) raf = requestAnimationFrame(place);
+      };
+      new MutationObserver(queue).observe(bar, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'aria-pressed', 'aria-current']
+      });
+      new ResizeObserver(queue).observe(bar);
+      document.fonts?.ready?.then(queue); // the Arabic font changes the button widths
+      queue();
+    });
+  })();
 
   // ==========================================================================
   // 9. INITIALIZATION & STATE HYDRATION
