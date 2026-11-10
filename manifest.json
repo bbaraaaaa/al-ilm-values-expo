@@ -7,8 +7,8 @@
   "display": "standalone",
   "display_override": ["fullscreen", "standalone"],
   "orientation": "landscape",
-  "background_color": "#050a08",
-  "theme_color": "#050a08",
+  "background_color": "#051920",
+  "theme_color": "#051920",
   "dir": "rtl",
   "lang": "ar-SA",
   "icons": [

@@ -161,28 +161,39 @@
   });
 
   // --------------------------------------------------------------------------
-  // «ملء الشاشة» — on every screen whose browser can do it, except the iPad /
-  // iPhone (Safari's own gestures leave it at once). A classroom board with a
-  // built-in Windows computer (OPS) reports itself as an ordinary PC, so
-  // computers get the button too. Once turned on, the next touch after a
-  // reload brings full screen back (browsers allow it only from a touch),
-  // until it is turned off with the same button.
+  // «ملء الشاشة» — the owner's rule (v5.10): only where the browser's own bar
+  // stays on screen: interactive classroom boards (BenQ and the like), smart
+  // TVs and Android phones / tablets. Not on computers, the iPad or iPhone.
+  // The exhibition board is a BenQ RM7504 on Android 13: the Android rule
+  // covers it (and perf_tier.js names it a board, also in «desktop site»
+  // mode). For any other screen that needs it, open the site once on it with
+  // ?fs=1: that device remembers it (?fs=0 hides the button for good,
+  // ?fs=auto goes back to the rule).
+  // Once turned on, the next touch after a reload brings full screen back
+  // (browsers allow it only from a touch), until turned off with the button.
   // The button sits in the header; while the header is folded to its logo
   // pill or scrolled away, a floating copy in the top corner keeps it in reach.
-  // ?fs=1 shows the button on any device (testing), ?fs=0 hides it.
   // --------------------------------------------------------------------------
   const FS_PREF = 'alm_fullscreen';
+  const FS_SHOW = 'alm_fs_show';
   const docEl = document.documentElement;
   const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
   const fsSupported = Boolean(docEl.requestFullscreen || docEl.webkitRequestFullscreen) && document.fullscreenEnabled !== false;
   const fsWanted = () => {
-    const asked = /[?&]fs=([01])\b/.exec(location.search);
-    if (asked) return asked[1] === '1';
+    const asked = /[?&]fs=(0|1|auto)\b/.exec(location.search);
+    let kept = null;
+    try {
+      if (asked && asked[1] === 'auto') localStorage.removeItem(FS_SHOW);
+      else if (asked) localStorage.setItem(FS_SHOW, asked[1]);
+      kept = localStorage.getItem(FS_SHOW);
+    } catch (_) {}
+    if (asked && asked[1] !== 'auto') return asked[1] === '1';
+    if (kept === '1' || kept === '0') return kept === '1';
     const ua = navigator.userAgent || '';
     const device = (window.PerfTier && window.PerfTier.device) || '';
-    if (device === 'ipad' || /iPhone|iPod/.test(ua)) return false;
+    if (device === 'ipad' || /iPad|iPhone|iPod|Macintosh/.test(ua)) return false;
     if (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) return false;
-    return true;
+    return /Android/.test(ua) || device === 'tv' || device === 'board';
   };
   const readPref = () => {
     try {

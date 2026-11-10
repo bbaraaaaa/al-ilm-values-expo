@@ -12,7 +12,10 @@
   const STORAGE_KEY = 'al_ilm_hikmah_v2';
   const SCENARIOS_KEY = 'al_ilm_scenarios_v2';
 
-  const VALUES = Array.isArray(window.AL_ILM_DATA?.values) ? window.AL_ILM_DATA.values : [];
+  // the Dawn Sea copies from fable_engine.js (same objects, calmer accents)
+  const VALUES = (Array.isArray(window.AL_ILM_DATA?.values) ? window.AL_ILM_DATA.values : []).map((v) =>
+    window.ALM_PALETTE ? window.ALM_PALETTE.paint(v) : v
+  );
   const SCENARIOS = Array.isArray(window.AL_ILM_DATA?.scenarios) ? window.AL_ILM_DATA.scenarios : [];
 
   const $ = (id) => document.getElementById(id);

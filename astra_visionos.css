@@ -32,21 +32,21 @@
 :root {
   color-scheme: dark;
 
-  --tuwaiq-obsidian: #050B14;
-  --tuwaiq-navy: #091426;
-  --tuwaiq-slate: #0E1E36;
-  --diriyah-gold: #D4AF37;
-  --diriyah-amber: #F59E0B;
-  --diriyah-sand: #E6C98F;
-  --ilm-emerald: #10B981;
-  --ilm-emerald-deep: #065F46;
+  --tuwaiq-obsidian: #010d12;
+  --tuwaiq-navy: #001820;
+  --tuwaiq-slate: #07222a;
+  --diriyah-gold: #ceaf6a;
+  --diriyah-amber: #d8ab6d;
+  --diriyah-sand: #e7c88f;
+  --ilm-emerald: #37afbf;
+  --ilm-emerald-deep: #005d69;
 
-  --bg-main: #050B14;
-  --bg-card: rgba(11, 23, 42, 0.72);
-  --bg-elevated: rgba(15, 31, 56, 0.84);
+  --bg-main: #010d12;
+  --bg-card: rgba(1, 27, 35, 0.576);
+  --bg-elevated: rgba(8, 35, 43, 0.672);
   --text-main: #F8FAFC;
   --text-muted: rgba(226, 232, 240, 0.70);
-  --border-line: rgba(212, 175, 55, 0.16);
+  --border-line: rgba(206, 175, 106, 0.128);
   --glass-bg: rgba(255, 255, 255, 0.045);
 
   --ease-out-expo: cubic-bezier(0.23, 1, 0.32, 1);
@@ -81,19 +81,19 @@
   --radius-pill: 999px;
 
   --glass-filter: blur(26px) saturate(180%);
-  --surface-solid: #0B172A;
-  --surface-elevated-solid: #0F1F38;
+  --surface-solid: #011b23;
+  --surface-elevated-solid: #08232b;
   --specular-top: rgba(255, 255, 255, 0.24);
   --specular-inner: rgba(255, 255, 255, 0.035);
   --control-bg: rgba(255, 255, 255, 0.055);
   --control-hover: rgba(255, 255, 255, 0.09);
   --text-accent: var(--diriyah-sand);
-  --text-success: #6EE7B7;
+  --text-success: #6fe0f0;
   --focus-ring: var(--diriyah-sand);
-  --selection-bg: rgba(212, 175, 55, 0.25);
-  --active-bg: rgba(212, 175, 55, 0.13);
-  --active-border: rgba(212, 175, 55, 0.48);
-  --scrim: rgba(2, 6, 14, 0.76);
+  --selection-bg: rgba(206, 175, 106, 0.2);
+  --active-bg: rgba(206, 175, 106, 0.104);
+  --active-border: rgba(206, 175, 106, 0.384);
+  --scrim: rgba(0, 7, 12, 0.608);
 
   --shadow-surface: 0 2px 4px rgba(0, 0, 0, 0.16),
     0 12px 28px rgba(0, 0, 0, 0.22),
@@ -104,12 +104,12 @@
   --shadow-control: 0 2px 3px rgba(0, 0, 0, 0.18),
     0 8px 20px rgba(0, 0, 0, 0.18);
 
-  --best-ink: #6EE7B7;
-  --best-bg: rgba(16, 185, 129, 0.12);
-  --best-border: rgba(16, 185, 129, 0.60);
-  --mid-ink: #FCD58C;
-  --mid-bg: rgba(245, 158, 11, 0.10);
-  --mid-border: rgba(245, 158, 11, 0.58);
+  --best-ink: #6fe0f0;
+  --best-bg: rgba(55, 175, 191, 0.096);
+  --best-border: rgba(55, 175, 191, 0.48);
+  --mid-ink: #edc885;
+  --mid-bg: rgba(216, 171, 109, 0.08);
+  --mid-border: rgba(216, 171, 109, 0.464);
   --low-ink: #F5B7B2;
   --low-bg: rgba(181, 83, 79, 0.14);
   --low-border: rgba(216, 137, 132, 0.65);
@@ -128,41 +128,41 @@ body.projector-day {
   --bg-main: #F6F3EB;
   --bg-card: rgba(255, 255, 255, 0.96);
   --bg-elevated: rgba(255, 253, 248, 0.98);
-  --text-main: #091426;
+  --text-main: #001820;
   --text-muted: #42516A;
-  --border-line: rgba(9, 20, 38, 0.28);
+  --border-line: rgba(0, 24, 32, 0.224);
   --glass-bg: rgba(255, 255, 255, 0.88);
   --surface-solid: #FFFFFF;
   --surface-elevated-solid: #FFFDFA;
   --specular-top: rgba(255, 255, 255, 1);
   --specular-inner: rgba(255, 255, 255, 0.65);
-  --control-bg: rgba(9, 20, 38, 0.055);
-  --control-hover: rgba(9, 20, 38, 0.10);
+  --control-bg: rgba(0, 24, 32, 0.044);
+  --control-hover: rgba(0, 24, 32, 0.08);
   --text-accent: #735514;
-  --text-success: #065F46;
-  --focus-ring: #075C45;
-  --selection-bg: rgba(212, 175, 55, 0.32);
+  --text-success: #005d69;
+  --focus-ring: #005a65;
+  --selection-bg: rgba(206, 175, 106, 0.256);
   --active-bg: #EDE3C7;
-  --active-border: #8A6C21;
-  --scrim: rgba(9, 20, 38, 0.46);
-  --shadow-surface: 0 2px 4px rgba(9, 20, 38, 0.08),
-    0 12px 28px rgba(9, 20, 38, 0.09),
-    0 28px 64px rgba(9, 20, 38, 0.06);
-  --shadow-float: 0 4px 8px rgba(9, 20, 38, 0.10),
-    0 24px 48px rgba(9, 20, 38, 0.14),
-    0 52px 100px rgba(9, 20, 38, 0.12);
-  --shadow-control: 0 2px 3px rgba(9, 20, 38, 0.08),
-    0 8px 20px rgba(9, 20, 38, 0.10);
-  --best-ink: #065F46;
-  --best-bg: #E1F2E9;
-  --best-border: #18724F;
-  --mid-ink: #734509;
+  --active-border: #8b6b25;
+  --scrim: rgba(0, 24, 32, 0.368);
+  --shadow-surface: 0 2px 4px rgba(0, 24, 32, 0.064),
+    0 12px 28px rgba(0, 24, 32, 0.072),
+    0 28px 64px rgba(0, 24, 32, 0.048);
+  --shadow-float: 0 4px 8px rgba(0, 24, 32, 0.08),
+    0 24px 48px rgba(0, 24, 32, 0.112),
+    0 52px 100px rgba(0, 24, 32, 0.096);
+  --shadow-control: 0 2px 3px rgba(0, 24, 32, 0.064),
+    0 8px 20px rgba(0, 24, 32, 0.08);
+  --best-ink: #005d69;
+  --best-bg: #def2f5;
+  --best-border: #00707e;
+  --mid-ink: #704702;
   --mid-bg: #FBEDD3;
-  --mid-border: #99630E;
+  --mid-border: #916728;
   --low-ink: #883B36;
   --low-bg: #F6E7E4;
   --low-border: #9F4B43;
-  --spot-color: rgba(166, 125, 28, 0.09);
+  --spot-color: rgba(161, 126, 59, 0.072);
 }
 
 *,
@@ -334,7 +334,7 @@ summary {
   border-radius: inherit;
   pointer-events: none;
   contain: paint;
-  background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), var(--spot-color, rgba(212, 175, 55, 0.15)), transparent 65%);
+  background: radial-gradient(420px circle at var(--spot-x, 50%) var(--spot-y, 50%), var(--spot-color, rgba(206, 175, 106, 0.12)), transparent 65%);
   opacity: 0;
   transition: opacity var(--duration-fast) var(--ease-out-expo);
 }
@@ -373,7 +373,7 @@ summary {
   inline-size: 840px;
   block-size: 840px;
   border-radius: 0;
-  background: radial-gradient(420px circle at 420px 420px, var(--spot-color, rgba(212, 175, 55, 0.15)), transparent 65%);
+  background: radial-gradient(420px circle at 420px 420px, var(--spot-color, rgba(206, 175, 106, 0.12)), transparent 65%);
   transform: translate3d(var(--spot-x, 0px), var(--spot-y, 0px), 0);
   /* This mode expects local pixel coordinates, including an initial center. */
 }
@@ -792,7 +792,7 @@ summary {
   min-block-size: 3.5rem;
   padding: 0.875rem 1.875rem;
   border: 1px solid var(--diriyah-sand);
-  border-top-color: #F5E3BC;
+  border-top-color: #dfcba6;
   border-radius: var(--radius-pill);
   background: var(--diriyah-gold);
   color: var(--tuwaiq-obsidian);
@@ -823,7 +823,7 @@ summary {
 
 :where(.spin-action-btn, .spin-reactor-btn):is(.busy, .is-spinning, [aria-busy="true"]) {
   border-color: var(--ilm-emerald);
-  border-top-color: #6EE7B7;
+  border-top-color: #6fe0f0;
   background: var(--ilm-emerald-deep);
   color: #F8FAFC;
   cursor: progress;

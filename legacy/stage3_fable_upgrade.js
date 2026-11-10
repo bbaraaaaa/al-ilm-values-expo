@@ -1,10 +1,12 @@
-/* Built by tools/build-legacy.ps1 from stage3_fable_upgrade.js (sha256 8e5e37b6d7c8344fcf60d54d989cc50752d8df6d74263fbbbe3195d912fb346e) for older browsers. Do not edit: edit stage3_fable_upgrade.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from stage3_fable_upgrade.js (sha256 89a535363e4e5a4bd999e383d591789b0e99de2ff400e6a89616516684a5964a) for older browsers. Do not edit: edit stage3_fable_upgrade.js and rebuild. */
 (() => {
   "use strict";
   var _a, _b, _c, _d, _e, _f, _g, _h, _i;
   const STORAGE_KEY = "al_ilm_hikmah_v2";
   const SCENARIOS_KEY = "al_ilm_scenarios_v2";
-  const VALUES = Array.isArray((_a = window.AL_ILM_DATA) == null ? void 0 : _a.values) ? window.AL_ILM_DATA.values : [];
+  const VALUES = (Array.isArray((_a = window.AL_ILM_DATA) == null ? void 0 : _a.values) ? window.AL_ILM_DATA.values : []).map(
+    (v) => window.ALM_PALETTE ? window.ALM_PALETTE.paint(v) : v
+  );
   const SCENARIOS = Array.isArray((_b = window.AL_ILM_DATA) == null ? void 0 : _b.scenarios) ? window.AL_ILM_DATA.scenarios : [];
   const $ = (id) => document.getElementById(id);
   const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));

@@ -3,12 +3,14 @@
  *
  * The motion language of the reference clips, applied to the existing page:
  *   A. the home emblem turns and flies into the header logo, which catches
- *      it; the intro lines rise at their own speeds and dissolve at the top
+ *      it; the header logo stays hidden until the emblem lands there (one
+ *      emblem on screen at a time); the intro lines rise at their own speeds
+ *      and dissolve at the top
  *   B. a giant faint word behind each section title, drifting with the scroll
  *   C. the 3D ring of value cards settles as its section arrives
  *   D. the light of the page takes the colour of the section / chosen value
- *   F. a thin progress line in the floating section bar
  *   G. a value card grows into the value window (View Transitions API)
+ *   (F, a progress line in the section bar, was removed in v5.13)
  *   (E, titles coming into focus and cards tilting in, is CSS only)
  *
  * Smoothness and cost:
@@ -24,8 +26,8 @@
  *       high   everything
  *       medium everything but the blur and the CSS focus / tilt entrances
  *       low    (classroom boards, TVs) the emblem flight without the 3D turn,
- *              the intro dissolve without blur, the giant words, the
- *              progress line; no ring tilt, no colour light, no card morph
+ *              the intro dissolve without blur, the giant words; no ring
+ *              tilt, no colour light, no card morph
  *     and perf_tier.js steps the level down by itself if frames drop while
  *     this scrubs (PerfTier.watch)
  * Like the rest of the exhibit (CSS sections 12 and 20.9) the motion stays
@@ -183,16 +185,6 @@
   var ambient = doc.getElementById('topAmbient');
   var encycCard = doc.getElementById('encycMainCard');
 
-  // F. progress line in the floating section bar
-  var dock = doc.querySelector('.glass-dock.floating-dock');
-  var progress = null;
-  if (dock) {
-    progress = doc.createElement('span');
-    progress.className = 'ms-progress';
-    progress.setAttribute('aria-hidden', 'true');
-    dock.appendChild(progress);
-  }
-
   // ---- measuring (once, then only when something changes size) -----------
   // All reads first, then the few writes (the giant words' places).
   var M = null;
@@ -259,9 +251,18 @@
   var introReady = false;
   var introPromoted = false;
   var caught = false;
+  var lastP = 0; // how far the emblem had flown on the previous frame
+  // The header logo waits for the emblem (one emblem on screen at a time):
+  // hidden on the home screen and while the emblem is on its way, it appears
+  // as the flying copy fades into it. Only where the flight happens (a header
+  // that stays on screen); elsewhere, and without this script, it just shows.
+  function brandShow(o) {
+    if (brand) put(brand, undefined, o);
+  }
   function frameIntro(S, level, still, brandRect) {
     var I = M.intro;
     var inRange = !!I && !still && S < I.top + I.h + M.vh;
+    var canFly = !!(M.pinned && brandImg && flyer && M.emblem);
     var promote = inRange && introReady;
     if (promote !== introPromoted) {
       introPromoted = promote;
@@ -275,7 +276,9 @@
         clear(emblem);
       }
       caught = false;
+      lastP = inRange ? 0 : 1; // at the top: not flown yet; far below: landed long ago
       if (flyer) put(flyer, undefined, '0');
+      brandShow(inRange && canFly ? '0' : '');
       return;
     }
     introLive = true;
@@ -295,11 +298,21 @@
     var p = clamp01(S / E.travel);
     var e = easeInOut(p);
     var spin = level !== 'low' ? ' perspective(700px) rotateY(' + r(360 * e) + 'deg)' : '';
-    if (M.pinned && brandImg && flyer) {
+    if (canFly) {
       put(emblem, '', '0', '');
+      // the logo catches the emblem as it lands (also after a jump, as from
+      // «ابدأ الجولة»; not when the page comes back up from further down)
+      if (p >= 0.97 && !caught && lastP < 0.97) {
+        caught = true;
+        catchLogo();
+      } else if (p < 0.6) {
+        caught = false;
+      }
+      lastP = p;
       if (p >= 1) {
         // landed: the copy has faded into the logo; nothing left to move
         put(flyer, undefined, '0');
+        brandShow('');
         return;
       }
       // fly to the logo in the folded header and land on it exactly
@@ -311,20 +324,17 @@
       var x = E.cx + (bx - E.cx) * e;
       var y = E.cy + (by - E.cy) * e;
       var sc = 1 + ((b.width || E.w) / E.w - 1) * e;
+      var landing = smooth(0.82, 1, p);
       put(
         flyer,
         'translate3d(' + r(x - E.w / 2) + 'px,' + r(y - E.h / 2) + 'px,0)' + spin + ' scale(' + r(sc) + ')',
-        String(r(1 - smooth(0.82, 1, p)))
+        String(r(1 - landing))
       );
-      if (p >= 0.97 && !caught) {
-        caught = true;
-        catchLogo();
-      } else if (p < 0.6) {
-        caught = false;
-      }
+      brandShow(String(r(landing))); // the copy fades into the logo as the logo appears
     } else {
       // the header scrolls away (phones): rise faster, turn, and fade
       if (flyer) put(flyer, undefined, '0');
+      brandShow('');
       put(
         emblem,
         'translate3d(0,' + r(-S * 0.3) + 'px,0)' + spin + ' scale(' + r(1 - 0.3 * e) + ')',
@@ -399,7 +409,12 @@
     for (var i = 0; i < DATA.length; i++) if (DATA[i].id === id) return DATA[i].accent;
     return DATA[0] ? DATA[0].accent : '#10b981';
   }
+  // the page light in the Dawn Sea colours (window.ALM_PALETTE, fable_engine.js)
   function sectionColor(id) {
+    var c = rawSectionColor(id);
+    return window.ALM_PALETTE && c ? window.ALM_PALETTE.accent(c) : c;
+  }
+  function rawSectionColor(id) {
     if (id === 'hero-section') {
       // the ring's colour, as fable_engine.js sets it on #topAmbient (inline
       // style: read without asking the browser to compute styles)
@@ -445,11 +460,6 @@
     atmoTimer = setTimeout(applyAtmo, atmoShown ? 160 : 0);
   }
 
-  // ---- F. progress line ---------------------------------------------------
-  function frameProgress(S) {
-    if (!progress) return;
-    put(progress, 'scaleX(' + Math.round(clamp01(S / M.max) * 1000) / 1000 + ')');
-  }
 
   // ---- the loop ------------------------------------------------------------
   var queued = false;
@@ -482,7 +492,6 @@
     frameGiants(Y, level, still);
     frameRing(Y, level, still);
     frameAtmo(S, level);
-    frameProgress(Y);
 
     if (eased !== S) {
       lastAt = now;

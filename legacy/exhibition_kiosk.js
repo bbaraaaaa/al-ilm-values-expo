@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 d2f6b007835b46295021fd6dbff1acf473447230e4d45ba8b787bb1974b32e57) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 04e00481be7d276bd231b1be3e082554284b62e6a6054ff17fbbcb5af319cf3f) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
 (() => {
   "use strict";
   var _a;
@@ -122,17 +122,26 @@
     event.preventDefault();
   });
   const FS_PREF = "alm_fullscreen";
+  const FS_SHOW = "alm_fs_show";
   const docEl = document.documentElement;
   const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
   const fsSupported = Boolean(docEl.requestFullscreen || docEl.webkitRequestFullscreen) && document.fullscreenEnabled !== false;
   const fsWanted = () => {
-    const asked = /[?&]fs=([01])\b/.exec(location.search);
-    if (asked) return asked[1] === "1";
+    const asked = /[?&]fs=(0|1|auto)\b/.exec(location.search);
+    let kept = null;
+    try {
+      if (asked && asked[1] === "auto") localStorage.removeItem(FS_SHOW);
+      else if (asked) localStorage.setItem(FS_SHOW, asked[1]);
+      kept = localStorage.getItem(FS_SHOW);
+    } catch (_) {
+    }
+    if (asked && asked[1] !== "auto") return asked[1] === "1";
+    if (kept === "1" || kept === "0") return kept === "1";
     const ua = navigator.userAgent || "";
     const device = window.PerfTier && window.PerfTier.device || "";
-    if (device === "ipad" || /iPhone|iPod/.test(ua)) return false;
+    if (device === "ipad" || /iPad|iPhone|iPod|Macintosh/.test(ua)) return false;
     if (window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches) return false;
-    return true;
+    return /Android/.test(ua) || device === "tv" || device === "board";
   };
   const readPref = () => {
     try {

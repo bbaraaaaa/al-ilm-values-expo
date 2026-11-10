@@ -13,9 +13,9 @@
   <meta name="apple-mobile-web-app-title" content="معرض القيم" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
-  <meta name="theme-color" content="#050a08" />
-  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.12.0" />
-  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.12.0" />
+  <meta name="theme-color" content="#051920" />
+  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.0" />
+  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.0" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
   <title>معرض ترسيخ القيم — ثانوية العلم النافع الأهلية</title>
@@ -26,11 +26,11 @@
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
   <!-- Device performance level (sets html[data-perf]) before the styles apply -->
-  <script src="./perf_tier.js?v=5.12.0"></script>
-  <link rel="stylesheet" href="./astra_visionos.css?v=5.12.0" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.12.0" />
+  <script src="./perf_tier.js?v=5.13.0"></script>
+  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.0" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.0" />
   <!-- Scroll-linked motion (emblem flight, giant words, ring settle, page light) -->
-  <link rel="stylesheet" href="./motion_scroll.css?v=5.12.0" />
+  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.0" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -56,8 +56,8 @@
 
     body {
       background-image:
-        radial-gradient(960px 520px at 82% -6%, rgba(16, 185, 129, 0.11), transparent 62%),
-        radial-gradient(840px 480px at 14% 8%, rgba(212, 175, 55, 0.09), transparent 60%);
+        radial-gradient(960px 520px at 82% -6%, rgba(55, 175, 191, 0.088), transparent 62%),
+        radial-gradient(840px 480px at 14% 8%, rgba(206, 175, 106, 0.072), transparent 60%);
     }
 
     .astra-shell,
@@ -68,8 +68,8 @@
 
     body.projector-day {
       background-image:
-        radial-gradient(920px 480px at 80% -6%, rgba(16, 185, 129, 0.07), transparent 60%),
-        radial-gradient(820px 460px at 15% 8%, rgba(212, 175, 55, 0.09), transparent 58%);
+        radial-gradient(920px 480px at 80% -6%, rgba(55, 175, 191, 0.056), transparent 60%),
+        radial-gradient(820px 460px at 15% 8%, rgba(206, 175, 106, 0.072), transparent 58%);
     }
 
     .hidden {
@@ -120,7 +120,7 @@
       background: linear-gradient(160deg,
           color-mix(in srgb, var(--card-accent) 15%, #ffffff) 0%,
           #fffdfa 100%);
-      border-color: color-mix(in srgb, var(--card-accent) 48%, rgba(9, 20, 38, 0.18));
+      border-color: color-mix(in srgb, var(--card-accent) 48%, rgba(0, 24, 32, 0.144));
     }
 
     /* 3D Card Interior Anatomy — exhibition size for iPad Air 13" (1366x1024) */
@@ -180,22 +180,22 @@
 
     body.projector-day .value-grid-card {
       background: linear-gradient(160deg,
-          color-mix(in srgb, var(--card-accent, #D4AF37) 15%, #ffffff) 0%,
+          color-mix(in srgb, var(--card-accent, #ceaf6a) 15%, #ffffff) 0%,
           #fffdfa 100%);
-      border-color: color-mix(in srgb, var(--card-accent, #D4AF37) 48%, rgba(9, 20, 38, 0.18));
+      border-color: color-mix(in srgb, var(--card-accent, #ceaf6a) 48%, rgba(0, 24, 32, 0.144));
     }
 
     .value-grid-card.spin-roulette-active {
       transform: translateY(-4px) scale(1.025);
       border-color: #ffffff !important;
-      box-shadow: 0 0 0 2px var(--card-accent, #D4AF37), 0 24px 54px rgba(0, 0, 0, 0.55);
+      box-shadow: 0 0 0 2px var(--card-accent, #ceaf6a), 0 24px 54px rgba(0, 0, 0, 0.55);
     }
 
     @media (hover: hover) and (pointer: fine) {
       .value-grid-card:hover {
         transform: translateY(-3px);
-        border-color: var(--card-accent, #D4AF37);
-        box-shadow: 0 0 24px -4px color-mix(in srgb, var(--card-accent, #D4AF37) 35%, transparent), 0 20px 45px rgba(0, 0, 0, 0.6);
+        border-color: var(--card-accent, #ceaf6a);
+        box-shadow: 0 0 24px -4px color-mix(in srgb, var(--card-accent, #ceaf6a) 35%, transparent), 0 20px 45px rgba(0, 0, 0, 0.6);
       }
     }
 
@@ -243,8 +243,8 @@
     }
 
     body.projector-day .vcard-group-pill {
-      background: rgba(9, 20, 38, 0.06);
-      border-color: rgba(9, 20, 38, 0.14);
+      background: rgba(0, 24, 32, 0.048);
+      border-color: rgba(0, 24, 32, 0.112);
     }
 
     .vcard-num {
@@ -257,7 +257,7 @@
     }
 
     body.projector-day .vcard-num {
-      background: rgba(9, 20, 38, 0.07);
+      background: rgba(0, 24, 32, 0.056);
     }
 
     /* Card centre: name, one-line description, short quote */
@@ -283,7 +283,7 @@
     }
 
     body.projector-day .vcard-title {
-      color: #0b1528;
+      color: #001921;
     }
 
     .vcard-sub {
@@ -308,7 +308,7 @@
     }
 
     body.projector-day .vcard-quote {
-      color: rgba(11, 21, 40, 0.76);
+      color: rgba(0, 25, 33, 0.608);
     }
 
     /* Card bottom: one short call to action */
@@ -334,8 +334,8 @@
       /* fixed fallbacks first, for older TV browsers without color-mix() */
       border: 1px solid rgba(255, 255, 255, 0.28);
       background: rgba(255, 255, 255, 0.1);
-      border: 1px solid color-mix(in srgb, var(--card-accent, #10b981) 55%, transparent);
-      background: color-mix(in srgb, var(--card-accent, #10b981) 15%, transparent);
+      border: 1px solid color-mix(in srgb, var(--card-accent, #37afbf) 55%, transparent);
+      background: color-mix(in srgb, var(--card-accent, #37afbf) 15%, transparent);
       color: #ffffff;
       font-size: 0.95rem;
       font-weight: 800;
@@ -343,8 +343,8 @@
     }
 
     .spatial-orbit-stage .value-card-3d.is-center .vcard-tap-hint {
-      background: color-mix(in srgb, var(--card-accent, #10b981) 26%, transparent);
-      box-shadow: 0 0 20px color-mix(in srgb, var(--card-accent, #10b981) 30%, transparent);
+      background: color-mix(in srgb, var(--card-accent, #37afbf) 26%, transparent);
+      box-shadow: 0 0 20px color-mix(in srgb, var(--card-accent, #37afbf) 30%, transparent);
     }
 
     .value-card-3d:active .vcard-tap-hint,
@@ -389,7 +389,7 @@
     }
 
     body.projector-day .orbit-dot {
-      background: rgba(9, 20, 38, 0.22);
+      background: rgba(0, 24, 32, 0.176);
     }
 
     .orbit-dot.active {
@@ -402,7 +402,7 @@
       inline-size: 3rem;
       block-size: 3rem;
       border-radius: 0.95rem;
-      background: linear-gradient(145deg, rgba(16, 185, 129, 0.22), rgba(212, 175, 55, 0.2));
+      background: linear-gradient(145deg, rgba(55, 175, 191, 0.176), rgba(206, 175, 106, 0.16));
       border: 1px solid var(--active-border);
       display: inline-flex;
       align-items: center;
@@ -435,8 +435,8 @@
       font-weight: 800;
       padding: 0.15rem 0.6rem;
       border-radius: 999px;
-      background: rgba(16, 185, 129, 0.14);
-      border: 1px solid rgba(16, 185, 129, 0.38);
+      background: rgba(55, 175, 191, 0.112);
+      border: 1px solid rgba(55, 175, 191, 0.304);
       color: var(--best-ink);
     }
 
@@ -509,8 +509,8 @@
       gap: 0.5rem;
       padding: 0.3rem 0.85rem;
       border-radius: 999px;
-      background: rgba(212, 175, 55, 0.12);
-      border: 1px solid rgba(212, 175, 55, 0.35);
+      background: rgba(206, 175, 106, 0.096);
+      border: 1px solid rgba(206, 175, 106, 0.28);
       color: var(--text-accent);
       font-size: 0.78rem;
       font-weight: 800;
@@ -525,7 +525,7 @@
     }
 
     .hero-headline .accent-span {
-      color: var(--ilm-emerald);
+      color: var(--alm-teal, #61ced4);
     }
 
     .hero-slogan {
@@ -879,7 +879,7 @@
 <body>
   <div class="astra-shell">
     <!-- ======================================================================
-         VISIONOS TOP SPATIAL NAVIGATION & INSTANT ARABIC SEARCH
+         VISIONOS TOP SPATIAL NAVIGATION
          ====================================================================== -->
     <header class="top-nav" role="banner">
       <a href="#hero-section" onclick="switchView('all'); return false;" class="nav-brand">
@@ -915,24 +915,8 @@
         </button>
       </nav>
 
-      <!-- Instant Normalized Arabic Search -->
-      <div class="vision-search-wrap" role="search">
-        <span class="search-icon-start" aria-hidden="true">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.5-3.5" stroke-linecap="round" />
-          </svg>
-        </span>
-        <input
-          id="globalSearchInput"
-          type="search"
-          class="vision-search-input"
-          placeholder="ابحث في القيم والقصص..."
-          aria-label="ابحث في القيم والقصص الواقعية"
-        />
-        <button id="clearSearchBtn" type="button" class="search-clear-btn hidden">مسح</button>
-      </div>
-
+      <!-- (the header search was removed in v5.13 at the owner's request;
+           fable_engine.js / exhibition_kiosk.js skip it when it is absent) -->
     </header>
 
     <main id="mainContent">
@@ -970,7 +954,7 @@
            SECTION 1: 3D SPATIAL ORBIT STAGE & HIGH-SPEED SPIN REACTOR
            ==================================================================== -->
       <section id="hero-section" class="spa-section" style="position: relative;">
-        <div id="topAmbient" class="ambient-orb" style="background: #2DD4BF;"></div>
+        <div id="topAmbient" class="ambient-orb" style="background: #65d4c3;"></div>
 
         <div class="hero-top-grid">
           <div>
@@ -1142,7 +1126,7 @@
                   <p id="encycP2" style="margin: 0; font-size: 0.84rem; line-height: 1.75; color: var(--text-muted);"></p>
                 </div>
                 <div>
-                  <div style="font-size: 0.8rem; font-weight: 800; color: #38bdf8; margin-block-end: 0.35rem;">٣. الأثر في رؤية السعودية 2030</div>
+                  <div style="font-size: 0.8rem; font-weight: 800; color: #76c9f8; margin-block-end: 0.35rem;">٣. الأثر في رؤية السعودية 2030</div>
                   <p id="encycP3" style="margin: 0; font-size: 0.84rem; line-height: 1.75; color: var(--text-muted);"></p>
                 </div>
               </div>
@@ -1350,7 +1334,7 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=5.12.0"></script>
+  <script src="./opus_content.js?v=5.13.0"></script>
   <!-- Older browsers (many classroom boards / smart TVs, Chrome < 80) cannot
        read the modern scripts below: the second line only parses in a modern
        browser, so ALM_LEGACY stays true elsewhere, and after each modern script
@@ -1358,18 +1342,18 @@
        (legacy/, built by tools/build-legacy.ps1) is loaded instead. -->
   <script>window.ALM_LEGACY = true;</script>
   <script>window.ALM_LEGACY = ({})?.x ?? false;</script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.12.0"><\/script>');</script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.0"><\/script>');</script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=5.12.0"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.12.0"><\/script>');</script>
+  <script src="./fable_engine.js?v=5.13.0"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.0"><\/script>');</script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=5.12.0"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.12.0"><\/script>');</script>
+  <script src="./stage3_fable_upgrade.js?v=5.13.0"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.0"><\/script>');</script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=5.12.0"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.12.0"><\/script>');</script>
+  <script src="./exhibition_kiosk.js?v=5.13.0"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.0"><\/script>');</script>
 
   <!-- Scroll-linked motion: written for older board browsers too (no legacy copy) -->
-  <script src="./motion_scroll.js?v=5.12.0"></script>
+  <script src="./motion_scroll.js?v=5.13.0"></script>
 </body>
 </html>

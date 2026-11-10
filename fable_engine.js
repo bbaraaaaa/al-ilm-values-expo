@@ -18,7 +18,43 @@
   }
 
   const DATA = window.AL_ILM_DATA || {};
-  const VALUES = Array.isArray(DATA.values) ? DATA.values : [];
+
+  /* Dawn Sea palette (v5.13.0). The content keeps its own colours
+   * (opus_content.js is read-only); the site shows each value in a calmer
+   * version of the same hue, all twelve at one visual weight, and pulls the
+   * card grounds halfway to the sea-teal surface. Values are copied, never
+   * changed in place; stage3_fable_upgrade.js and motion_scroll.js use the
+   * same copies through window.ALM_PALETTE. */
+  const ALM_PALETTE = (window.ALM_PALETTE = (() => {
+    const ACCENT = {
+      '#2DD4BF': '#65d4c3', '#10B981': '#80d3a4', '#38BDF8': '#76c9f8', '#F59E0B': '#f1ad79',
+      '#A78BFA': '#bab3fe', '#60A5FA': '#93c0ff', '#D4AF37': '#cdc06d', '#FB7185': '#f9a1ac',
+      '#84CC16': '#a7cc83', '#22D3EE': '#60d0e3', '#FBBF24': '#e1b66c', '#C084FC': '#daa8ea'
+    };
+    const GROUND = {
+      '#0b2e2b': '#112c34', '#06171d': '#081d23', '#092c1e': '#0e2931', '#051512': '#03141b',
+      '#0b253c': '#0b2433', '#061322': '#081b26', '#332109': '#22231c', '#171108': '#141a19',
+      '#1f1638': '#171d31', '#0d0b1e': '#0d1724', '#0f213d': '#0d2233', '#071124': '#091a27',
+      '#2d240b': '#1e241d', '#141108': '#121a19', '#311322': '#231c26', '#160a14': '#14171f',
+      '#1b2c0d': '#102a33', '#0c1608': '#00161e', '#092b36': '#0a2730', '#05141d': '#081b23',
+      '#2f2309': '#20241c', '#151006': '#121a18', '#27133a': '#1c1c32', '#11091f': '#101624'
+    };
+    const painted = new WeakMap();
+    const accent = (c) => (typeof c === 'string' && ACCENT[c.toUpperCase()]) || c;
+    const surface = (s) =>
+      typeof s === 'string' ? s.replace(/#[0-9a-fA-F]{6}\b/g, (h) => GROUND[h.toLowerCase()] || h) : s;
+    const paint = (v) => {
+      if (!v || typeof v !== 'object') return v;
+      let p = painted.get(v);
+      if (!p) {
+        p = Object.assign({}, v, { accent: accent(v.accent), surface: surface(v.surface) });
+        painted.set(v, p);
+      }
+      return p;
+    };
+    return { accent, surface, paint };
+  })());
+  const VALUES = (Array.isArray(DATA.values) ? DATA.values : []).map(ALM_PALETTE.paint);
   const ICONS = DATA.icons || {};
 
   // Flatten all 36 real-life stories from the 12 values
