@@ -14,8 +14,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
   <meta name="theme-color" content="#050a08" />
-  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.9.3" />
-  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.9.3" />
+  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.11.1" />
+  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.11.1" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
   <title>معرض ترسيخ القيم — ثانوية العلم النافع الأهلية</title>
@@ -26,9 +26,9 @@
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
   <!-- Device performance level (sets html[data-perf]) before the styles apply -->
-  <script src="./perf_tier.js?v=5.9.3"></script>
-  <link rel="stylesheet" href="./astra_visionos.css?v=5.9.3" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.9.3" />
+  <script src="./perf_tier.js?v=5.11.1"></script>
+  <link rel="stylesheet" href="./astra_visionos.css?v=5.11.1" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.11.1" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -885,7 +885,6 @@
           <!-- Official school logo (symbol only; the name is written beside it),
                recoloured to the site palette: night + day projector variants -->
           <img class="logo-night" src="./assets/school-emblem.svg" alt="" width="44" height="44" decoding="async" />
-          <img class="logo-day" src="./assets/school-emblem.svg" alt="" width="44" height="44" decoding="async" />
         </span>
         <div class="brand-titles">
           <div class="brand-school-row">
@@ -948,7 +947,7 @@
           <div class="intro-credits" role="group" aria-label="فريق العمل">
             <p><span class="intro-credits-role">تصميم الموقع وتطويره:</span> <span class="intro-credits-name">براء زمزمي</span></p>
             <p><span class="intro-credits-role">أفكار ومقترحات:</span> <span class="intro-credits-name">عمر غندورة</span>، <span class="intro-credits-name">عبدالإله الشريف</span>، <span class="intro-credits-name">فيصل الزهراني</span>، <span class="intro-credits-name">عبدالله اللقماني</span></p>
-            <p><span class="intro-credits-role">إشراف:</span> رائد النشاط <span class="intro-credits-name">الأستاذ عبدالإله هوساوي</span>، والموجه الطلابي <span class="intro-credits-name">الأستاذ عبدالرحمن الهذلي</span></p>
+            <p><span class="intro-credits-role">إشراف:</span> رائد النشاط <span class="intro-credits-name">الأستاذ عبدالإله هوساوي</span>، والموجهان الطلابيان <span class="intro-credits-name">الأستاذ عبدالرحمن الهذلي</span> و<span class="intro-credits-name">الأستاذ هاني مأمون</span></p>
           </div>
           <p class="intro-lead">
             مرحبًا بكم في معرض ترسيخ القيم، الذي يتبنّاه النشاط الطلابي والتوجيه الطلابي بمتابعة إدارة ثانوية العلم النافع.
@@ -1051,6 +1050,7 @@
             <p class="section-description">
               لكل قيمة من القيم الاثنتي عشرة ثلاث قصص ملهمة: من السيرة والتاريخ الإسلامي، ومن واقع طلاب ثانوية العلم النافع، ومن منجزات المملكة ورؤية 2030.
             </p>
+            <p class="voice-note">▶ كل قصة تُقرأ بصوت مولَّد بالذكاء الاصطناعي، والآيات بتلاوة الشيخ ياسر الدوسري.</p>
           </div>
           <div style="display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap;">
             <button type="button" id="randomStoryBtn" onclick="openRandomStory()" class="filter-pill">
@@ -1080,6 +1080,7 @@
             <p class="section-description">
               استكشف الثمرات النفسية والعلمية والوطنية لكل قيمة، وأربع ممارسات عملية يومية قابلة للتطبيق الفوري داخل المدرسة والمجتمع.
             </p>
+            <p class="voice-note">▶ للاستماع: القراءة بصوت مولَّد بالذكاء الاصطناعي، والآيات بتلاوة الشيخ ياسر الدوسري.</p>
           </div>
         </div>
 
@@ -1113,7 +1114,7 @@
             <div class="encyc-two-cols">
               <div class="surface-card spotlight-surface">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-block-end: 1rem;">
-                  <h4 style="margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--best-ink);">الثمرات والفوائد الـ ٣ الكبرى</h4>
+                  <h4 class="ra-head" style="margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--best-ink);">الثمرات والفوائد الـ ٣ الكبرى <span class="ra-slot" data-ra-btn></span></h4>
                   <span class="brand-branch-pill">نفسي • علمي • وطني</span>
                 </div>
                 <ul id="encycBenefitsList" class="encyc-list"></ul>
@@ -1121,7 +1122,7 @@
 
               <div class="surface-card spotlight-surface">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-block-end: 1rem;">
-                  <h4 style="margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--text-accent);">٤ خطوات لتجسيد القيمة سلوكاً</h4>
+                  <h4 class="ra-head" style="margin: 0; font-size: 1.08rem; font-weight: 900; color: var(--text-accent);">٤ خطوات لتجسيد القيمة سلوكاً <span class="ra-slot" data-ra-btn></span></h4>
                   <span class="vcard-group-pill">✨ إلهام سلوكي</span>
                 </div>
                 <ul id="encycStepsList" class="encyc-list" tabindex="-1"></ul>
@@ -1158,6 +1159,7 @@
             <p class="section-description">
               مقارنة واقعية مباشرة تبرز كيف تصنع كل قيمة فرقاً جوهرياً في شخصية الطالب وبيئة الفصل ومستقبل الوطن.
             </p>
+            <p class="voice-note">▶ للاستماع: القراءة بصوت مولَّد بالذكاء الاصطناعي.</p>
           </div>
           <div id="comparisonFilterBar" class="filter-bar" role="group" aria-label="تصفية مقارنات الأثر">
             <button type="button" class="filter-pill active" data-comp-group="all" aria-pressed="true">جميع القيم (١٢)</button>
@@ -1174,7 +1176,6 @@
     <footer style="padding-block: 2rem 1rem; border-block-start: 1px solid var(--border-line); text-align: center; color: var(--text-muted); font-size: 0.84rem;">
       <span class="footer-logo-tile">
         <img class="logo-night" src="./assets/school-emblem.svg" alt="شعار مدارس العلم النافع الأهلية" width="132" height="132" loading="lazy" decoding="async" />
-        <img class="logo-day" src="./assets/school-emblem.svg" alt="شعار مدارس العلم النافع الأهلية" width="132" height="132" loading="lazy" decoding="async" />
       </span>
       <strong style="color: var(--text-main);">مدارس العلم النافع الأهلية — ثانوية العلم النافع الأهلية</strong>
       <span> • مشاركة في معرض ترسيخ القيم • مشروع ترسيخ القيم وتعزيز الهوية الوطنية • معاً .. نبني جيلاً متمسكاً بقيمه، وفخوراً بوطنه</span>
@@ -1254,6 +1255,7 @@
             <p id="audioNote" class="studio-audio-note" role="status" hidden></p>
 
             <p id="editorialLyrics" class="editorial-lyrics-text"></p>
+            <p class="ra-hint">اضغط على أي كلمة ليعود الصوت إليها</p>
 
             <div class="studio-evidence" style="margin: 0;">
               <span style="display: block; font-size: 0.76rem; font-weight: 800; color: var(--text-accent); margin-block-end: 0.2rem;">التأصيل الشرعي للقيمة:</span>
@@ -1265,29 +1267,31 @@
         <!-- Row 2: 3 Real-Life Stories -->
         <div>
           <h3 style="margin: 0 0 0.75rem; font-size: 1rem; font-weight: 900; color: var(--text-accent);">القصص والأمثلة الواقعية الثلاث لتجسيد القيمة:</h3>
+          <p class="voice-note">▶ للاستماع: القراءة بصوت مولَّد بالذكاء الاصطناعي، والآيات بتلاوة الشيخ ياسر الدوسري.</p>
           <div id="modalExamplesGrid" class="studio-3col-grid"></div>
         </div>
 
         <!-- Row 3: Benefits + 4 Practical Steps + Comparison -->
         <div class="studio-3col-grid">
           <div class="studio-story-card">
-            <div style="font-size: 0.9rem; font-weight: 900; color: var(--best-ink); margin-block-end: 0.4rem;">الثمرات والفوائد التربوية:</div>
+            <div class="ra-head" style="font-size: 0.9rem; font-weight: 900; color: var(--best-ink); margin-block-end: 0.4rem;">الثمرات والفوائد التربوية: <span class="ra-slot" data-ra-btn></span></div>
             <ul id="modalBenefitsList" class="studio-list"></ul>
           </div>
 
           <div id="studioPracticeSection" tabindex="-1" class="studio-story-card">
-            <div style="font-size: 0.9rem; font-weight: 900; color: var(--text-accent); margin-block-end: 0.4rem;">✨ ٤ خطوات لتجسيد القيمة في حياتنا:</div>
+            <div class="ra-head" style="font-size: 0.9rem; font-weight: 900; color: var(--text-accent); margin-block-end: 0.4rem;">✨ ٤ خطوات لتجسيد القيمة في حياتنا: <span class="ra-slot" data-ra-btn></span></div>
             <ul id="modalStepsList" class="studio-list"></ul>
           </div>
 
           <div class="studio-story-card" style="justify-content: space-between; gap: 0.75rem;">
+            <div class="ra-head" style="font-size: 0.9rem; font-weight: 900; color: var(--text-accent);">الأثر بين حضور القيمة وغيابها: <span class="ra-slot" data-ra-btn></span></div>
             <div class="comp-box comp-box-pos">
               <div class="comp-box-label">✓ عند تطبيق القيمة:</div>
-              <p id="modalWithValue"></p>
+              <p id="modalWithValue" data-ra-f="0"></p>
             </div>
             <div class="comp-box comp-box-neg">
               <div class="comp-box-label">✕ عند غياب القيمة:</div>
-              <p id="modalWithoutValue"></p>
+              <p id="modalWithoutValue" data-ra-f="1"></p>
             </div>
           </div>
         </div>
@@ -1306,7 +1310,7 @@
             <span id="storyReaderMeta" class="brand-branch-pill">من واقع ثانوية العلم النافع</span>
             <span id="storyReaderCounter" class="vcard-group-pill" dir="ltr">1 / 36</span>
           </div>
-          <h3 id="storyReaderTitle" class="studio-title" style="font-size: 1.35rem; margin-block-start: 0.35rem;"></h3>
+          <h3 id="storyReaderTitle" data-ra-f="0" class="studio-title" style="font-size: 1.35rem; margin-block-start: 0.35rem;"></h3>
         </div>
         <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
           <button type="button" id="readerPrevBtn" onclick="stepStoryReader(-1)" class="filter-pill" aria-label="القصة السابقة" title="القصة السابقة">▶</button>
@@ -1318,7 +1322,7 @@
       </div>
 
       <div class="manager-body">
-        <div id="storyReaderBody" class="reader-body-text"></div>
+        <div id="storyReaderBody" data-ra-f="1" class="reader-body-text"></div>
         <aside id="storyReaderInsight" class="reader-insight-card" aria-label="إضاءة تربوية وسؤال للحوار">
           <div class="reader-insight-label">💡 إضاءة تربوية وسؤال للتأمل والحوار</div>
           <p id="storyReaderInsightText" class="reader-insight-text"></p>
@@ -1344,12 +1348,23 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=5.9.3"></script>
+  <script src="./opus_content.js?v=5.11.1"></script>
+  <!-- Older browsers (many classroom boards / smart TVs, Chrome < 80) cannot
+       read the modern scripts below: the second line only parses in a modern
+       browser, so ALM_LEGACY stays true elsewhere, and after each modern script
+       (which then simply fails to load there) the same code lowered for them
+       (legacy/, built by tools/build-legacy.ps1) is loaded instead. -->
+  <script>window.ALM_LEGACY = true;</script>
+  <script>window.ALM_LEGACY = ({})?.x ?? false;</script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.11.1"><\/script>');</script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=5.9.3"></script>
+  <script src="./fable_engine.js?v=5.11.1"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.11.1"><\/script>');</script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=5.9.3"></script>
+  <script src="./stage3_fable_upgrade.js?v=5.11.1"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.11.1"><\/script>');</script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=5.9.3"></script>
+  <script src="./exhibition_kiosk.js?v=5.11.1"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.11.1"><\/script>');</script>
 </body>
 </html>

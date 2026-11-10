@@ -8,8 +8,10 @@
  *   medium — most phones (A13–A15 iPhones, mid-range Android), Android
  *            tablets, older laptops: the same page and motion, without live
  *            blur filters, with fewer cards drawn in the 3D ring.
- *   low    — entry-level phones, smart TVs, browsers without a GPU: only
- *            cheap GPU motion (move / fade), shorter animations, no glows.
+ *   low    — entry-level phones, smart TVs, interactive classroom boards
+ *            (BenQ and the like), browsers without a GPU: only cheap GPU
+ *            motion (move / fade), shorter animations, no glows, and solid
+ *            panels instead of the live glass blur.
  *
  * The level starts as a guess from the kind of device, is refined once by a
  * short CPU check after the page has loaded (remembered for a week), and is
@@ -40,7 +42,16 @@
   var isTV = /SmartTV|SMART-TV|Tizen|Web0S|WebOS|NetCast|BRAVIA|HbbTV|CrKey|GoogleTV|Android TV|AFT[A-Z]|Roku|VIDAA|Viera/i.test(ua);
   var isAndroid = /Android/.test(ua);
   var isPhone = isIPhone || (isAndroid && /Mobile/.test(ua)) || (!isIPad && touchPoints > 0 && sw < 600);
-  var device = isIPad ? 'ipad' : isTV ? 'tv' : isPhone ? 'phone' : isAndroid ? 'tablet' : 'computer';
+  // Interactive classroom displays (BenQ, ViewSonic, Promethean, SMART, Newline,
+  // MAXHUB …): a big Android or Linux touch screen driven by a phone-class chip
+  // at 4K — or a board that names itself. They get the light level.
+  var isBoard =
+    !isTV &&
+    !isPhone &&
+    (/BenQ|\bR[MPE]\d{4}|ViewBoard|ViewSonic|Promethean|ActivPanel|SMART ?Board|Newline|MAXHUB|Clevertouch|Boxlight|i3TOUCH|IdeaHub|Hitevision|Horion|Optoma|InFocus|\bIFP/i.test(ua) ||
+      (isAndroid && !/Mobile/.test(ua) && sh >= 1800) ||
+      (/Linux/.test(ua) && !isAndroid && !/CrOS/.test(ua) && touchPoints > 0 && sh >= 1800));
+  var device = isIPad ? 'ipad' : isTV ? 'tv' : isBoard ? 'board' : isPhone ? 'phone' : isAndroid ? 'tablet' : 'computer';
 
   // iPhones by screen size: every model with a 375×667, 375×812, 390×844,
   // 414×896 or 428×926 screen has an A15 chip or older (iPhone 8 to 14, SE);
@@ -82,7 +93,7 @@
   // First guess, from the kind of device only.
   function guess() {
     if (device === 'ipad') return 2;
-    if (device === 'tv') return 0;
+    if (device === 'tv' || device === 'board') return 0;
     if (isIPhone) return newerIPhone ? 2 : 1;
     if (device === 'phone' || device === 'tablet') {
       if ((memory && memory <= 3) || (cores && cores <= 4)) return 0;
@@ -99,6 +110,9 @@
     if (cpu == null) return level;
     if (device === 'ipad') return cpu === 0 ? 1 : 2; // iPad stays at full quality
     if (isIPhone) return Math.min(level, cpu); // low-power mode or an old iPhone
+    // a smart board fills a 4K panel with a phone's graphics chip: always light
+    // (smooth beats fancy on a classroom screen; ?perf=medium tries more)
+    if (device === 'board') return 0;
     if (noGpu) return 0;
     var l = cpu;
     if (device === 'tv') l = Math.min(l, 1);
@@ -199,7 +213,7 @@
       // clearly slow already: no need to keep the device busy
       if (round < 4 && !(round > 1 && best > 30)) return setTimeout(next, 60);
       cpu = best <= 11 ? 2 : best <= 26 ? 1 : 0;
-      if (device === 'computer' || device === 'tv' || device === 'tablet') noGpu = softwareRendering();
+      if (device === 'computer' || device === 'tv' || device === 'tablet' || device === 'board') noGpu = softwareRendering();
       api.cpuMs = Math.round(best * 10) / 10;
       save();
       var l = compute();
@@ -282,5 +296,45 @@
       last = 0;
       rafId = requestAnimationFrame(frame);
     }
+  }
+
+  // ---- ?diag=1 : what this screen is, for checking a classroom board or TV
+  // from a photo (browser, level, screen, frames per second). Nothing else.
+  if (/[?&]diag=1\b/.test(location.search)) {
+    var showDiag = function () {
+      var box = document.createElement('div');
+      box.setAttribute('dir', 'ltr');
+      box.style.cssText =
+        'position:fixed;z-index:2147483647;left:8px;bottom:8px;max-width:min(96vw,640px);padding:10px 12px;border-radius:10px;' +
+        'background:rgba(0,0,0,.88);color:#d1fae5;font:12px/1.5 monospace;white-space:pre-wrap;pointer-events:none';
+      document.body.appendChild(box);
+      var frames = 0;
+      var t0 = performance.now();
+      var fps = '…';
+      var count = function () {
+        frames++;
+        var now = performance.now();
+        if (now - t0 >= 2000) {
+          fps = Math.round((frames * 1000) / (now - t0));
+          frames = 0;
+          t0 = now;
+          paint();
+        }
+        requestAnimationFrame(count);
+      };
+      var paint = function () {
+        box.textContent =
+          navigator.userAgent +
+          '\nlevel ' + api.level + ' | device ' + device + (window.ALM_LEGACY ? ' | older-browser scripts' : '') +
+          '\nscreen ' + screen.width + 'x' + screen.height + ' @' + (window.devicePixelRatio || 1) +
+          ' | window ' + innerWidth + 'x' + innerHeight +
+          '\ncores ' + (cores || '?') + ' | memory ' + (memory || '?') + ' GB | cpu ' + (api.cpuMs || '?') + ' ms' +
+          (noGpu ? ' | no GPU' : '') + ' | ' + fps + ' fps';
+      };
+      paint();
+      requestAnimationFrame(count);
+    };
+    if (document.body) showDiag();
+    else document.addEventListener('DOMContentLoaded', showDiag);
   }
 })();

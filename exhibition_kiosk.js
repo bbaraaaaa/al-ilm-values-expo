@@ -160,6 +160,106 @@
     event.preventDefault();
   });
 
+  // --------------------------------------------------------------------------
+  // «ملء الشاشة» — only where the browser's own bar stays on screen: Android
+  // phones and tablets, smart TVs and interactive classroom boards (BenQ and
+  // the like). Not on the iPad / iPhone / computers. Once turned on, the next
+  // touch after a reload brings full screen back (browsers allow it only from
+  // a touch), until it is turned off with the same button.
+  // ?fs=1 shows the button on any device (testing), ?fs=0 hides it.
+  // --------------------------------------------------------------------------
+  const FS_PREF = 'alm_fullscreen';
+  const docEl = document.documentElement;
+  const fsElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
+  const fsSupported = Boolean(docEl.requestFullscreen || docEl.webkitRequestFullscreen) && document.fullscreenEnabled !== false;
+  const fsWanted = () => {
+    const asked = /[?&]fs=([01])\b/.exec(location.search);
+    if (asked) return asked[1] === '1';
+    const ua = navigator.userAgent || '';
+    const device = (window.PerfTier && window.PerfTier.device) || '';
+    if (/iPad|iPhone|iPod|Macintosh/.test(ua)) return false;
+    if (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) return false;
+    return /Android/.test(ua) || device === 'tv' || device === 'board';
+  };
+  const readPref = () => {
+    try {
+      return localStorage.getItem(FS_PREF) === '1';
+    } catch (_) {
+      return false;
+    }
+  };
+  const writePref = (on) => {
+    try {
+      localStorage.setItem(FS_PREF, on ? '1' : '0');
+    } catch (_) {}
+  };
+
+  function enterFullscreen() {
+    const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen;
+    if (!req) return;
+    try {
+      const p = req.call(docEl, { navigationUI: 'hide' });
+      if (p && p.catch) p.catch(() => {});
+    } catch (_) {}
+  }
+
+  function exitFullscreen() {
+    const exit = document.exitFullscreen || document.webkitExitFullscreen;
+    if (!exit) return;
+    try {
+      const p = exit.call(document);
+      if (p && p.catch) p.catch(() => {});
+    } catch (_) {}
+  }
+
+  if (fsSupported && fsWanted()) {
+    const ICON_ENTER =
+      '<svg class="fs-icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+    const ICON_EXIT =
+      '<svg class="fs-icon-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+    const fsBtn = document.createElement('button');
+    fsBtn.type = 'button';
+    fsBtn.id = 'fullscreenBtn';
+    fsBtn.className = 'fs-btn';
+    fsBtn.innerHTML = `${ICON_ENTER}${ICON_EXIT}<span class="fs-label"></span>`;
+    // in the header, after the search (on phones the bottom bar holds the sections)
+    (document.querySelector('.top-nav') || document.body).appendChild(fsBtn);
+    docEl.classList.add('can-fullscreen');
+
+    const sync = () => {
+      const on = Boolean(fsElement());
+      docEl.classList.toggle('is-fullscreen', on);
+      fsBtn.classList.toggle('is-on', on);
+      const label = on ? 'إلغاء ملء الشاشة' : 'ملء الشاشة';
+      fsBtn.querySelector('.fs-label').textContent = on ? 'إلغاء' : 'ملء الشاشة';
+      fsBtn.setAttribute('aria-label', label);
+      fsBtn.title = label;
+    };
+    sync();
+    document.addEventListener('fullscreenchange', sync);
+    document.addEventListener('webkitfullscreenchange', sync);
+
+    fsBtn.addEventListener('click', () => {
+      if (fsElement()) {
+        writePref(false);
+        exitFullscreen();
+      } else {
+        writePref(true);
+        enterFullscreen();
+      }
+    });
+
+    // turned on before: the first touch of this visit brings it back
+    if (readPref() && !fsElement()) {
+      const again = (event) => {
+        window.removeEventListener('pointerup', again, true);
+        if (event.target && event.target.closest && event.target.closest('#fullscreenBtn')) return; // the button decides
+        if (readPref() && !fsElement()) enterFullscreen();
+      };
+      window.addEventListener('pointerup', again, true);
+    }
+  }
+
   // Small public handle (handy for testing on the device).
   window.ExhibitionKiosk = {
     enterAttract,

@@ -1,4 +1,31 @@
 {
-  "available": [],
-  "note": "اختياري: الموقع يكتشف تلقائياً أي ملف audio/<معرف القيمة>.mp3 موجود في هذا المجلد (مثل tasamuh.mp3). يمكنك أيضاً إدراج المعرف هنا."
+  "available": [
+    "amana",
+    "azeema",
+    "ihsan",
+    "ihtiram",
+    "indibat",
+    "itqan",
+    "masooliya",
+    "sidq",
+    "taawun",
+    "tasamuh",
+    "tumooh",
+    "watani"
+  ],
+  "words": [
+    "amana",
+    "azeema",
+    "ihsan",
+    "ihtiram",
+    "indibat",
+    "itqan",
+    "masooliya",
+    "sidq",
+    "taawun",
+    "tasamuh",
+    "tumooh",
+    "watani"
+  ],
+  "note": "available: القيم التي لها رسالة مسجّلة (audio/<معرف القيمة>.mp3) — أداة recording/process-recordings.ps1 تضيف المعرف هنا تلقائيًا؛ وإن أُضيف ملف باليد فأضِف معرفه هنا (مثل tasamuh). words: القيم التي لها ملف أوقات الكلمات audio/<معرف>.words.json (لإضاءة الكلمات بدقة أثناء القراءة)."
 }

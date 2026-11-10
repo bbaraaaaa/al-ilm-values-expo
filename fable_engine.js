@@ -264,8 +264,6 @@
       // «إعادة» shows (ring on the small hadith button); at the end / on stop
       // it all folds back (CSS section 20.1)
       ctl.classList.toggle('is-started', status !== 'idle');
-      // the verse / hadith text lights up while it is being read
-      ctl.closest?.('.evidence-source')?.previousElementSibling?.classList.toggle('is-reciting', this.isPlaying);
       if (this.isPlaying) {
         this.loop();
       } else {
@@ -402,8 +400,10 @@
     ['h-ghash', 'من غشنا فليس منا'],
     ['h-ihris', 'احرص على ما ينفعك']
   ].map(([id, key]) => ({ id, key: arNorm(key) }));
-  // the «التأصيل» boxes have their own player under the text
-  const HADITH_SKIP = '#modalEvidenceText, #encycEvidence, .evidence-source, button, input, textarea, script, style, [contenteditable]';
+  // the «التأصيل» boxes have their own player under the text; a text the
+  // narrator reads ([data-ra-has]) reads its hadith with it — no second ▶
+  const HADITH_SKIP =
+    '#modalEvidenceText, #encycEvidence, .evidence-source, [data-ra-has] [data-ra-f], [data-ra-has][data-ra-f], button, input, textarea, script, style, [contenteditable]';
 
   const makeHadithButton = (id) => {
     const btn = document.createElement('button');
@@ -454,6 +454,393 @@
   };
   window.decorateHadiths = decorateHadiths;
 
+  // ==========================================================================
+  // THE NARRATOR + THE NEON FOLLOW-ALONG
+  // The stories and the value texts (benefits, steps, the comparison, the
+  // encyclopedia paragraphs) are read aloud by the same generated voice as the
+  // hadiths (Gemini TTS «Sadaltager» — said on every button and under the
+  // section titles); a Quran verse inside a text is recited in the same file by
+  // Sheikh Yasser Al-Dosari. Only the value's message is not: it is recorded
+  // in a person's own voice (audio/<value>.mp3).
+  // audio/narration/index.json lists the units, and for every text on screen
+  // when each of its words is spoken, so the words light up (neon) as they are
+  // read. How the files were made: audio/narration/README.txt.
+  // Markup: a block read aloud carries data-ra="<unit>", its texts
+  // data-ra-f="<n>" in reading order; the round ▶ goes into [data-ra-btn], or
+  // right after the last word of the last text.
+  // ==========================================================================
+  const NARR = { units: null, loading: null };
+  const NARR_WHAT = { s: 'قراءة القصة', ben: 'قراءة الثمرات والفوائد', steps: 'قراءة الخطوات', cmp: 'قراءة المقارنة', p: 'قراءة الفقرة' };
+  const unitKind = (unit) => {
+    const m = /-(s|ben|steps|cmp|p)\d*$/.exec(unit);
+    return m ? m[1] : 'p';
+  };
+
+  const makeNarrationButton = (unit, info) => {
+    const what = NARR_WHAT[unitKind(unit)];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'hadith-play narr-play';
+    btn.dataset.recite = 'toggle';
+    btn.dataset.what = what;
+    btn.dataset.unit = unit;
+    btn.dataset.src = `./audio/narration/${unit}.mp3`;
+    const verses = info.v && info.v.length ? `، والآيات بصوت ${RECITER}` : '';
+    btn.title = `استمع (${HADITH_VOICE_NOTE}${verses})`;
+    btn.setAttribute('aria-label', `تشغيل ${what}`);
+    btn.innerHTML = ICON_PLAY + ICON_PAUSE;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); // never also opens the card it sits in
+      QuranRecite.toggle(btn);
+    });
+    return btn;
+  };
+
+  // the texts of a block in reading order (a paragraph can be block and text at once)
+  const fieldsOf = (scope) => (scope.matches('[data-ra-f]') ? [scope] : []).concat([...scope.querySelectorAll('[data-ra-f]')]);
+
+  const dropButton = (btn) => {
+    if (QuranRecite.ctl === btn) QuranRecite.stop();
+    btn.remove();
+  };
+
+  const decorateNarration = (root) => {
+    if (!NARR.units || !root || !root.querySelectorAll) return;
+    const scopes = root.matches && root.matches('[data-ra]') ? [root] : [];
+    root.querySelectorAll('[data-ra]').forEach((s) => scopes.push(s));
+    const up = root.parentElement && root.parentElement.closest('[data-ra]');
+    if (up && scopes.indexOf(up) < 0) scopes.push(up);
+    scopes.forEach((scope) => {
+      const unit = scope.dataset.ra;
+      const info = NARR.units[unit];
+      let btn = scope.querySelector('.narr-play');
+      if (!info) {
+        if (btn) dropButton(btn);
+        scope.removeAttribute('data-ra-has');
+        return;
+      }
+      if (!scope.hasAttribute('data-ra-has')) scope.setAttribute('data-ra-has', '');
+      // (the same texts HADITH_SKIP leaves alone, so the two never undo each other)
+      fieldsOf(scope).forEach((f) => f.querySelectorAll('.hadith-play:not(.narr-play)').forEach(dropButton));
+      if (btn && btn.dataset.unit === unit) return;
+      if (btn) dropButton(btn);
+      btn = makeNarrationButton(unit, info);
+      const slot = scope.querySelector('[data-ra-btn]');
+      if (slot) {
+        slot.appendChild(btn);
+      } else {
+        const fields = fieldsOf(scope);
+        const last = fields[fields.length - 1] || scope;
+        last.appendChild(document.createTextNode(' '));
+        last.appendChild(btn); // inline, right after the last word
+      }
+    });
+  };
+  window.decorateNarration = decorateNarration;
+
+  const loadNarration = () => {
+    if (!NARR.loading) {
+      NARR.loading = fetch('./audio/narration/index.json', { cache: 'no-cache' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          NARR.units = (d && d.units) || {};
+        })
+        .catch(() => {
+          NARR.units = {};
+        })
+        .then(() => {
+          document.documentElement.classList.toggle('has-narration', Object.keys(NARR.units).length > 0);
+          decorateNarration(document.body);
+        });
+    }
+    return NARR.loading;
+  };
+
+  // ---- the neon follow-along: the value's message ONLY ------------------------
+  // Words are wrapped once in <span class="ra-w"> when the message is first
+  // played; while it plays, the words already read glow (.is-read) and the one
+  // being read glows most (.is-now). Class changes only on a new word (a few
+  // times a second), never every frame.
+  const RA_SKIP = 'button, svg';
+  const wrapWords = (el) => {
+    const spans = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => (n.parentElement && n.parentElement.closest(RA_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT)
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach((node) => {
+      const parent = node.parentElement;
+      if (parent.classList.contains('ra-w')) {
+        if (node.nodeValue.trim()) spans.push(parent);
+        return;
+      }
+      if (!node.nodeValue.trim()) return;
+      const frag = document.createDocumentFragment();
+      node.nodeValue.split(/(\s+)/).forEach((part) => {
+        if (!part) return;
+        if (!part.trim()) {
+          frag.appendChild(document.createTextNode(part));
+          return;
+        }
+        const s = document.createElement('span');
+        s.className = 'ra-w';
+        s.textContent = part;
+        frag.appendChild(s);
+        spans.push(s);
+      });
+      parent.replaceChild(frag, node);
+    });
+    return spans;
+  };
+
+  // the window or the panel that scrolls the text: the word being read is kept
+  // in view, unless the visitor has just scrolled / touched (then they lead)
+  let raUserAt = 0;
+  ['wheel', 'touchstart', 'keydown'].forEach((type) =>
+    window.addEventListener(
+      type,
+      (e) => {
+        if (!(e.target && e.target.closest && e.target.closest('.hadith-play, .audio-btn'))) raUserAt = performance.now();
+      },
+      { capture: true, passive: true }
+    )
+  );
+  const scrollerOf = (el) => {
+    for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+      const oy = getComputedStyle(p).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && p.scrollHeight > p.clientHeight + 4) return p;
+    }
+    return null;
+  };
+
+  const makeReadAlong = () => {
+    let scope = null;
+    let list = [];
+    let idx = -1;
+    let scroller;
+    let onJump = null;
+    const keepInView = (el) => {
+      if (performance.now() - raUserAt < 2500) return;
+      if (scroller === undefined) scroller = scrollerOf(scope);
+      const r = el.getBoundingClientRect();
+      const box = scroller ? scroller.getBoundingClientRect() : { top: 0, bottom: window.innerHeight };
+      const h = box.bottom - box.top;
+      if (r.top >= box.top + h * 0.1 && r.bottom <= box.bottom - h * 0.16) return;
+      const delta = r.top - (box.top + h * 0.38);
+      (scroller || window).scrollBy({ top: delta, behavior: 'smooth' });
+    };
+    return {
+      get scope() {
+        return scope;
+      },
+      // jump(seconds): only when the sound can go to a word (a file, not the device's voice)
+      start(el, items, jump) {
+        this.clear();
+        scope = el;
+        list = items;
+        idx = -1;
+        scroller = undefined;
+        onJump = jump || null;
+        scope.classList.add('ra-live');
+        scope.classList.toggle('ra-seek', !!onJump);
+      },
+      // true when the tapped element is one of the words being followed
+      jump(el) {
+        if (!onJump) return false;
+        const word = list.find((w) => w.el === el);
+        if (!word) return false;
+        onJump(word.t);
+        return true;
+      },
+      tick(t) {
+        if (!scope) return;
+        let i = idx;
+        while (i + 1 < list.length && list[i + 1].t <= t + 0.08) i++;
+        while (i >= 0 && list[i].t > t + 0.08) i--;
+        if (i === idx) return;
+        if (i > idx) {
+          for (let k = Math.max(0, idx); k <= i; k++) list[k].el.classList.add('is-read');
+        } else {
+          for (let k = i + 1; k <= idx; k++) list[k].el.classList.remove('is-read');
+        }
+        if (idx >= 0 && list[idx]) list[idx].el.classList.remove('is-now');
+        if (i >= 0) {
+          list[i].el.classList.add('is-now');
+          keepInView(list[i].el);
+        }
+        idx = i;
+      },
+      clear() {
+        if (scope) {
+          scope.classList.remove('ra-live', 'ra-seek');
+          list.forEach((w) => w.el.classList.remove('is-read', 'is-now'));
+        }
+        scope = null;
+        list = [];
+        idx = -1;
+        onJump = null;
+      }
+    };
+  };
+  const RA_MSG = makeReadAlong();
+
+  // A tap on a word of the message being read: the sound goes to that word.
+  document.addEventListener('click', (e) => {
+    const word = e.target.closest && e.target.closest('.ra-w');
+    if (!word || String(window.getSelection ? window.getSelection() : '').length) return; // selecting text is not a tap
+    RA_MSG.jump(word);
+  });
+
+  // The value's message: word times from audio/<value>.words.json when it was
+  // made for the recording, otherwise spread over its length by the size of
+  // each word and the pauses at the punctuation (close enough to follow); with
+  // the device's Arabic voice, its own word-by-word signal when it gives one.
+  const estimateTimes = (spans, seconds) => {
+    const w = spans.map((s) => {
+      const t = s.textContent;
+      const letters = t.replace(/[^ء-ي0-9]/g, '').length;
+      const pause = /[.!؟?]$/.test(t) ? 7 : /[،,؛;:]$/.test(t) ? 4 : 0;
+      return Math.max(2, letters) + pause;
+    });
+    const total = w.reduce((a, b) => a + b, 0) || 1;
+    const lead = Math.min(0.35, seconds * 0.04);
+    const span = Math.max(0.5, seconds - lead - 0.3);
+    let acc = 0;
+    return w.map((x) => {
+      const t = lead + (acc / total) * span;
+      acc += x;
+      return t;
+    });
+  };
+
+  const MessageAlong = {
+    spans: [],
+    mode: 'off', // 'audio' (the file's clock) | 'clock' (estimated) | 'chars' (the voice's own signal)
+    raf: 0,
+    clock: { base: 0, since: 0, running: false },
+    total: 0,
+    begin(val) {
+      this.stop();
+      const el = $('editorialLyrics');
+      if (!el) return;
+      this.spans = wrapWords(el);
+      this.offsets = [];
+      let pos = 0;
+      const text = el.textContent;
+      this.spans.forEach((s) => {
+        pos = text.indexOf(s.textContent, pos);
+        this.offsets.push(pos);
+        pos += s.textContent.length;
+      });
+      RA_MSG.start(el, []);
+    },
+    setTimes(times, jump) {
+      if (!RA_MSG.scope) return;
+      RA_MSG.start(RA_MSG.scope, this.spans.map((el, i) => ({ el, t: times[i] })), jump);
+    },
+    // a tap on a word: the recording continues from it
+    jump(t) {
+      const player = this.player;
+      if (!player) return;
+      player.currentTime = Math.max(0, t - 0.02);
+      RA_MSG.tick(player.currentTime);
+      if (window.AudioStudio && window.AudioStudio.status === 'paused') window.AudioStudio.resumeAudio();
+    },
+    useAudio(player, val) {
+      this.mode = 'audio';
+      this.player = player;
+      const apply = (times) => {
+        if (this.mode === 'audio') this.setTimes(times, (t) => this.jump(t));
+      };
+      const fallback = () => {
+        const d = player.duration;
+        if (Number.isFinite(d) && d > 0) apply(estimateTimes(this.spans, d));
+        else player.addEventListener('loadedmetadata', fallback, { once: true });
+      };
+      // word times only for the recordings the manifest lists under "words"
+      if (window.AudioStudio && window.AudioStudio.wordsIds.has(val.id)) {
+        const base = (val.file || `./audio/${val.id}.mp3`).replace(/\.mp3(\?.*)?$/, '');
+        fetch(`${base}.words.json`, { cache: 'no-cache' })
+          .then((r) => (r.ok && /json/.test(r.headers.get('content-type') || '') ? r.json() : null))
+          .then((d) => (d && Array.isArray(d.t) && d.t.length === this.spans.length ? apply(d.t) : fallback()))
+          .catch(fallback);
+      } else {
+        fallback();
+      }
+      this.loop(() => player.currentTime);
+    },
+    useClock(seconds) {
+      this.mode = 'clock';
+      this.total = seconds;
+      this.setTimes(estimateTimes(this.spans, seconds));
+      this.clock = { base: 0, since: performance.now(), running: true };
+      this.loop(() => this.elapsed());
+    },
+    useChars(utterance, wordsPerSecond) {
+      this.mode = 'chars';
+      this.setTimes(this.spans.map((_, i) => i)); // the index is the "time"
+      let heard = false;
+      utterance.onboundary = (e) => {
+        if (this.mode !== 'chars' || (e.name && e.name !== 'word')) return;
+        heard = true;
+        let i = 0;
+        while (i + 1 < this.offsets.length && this.offsets[i + 1] <= e.charIndex) i++;
+        RA_MSG.tick(i);
+      };
+      // no word signal from this voice: follow an estimate instead
+      this.clock = { base: 0, since: performance.now(), running: true };
+      setTimeout(() => {
+        if (!heard && this.mode === 'chars' && RA_MSG.scope) {
+          const seconds = this.spans.length / wordsPerSecond;
+          const passed = this.elapsed();
+          this.mode = 'clock';
+          this.setTimes(estimateTimes(this.spans, seconds));
+          this.clock = { base: passed, since: performance.now(), running: this.clock.running };
+          this.loop(() => this.elapsed());
+        }
+      }, 1600);
+    },
+    elapsed() {
+      const c = this.clock;
+      return (c.base + (c.running ? performance.now() - c.since : 0)) / 1000;
+    },
+    pause() {
+      const c = this.clock;
+      if (c.running) {
+        c.base += performance.now() - c.since;
+        c.running = false;
+      }
+    },
+    resume() {
+      const c = this.clock;
+      if (!c.running) {
+        c.since = performance.now();
+        c.running = true;
+      }
+      if (this.mode === 'audio' || this.mode === 'clock') this.loop(this.now);
+    },
+    loop(now) {
+      this.now = now;
+      cancelAnimationFrame(this.raf);
+      const step = () => {
+        if (window.AudioStudio && window.AudioStudio.status !== 'playing') {
+          this.raf = 0;
+          return;
+        }
+        RA_MSG.tick(now());
+        this.raf = requestAnimationFrame(step);
+      };
+      this.raf = requestAnimationFrame(step);
+    },
+    stop() {
+      cancelAnimationFrame(this.raf);
+      this.raf = 0;
+      this.mode = 'off';
+      RA_MSG.clear();
+    }
+  };
+
   const startHadithDecorator = () => {
     decorateHadiths(document.body);
     let queued = new Set();
@@ -464,6 +851,8 @@
           r.addedNodes.forEach((n) => queued.add(n.nodeType === 3 ? n.parentElement : n));
         } else if (r.type === 'characterData') {
           queued.add(r.target.parentElement);
+        } else if (r.type === 'attributes') {
+          queued.add(r.target); // a block now reads another unit
         }
       }
       // a reading whose text was replaced stops with it
@@ -473,9 +862,13 @@
         raf = 0;
         const roots = [...queued].filter((el) => el && el.isConnected && !el.closest?.('.hadith-play'));
         queued = new Set();
-        roots.forEach(decorateHadiths);
+        roots.forEach((root) => {
+          decorateNarration(root);
+          decorateHadiths(root);
+        });
       });
-    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['data-ra'] });
+    loadNarration();
   };
 
   // ==========================================================================
@@ -1589,7 +1982,7 @@
       grid.innerHTML = filtered
         .map(
           (s) => `
-          <article class="story-card spotlight-surface" style="--spot-color:${escapeHTML(s.valueAccent)}26; border-top-color:${escapeHTML(s.valueAccent)}66;">
+          <article class="story-card spotlight-surface" data-ra="${escapeHTML(s.id.replace('_story_', '-s'))}" style="--spot-color:${escapeHTML(s.valueAccent)}26; border-top-color:${escapeHTML(s.valueAccent)}66;">
             <div class="story-meta justify-between">
               <span class="story-val-chip" style="color:${escapeHTML(s.valueAccent)}; background:${escapeHTML(s.valueAccent)}16; border:1px solid ${escapeHTML(s.valueAccent)}40;">
                 <span class="story-chip-icon">${getIconSVG(s.valueId)}</span>
@@ -1597,8 +1990,8 @@
               </span>
               <span class="story-cat-chip">${escapeHTML(s.typeLabel)}</span>
             </div>
-            <h3 class="story-heading">${escapeHTML(s.title)}</h3>
-            <p class="story-body">${escapeHTML(s.story)}</p>
+            <h3 class="story-heading" data-ra-f="0">${escapeHTML(s.title)}</h3>
+            <p class="story-body" data-ra-f="1">${escapeHTML(s.story)}</p>
             <button type="button" class="story-action-btn" data-open-val="${escapeHTML(s.valueId)}" style="color:${escapeHTML(s.valueAccent)}">
               <span>فتح موسوعة وصوت «${escapeHTML(s.valueName)}»</span>
               <span aria-hidden="true">←</span>
@@ -1669,25 +2062,31 @@
       setTxt('encycFullText', v.text);
       setTxt('encycEvidence', v.evidence);
       renderEvidenceSource('encycEvidence', v.id);
-      setTxt('encycP1', v.p1);
-      setTxt('encycP2', v.p2);
-      setTxt('encycP3', v.p3);
+      // each paragraph is read aloud on its own (data-ra) and is its own text
+      ['p1', 'p2', 'p3'].forEach((k) => {
+        const el = $(`encyc${k.toUpperCase()}`);
+        if (!el) return;
+        el.textContent = v[k] || '';
+        el.dataset.raF = '0';
+        el.dataset.ra = `${v.id}-${k}`;
+      });
 
       const benList = $('encycBenefitsList');
       if (benList) {
         benList.innerHTML = (v.benefits || [])
-          .map((b) => {
+          .map((b, i) => {
             if (typeof b === 'object' && b !== null) {
               return `
                 <li class="encyc-item">
-                  <div class="encyc-item-title" style="color:${escapeHTML(v.accent)}">✦ ${escapeHTML(b.title)}</div>
-                  <p class="encyc-item-desc">${escapeHTML(b.desc)}</p>
+                  <div class="encyc-item-title" style="color:${escapeHTML(v.accent)}">✦ <span data-ra-f="${2 * i}">${escapeHTML(b.title)}</span></div>
+                  <p class="encyc-item-desc" data-ra-f="${2 * i + 1}">${escapeHTML(b.desc)}</p>
                 </li>
               `;
             }
             return `<li class="encyc-item"><p class="encyc-item-desc">✦ ${escapeHTML(b)}</p></li>`;
           })
           .join('');
+        if (benList.parentElement) benList.parentElement.dataset.ra = `${v.id}-ben`;
       }
 
       const stepsList = $('encycStepsList');
@@ -1697,11 +2096,12 @@
             (st, idx) => `
               <li class="encyc-step-row">
                 <span class="encyc-step-num" style="background:${escapeHTML(v.accent)}22; color:${escapeHTML(v.accent)}; border:1px solid ${escapeHTML(v.accent)}45;">${idx + 1}</span>
-                <span>${escapeHTML(st)}</span>
+                <span data-ra-f="${idx}">${escapeHTML(st)}</span>
               </li>
             `
           )
           .join('');
+        if (stepsList.parentElement) stepsList.parentElement.dataset.ra = `${v.id}-steps`;
       }
     },
 
@@ -1719,7 +2119,7 @@
       grid.innerHTML = list
         .map(
           (v) => `
-          <article class="comparison-card is-preferred spotlight-surface" style="--spot-color:${escapeHTML(v.accent)}24; border-inline-start-color:${escapeHTML(v.accent)};">
+          <article class="comparison-card is-preferred spotlight-surface" data-ra="${escapeHTML(v.id)}-cmp" style="--spot-color:${escapeHTML(v.accent)}24; border-inline-start-color:${escapeHTML(v.accent)};">
             <div class="comp-header">
               <div class="comp-title-group">
                 <span class="comp-icon" style="color:${escapeHTML(v.accent)}; background:${escapeHTML(v.accent)}16;">${getIconSVG(v.id)}</span>
@@ -1728,17 +2128,20 @@
                   <span class="comp-sub">${escapeHTML(v.sub)}</span>
                 </div>
               </div>
-              <button type="button" class="comp-open-btn" data-comp-open="${escapeHTML(v.id)}" style="color:${escapeHTML(v.accent)}">استمع للقيمة</button>
+              <div class="comp-actions">
+                <span class="ra-slot" data-ra-btn></span>
+                <button type="button" class="comp-open-btn" data-comp-open="${escapeHTML(v.id)}" style="color:${escapeHTML(v.accent)}">استمع للقيمة</button>
+              </div>
             </div>
 
             <div class="comp-box comp-box-pos">
               <div class="comp-box-label">✓ عند تطبيق القيمة في حياتنا ومدرستنا</div>
-              <p>${escapeHTML(v.withVal)}</p>
+              <p data-ra-f="0">${escapeHTML(v.withVal)}</p>
             </div>
 
             <div class="comp-box comp-box-neg">
               <div class="comp-box-label">✕ عند غياب القيمة أو إهمالها</div>
-              <p>${escapeHTML(v.withoutVal)}</p>
+              <p data-ra-f="1">${escapeHTML(v.withoutVal)}</p>
             </div>
           </article>
         `
@@ -1770,6 +2173,7 @@
   // ==========================================================================
   const AudioStudio = (window.AudioStudio = {
     diskAvailableIds: new Set(),
+    wordsIds: new Set(), // recordings with audio/<id>.words.json (exact word times for the neon)
     currentValue: null,
     source: 'silent', // 'file' | 'speech' | 'silent' (no file, no Arabic voice)
     status: 'idle', // 'idle' | 'playing' | 'paused'
@@ -1804,18 +2208,24 @@
       }
     },
 
-    // Which values have an audio file? 1) ids listed in audio/audio_manifest.json,
-    // 2) any audio/<id>.mp3 that simply exists (auto-detected, no list to edit).
+    // Which values have an audio file? The list in audio/audio_manifest.json
+    // (recording/process-recordings.ps1 keeps it up to date). Only without that
+    // list is each audio/<id>.mp3 looked for — twelve requests, each a «not
+    // found» on the console until the recordings exist.
     async checkDiskAudioManifest() {
+      let listed = false;
       try {
         const res = await fetch('./audio/audio_manifest.json', { cache: 'no-store' });
-        if (res.ok) {
+        if (res.ok && /json/.test(res.headers.get('content-type') || '')) {
           const data = await res.json();
           if (Array.isArray(data.available)) {
             data.available.forEach((id) => this.diskAvailableIds.add(String(id)));
+            listed = true;
           }
+          if (Array.isArray(data.words)) data.words.forEach((id) => this.wordsIds.add(String(id)));
         }
       } catch (_) {}
+      if (listed) return;
 
       await Promise.all(
         VALUES.filter((v) => !this.diskAvailableIds.has(v.id)).map(async (v) => {
@@ -1869,16 +2279,16 @@
       // The value's message as plain, readable text.
       setTxt('editorialLyrics', val.text);
 
-      // Populate 3 real-life stories inside modal
+      // Populate 3 real-life stories inside modal (each read aloud: data-ra)
       const exGrid = $('modalExamplesGrid');
       if (exGrid) {
         exGrid.innerHTML = (val.examples || [])
           .map(
-            (ex) => `
-            <article class="studio-story-card">
+            (ex, i) => `
+            <article class="studio-story-card" data-ra="${escapeHTML(val.id)}-s${i + 1}">
               <span class="studio-story-type" style="color:${escapeHTML(val.accent)}">${escapeHTML(ex.type)}</span>
-              <h4 class="studio-story-title">${escapeHTML(ex.title)}</h4>
-              <p class="studio-story-body">${escapeHTML(ex.story)}</p>
+              <h4 class="studio-story-title" data-ra-f="0">${escapeHTML(ex.title)}</h4>
+              <p class="studio-story-body" data-ra-f="1">${escapeHTML(ex.story)}</p>
             </article>
           `
           )
@@ -1889,23 +2299,30 @@
       const benEl = $('modalBenefitsList');
       if (benEl) {
         benEl.innerHTML = (val.benefits || [])
-          .map((b) =>
+          .map((b, i) =>
             typeof b === 'object' && b !== null
-              ? `<li><strong style="color:${escapeHTML(val.accent)}">✦ ${escapeHTML(b.title)}:</strong> ${escapeHTML(b.desc)}</li>`
+              ? `<li><strong style="color:${escapeHTML(val.accent)}">✦ <span data-ra-f="${2 * i}">${escapeHTML(b.title)}</span>:</strong> <span data-ra-f="${2 * i + 1}">${escapeHTML(b.desc)}</span></li>`
               : `<li>✦ ${escapeHTML(b)}</li>`
           )
           .join('');
+        if (benEl.parentElement) benEl.parentElement.dataset.ra = `${val.id}-ben`;
       }
 
-      // Populate 4 daily steps inside modal
+      // Populate 4 daily steps inside modal (stage3 renders them as cards)
       const stepsEl = $('modalStepsList');
       if (stepsEl) {
         stepsEl.innerHTML = (val.steps || [])
-          .map((s, idx) => `<li><strong style="color:${escapeHTML(val.accent)}">${idx + 1}.</strong> ${escapeHTML(s)}</li>`)
+          .map((s, idx) => `<li><strong style="color:${escapeHTML(val.accent)}">${idx + 1}.</strong> <span data-ra-f="${idx}">${escapeHTML(s)}</span></li>`)
           .join('');
+        if (stepsEl.parentElement) stepsEl.parentElement.dataset.ra = `${val.id}-steps`;
       }
 
+      // with / without the value: read as one
+      const compBox = $('modalWithValue')?.closest('.studio-story-card');
+      if (compBox) compBox.dataset.ra = `${val.id}-cmp`;
+
       const modal = $('studioModal');
+
       if (modal) {
         window.PerfTier?.watch(900);
         modal.classList.add('active');
@@ -1982,11 +2399,14 @@
       const finished = () => {
         if (session === this._playSessionId) this.setStatus('idle');
       };
+      // the message's words light up (neon) as they are read
+      MessageAlong.begin(val);
 
       if (this.source === 'file') {
         const player = $('realAudioPlayer');
         if (!player) return;
         player.src = val.file || `./audio/${val.id}.mp3`;
+        MessageAlong.useAudio(player, val);
         player.onended = finished;
         player.onerror = () => {
           if (session !== this._playSessionId) return;
@@ -2012,6 +2432,7 @@
         utterance.rate = 1;
         utterance.onend = finished;
         utterance.onerror = finished;
+        MessageAlong.useChars(utterance, 2.3);
         synth.speak(utterance);
         this.setStatus('playing');
         return;
@@ -2025,6 +2446,7 @@
       this.showNote(`لا يوجد ملف صوتي لهذه القيمة بعد — أضِفه في مجلد audio باسم ${val.id}.mp3`);
       this.runSilent();
       this.setStatus('playing');
+      MessageAlong.useClock(this._silentLeft / 1000);
     },
 
     runSilent() {
@@ -2040,6 +2462,7 @@
         clearTimeout(this._silentTimer);
         this._silentLeft = Math.max(0, this._silentLeft - (performance.now() - this._silentSince));
       }
+      MessageAlong.pause();
       this.setStatus('paused');
     },
 
@@ -2048,6 +2471,7 @@
       else if (this.source === 'speech') window.speechSynthesis?.resume();
       else this.runSilent();
       this.setStatus('playing');
+      MessageAlong.resume();
     },
 
     // «تشغيل» ⇄ «إيقاف»; «إعادة» appears beside it once the message has started.
@@ -2062,6 +2486,7 @@
       $('audioPlayBtn')?.setAttribute('aria-label', this.isPlaying ? 'إيقاف رسالة القيمة' : 'تشغيل رسالة القيمة');
       const replay = $('audioReplayBtn');
       if (replay) replay.hidden = status === 'idle';
+      if (status === 'idle') MessageAlong.stop();
     },
 
     stopPlayback() {

@@ -1475,20 +1475,6 @@ body.projector-day .top-nav .brand-emblem.has-logo {
   object-fit: contain;
 }
 
-/* Logo recoloured to the site palette: emerald + amber star (night),
- * deeper emerald + amber (day projector) — swap with the theme. */
-:is(.top-nav .brand-emblem.has-logo, .footer-logo-tile) img.logo-day {
-  display: none;
-}
-
-body.projector-day :is(.top-nav .brand-emblem.has-logo, .footer-logo-tile) img.logo-day {
-  display: block;
-}
-
-body.projector-day :is(.top-nav .brand-emblem.has-logo, .footer-logo-tile) img.logo-night {
-  display: none;
-}
-
 /* 10.7 Four steps as an inspiration gallery -------------------------------- */
 .exhibit-steps-list {
   list-style: none;
@@ -3036,29 +3022,6 @@ html[data-perf="low"] .top-nav.is-folded {
   pointer-events: none;
 }
 
-/* --- 20.4 the verse / hadith text lights up while it is read */
-#modalEvidenceText,
-#encycEvidence {
-  --mt: color 600ms ease, text-shadow 600ms ease;
-  transition: var(--mt);
-}
-
-:is(#modalEvidenceText, #encycEvidence).is-reciting {
-  color: #fff7df;
-  text-shadow: 0 0 16px rgb(231 207 143 / 42%);
-}
-
-:is(.studio-evidence, div):has(> :is(#modalEvidenceText, #encycEvidence)) {
-  --mt: box-shadow 600ms ease;
-  transition: var(--mt);
-}
-
-:is(.studio-evidence, div):has(> .is-reciting) {
-  box-shadow:
-    0 0 0 1px rgb(231 207 143 / 34%),
-    0 0 30px rgb(231 207 143 / 12%);
-}
-
 /* --- 20.5 the home title: one sweep of light across «ترسيخ القيم» (right to left) */
 @keyframes introSheen {
   from {
@@ -3276,4 +3239,226 @@ html[data-perf="low"] :is(.audio-btn--main, .hadith-play) :is(.audio-icon-play, 
   .rv-group.rv-cards > * {
     animation: var(--ma, none) !important;
   }
+}
+
+
+/* ==========================================================================
+ * 21. THE NARRATOR + THE NEON FOLLOW-ALONG (fable_engine.js)
+ *     The stories and the value texts have the hadith ▶ (same shape, same
+ *     ring of progress); while a text is read, the words already read glow
+ *     in the value's colour and the word being read glows most. The value's
+ *     message does the same with its own player. Only colour, opacity and a
+ *     text glow change, and only when a new word starts.
+ * ========================================================================== */
+.ra-slot {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.ra-slot:empty {
+  display: none;
+}
+
+.ra-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.35rem;
+}
+
+.voice-note {
+  display: none;
+  margin: 0.4rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+html.has-narration .voice-note {
+  display: block;
+}
+
+.comp-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ra-w {
+  --mt: color 280ms ease, opacity 280ms ease, text-shadow 280ms ease;
+  transition: var(--mt);
+}
+
+.ra-live .ra-w {
+  opacity: 0.5;
+}
+
+/* a word can be tapped while its text is being read: the sound goes to it */
+.ra-seek .ra-w {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) {
+  .ra-seek .ra-w:hover {
+    opacity: 1;
+    color: #ffffff;
+    text-shadow: 0 0 0.4em rgba(255, 255, 255, 0.5);
+  }
+}
+
+/* white neon: the words already read stay softly lit, the one being read shines */
+.ra-live .ra-w.is-read {
+  opacity: 1;
+  color: #ffffff;
+  text-shadow:
+    0 0 0.22em rgba(255, 255, 255, 0.42),
+    0 0 0.7em rgba(255, 255, 255, 0.14);
+}
+
+.ra-live .ra-w.is-now {
+  opacity: 1;
+  color: #ffffff;
+  text-shadow:
+    0 0 0.07em #ffffff,
+    0 0 0.26em rgba(255, 255, 255, 0.95),
+    0 0 0.7em rgba(255, 255, 255, 0.65),
+    0 0 1.5em rgba(255, 255, 255, 0.32);
+}
+
+/* under the message, while it plays */
+.ra-hint {
+  margin: 0.15rem 0 0;
+  min-block-size: 1.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.ra-seek + .ra-hint {
+  opacity: 1;
+}
+
+/* light devices (smart boards, TVs, entry phones): the same follow-along
+ * without the glow — colour, and a soft mark under the word being read */
+html[data-perf="low"] .ra-live .ra-w.is-read {
+  text-shadow: none;
+}
+
+html[data-perf="low"] .ra-live .ra-w.is-now {
+  text-shadow: none;
+  border-radius: 0.3em;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ra-w {
+    transition: var(--mt, none) !important;
+  }
+}
+
+/* ==========================================================================
+ * 22. «ملء الشاشة» — Android, smart TVs and classroom boards only
+ *     (exhibition_kiosk.js adds the button to the header there)
+ * ========================================================================== */
+.fs-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-inline-size: 2.6rem;
+  min-block-size: 2.6rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid rgba(212, 175, 55, 0.45);
+  border-radius: 999px;
+  background: rgba(212, 175, 55, 0.1);
+  color: var(--diriyah-sand, #e7cf8f);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.fs-btn:hover {
+  border-color: rgba(212, 175, 55, 0.75);
+  background: rgba(212, 175, 55, 0.18);
+}
+
+.fs-btn:focus-visible {
+  outline: 2px solid var(--diriyah-sand, #e7cf8f);
+  outline-offset: 2px;
+}
+
+.fs-btn .fs-icon-exit,
+.fs-btn.is-on .fs-icon-enter {
+  display: none;
+}
+
+.fs-btn.is-on .fs-icon-exit {
+  display: inline;
+}
+
+/* narrow screens: the icon alone */
+@media (max-width: 900px) {
+  .fs-btn {
+    padding: 0.35rem;
+  }
+
+  .fs-btn .fs-label {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    inline-size: 1px;
+    block-size: 1px;
+    white-space: nowrap;
+  }
+}
+
+/* ==========================================================================
+ * 23. LIGHT DEVICES AND OLDER BROWSERS (smart boards, TVs)
+ *     Plain selectors only: the browsers of many classroom boards and TVs are
+ *     older than :is() / :where(), and a rule they cannot read is dropped
+ *     whole — so the light level is written here without them.
+ * ========================================================================== */
+html[data-perf="low"] *,
+html[data-perf="low"] *::before,
+html[data-perf="low"] *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+html[data-perf="low"] .intro-glow {
+  filter: none;
+}
+
+html[data-perf="low"] .ambient-orb {
+  display: none;
+}
+
+html[data-perf="low"] .attract-hint {
+  animation: none;
+}
+
+html[data-perf="low"] .studio-panel,
+html[data-perf="low"] .manager-panel,
+html[data-perf="low"] .reader-panel,
+html[data-perf="low"] .top-nav,
+html[data-perf="low"] .glass-dock.floating-dock {
+  background-color: rgb(13, 26, 21);
+}
+
+html[data-perf="low"] .value-card-3d .vcard-header,
+html[data-perf="low"] .value-card-3d .vcard-body,
+html[data-perf="low"] .value-card-3d .vcard-footer,
+html[data-perf="low"] .value-card-3d .vcard-glare {
+  transform: none !important;
+  transition: none;
 }

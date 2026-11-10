@@ -83,6 +83,8 @@
   }
 
   const stories = buildStoriesCatalog();
+  // «tasamuh_story_1» → its reading «tasamuh-s1» (audio/narration/)
+  const narrationUnit = (storyId) => String(storyId).replace('_story_', '-s');
   window.Stage3 = window.Stage3 || {};
   window.Stage3.stories = stories;
 
@@ -451,6 +453,8 @@
 
     container.replaceChildren();
     container.classList.add('exhibit-steps-list');
+    // the four steps are read aloud as one (fable_engine.js); each step text is one of its texts
+    if (container.parentElement) container.parentElement.dataset.ra = `${value.id}-steps`;
     steps.slice(0, 4).forEach((step, index) => {
       const item = document.createElement('li');
       item.className = 'exhibit-step-card';
@@ -472,6 +476,7 @@
 
       const text = document.createElement('p');
       text.className = 'exhibit-step-text';
+      text.dataset.raF = String(index);
       text.textContent = step;
 
       copy.append(kicker, text);
@@ -1046,6 +1051,7 @@
         const article = document.createElement('article');
         article.className = 'studio-story-card';
         article.dataset.storyId = story.id;
+        article.dataset.ra = narrationUnit(story.id); // read aloud (fable_engine.js)
 
         const type = document.createElement('span');
         type.className = 'studio-story-type';
@@ -1054,10 +1060,12 @@
 
         const title = document.createElement('h4');
         title.className = 'studio-story-title';
+        title.dataset.raF = '0';
         title.textContent = story.title;
 
         const body = document.createElement('p');
         body.className = 'studio-story-body';
+        body.dataset.raF = '1';
         body.textContent = story.story;
 
         const read = document.createElement('span');
@@ -1349,6 +1357,9 @@
     const insightText = $('storyReaderInsightText');
 
     if (title) title.textContent = story.title;
+    // the reader reads this story aloud (title + text; fable_engine.js)
+    const panel = modal.querySelector('.reader-panel');
+    if (panel) panel.dataset.ra = narrationUnit(story.id);
     if (meta) meta.textContent = `${story.valueName} • ${story.typeLabel}`;
     if (counter) counter.textContent = `${storyIdx + 1} / ${stories.length}`;
     if (body) {
