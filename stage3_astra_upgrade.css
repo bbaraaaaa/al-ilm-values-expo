@@ -3362,8 +3362,9 @@ html[data-perf="low"] .ra-live .ra-w.is-now {
 }
 
 /* ==========================================================================
- * 22. «ملء الشاشة» — Android, smart TVs and classroom boards only
- *     (exhibition_kiosk.js adds the button to the header there)
+ * 22. «ملء الشاشة» — every screen that can do it except the iPad / iPhone
+ *     (exhibition_kiosk.js adds the button to the header, plus a floating
+ *     copy for when the header is folded or scrolled away)
  * ========================================================================== */
 .fs-btn {
   display: inline-flex;
@@ -3404,6 +3405,54 @@ html[data-perf="low"] .ra-live .ra-w.is-now {
 
 .fs-btn.is-on .fs-icon-exit {
   display: inline;
+}
+
+/* The floating copy (exhibition_kiosk.js): while the header is folded to its
+ * logo pill or scrolled away, it waits in the top corner opposite the logo,
+ * level with the pill (top set by the script). Solid like the header pill. */
+.fs-btn--float {
+  position: fixed;
+  top: 0.75rem; /* older browsers (no max() / env()) */
+  left: 0.75rem;
+  top: max(0.75rem, env(safe-area-inset-top, 0px));
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  z-index: 31; /* over the header (30), under the section bar (40) and windows */
+  min-block-size: 2.9rem;
+  padding-inline: 1rem;
+  background: linear-gradient(rgba(212, 175, 55, 0.14), rgba(212, 175, 55, 0.14)), rgb(12 25 19 / 96%);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 35%);
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, -10px, 0);
+  --mt: opacity 160ms ease, transform 200ms var(--motion-ease-accelerate), visibility 0s linear 200ms;
+  transition: var(--mt);
+}
+
+.fs-btn--float.is-shown {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  --mt: opacity 240ms ease, transform 360ms var(--motion-ease-expressive), visibility 0s;
+}
+
+.fs-btn--float:hover {
+  background: linear-gradient(rgba(212, 175, 55, 0.22), rgba(212, 175, 55, 0.22)), rgb(12 25 19 / 96%);
+}
+
+body.projector-day .fs-btn--float {
+  background: linear-gradient(rgba(212, 175, 55, 0.14), rgba(212, 175, 55, 0.14)), #ffffff;
+  color: #6b4f0e;
+  box-shadow: 0 8px 22px rgb(6 33 22 / 16%);
+}
+
+html[data-perf="low"] .fs-btn--float {
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fs-btn--float {
+    transition: var(--mt, none) !important;
+  }
 }
 
 /* narrow screens: the icon alone */

@@ -161,11 +161,14 @@
   });
 
   // --------------------------------------------------------------------------
-  // «ملء الشاشة» — only where the browser's own bar stays on screen: Android
-  // phones and tablets, smart TVs and interactive classroom boards (BenQ and
-  // the like). Not on the iPad / iPhone / computers. Once turned on, the next
-  // touch after a reload brings full screen back (browsers allow it only from
-  // a touch), until it is turned off with the same button.
+  // «ملء الشاشة» — on every screen whose browser can do it, except the iPad /
+  // iPhone (Safari's own gestures leave it at once). A classroom board with a
+  // built-in Windows computer (OPS) reports itself as an ordinary PC, so
+  // computers get the button too. Once turned on, the next touch after a
+  // reload brings full screen back (browsers allow it only from a touch),
+  // until it is turned off with the same button.
+  // The button sits in the header; while the header is folded to its logo
+  // pill or scrolled away, a floating copy in the top corner keeps it in reach.
   // ?fs=1 shows the button on any device (testing), ?fs=0 hides it.
   // --------------------------------------------------------------------------
   const FS_PREF = 'alm_fullscreen';
@@ -177,9 +180,9 @@
     if (asked) return asked[1] === '1';
     const ua = navigator.userAgent || '';
     const device = (window.PerfTier && window.PerfTier.device) || '';
-    if (/iPad|iPhone|iPod|Macintosh/.test(ua)) return false;
+    if (device === 'ipad' || /iPhone|iPod/.test(ua)) return false;
     if (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) return false;
-    return /Android/.test(ua) || device === 'tv' || device === 'board';
+    return true;
   };
   const readPref = () => {
     try {
@@ -217,29 +220,40 @@
       '<svg class="fs-icon-enter" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
     const ICON_EXIT =
       '<svg class="fs-icon-exit" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
-    const fsBtn = document.createElement('button');
-    fsBtn.type = 'button';
-    fsBtn.id = 'fullscreenBtn';
-    fsBtn.className = 'fs-btn';
-    fsBtn.innerHTML = `${ICON_ENTER}${ICON_EXIT}<span class="fs-label"></span>`;
+    const makeFsButton = (id, extra) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.id = id;
+      b.className = `fs-btn${extra ? ` ${extra}` : ''}`;
+      b.innerHTML = `${ICON_ENTER}${ICON_EXIT}<span class="fs-label"></span>`;
+      return b;
+    };
+    const nav = document.querySelector('.top-nav');
+    const fsBtn = makeFsButton('fullscreenBtn');
     // in the header, after the search (on phones the bottom bar holds the sections)
-    (document.querySelector('.top-nav') || document.body).appendChild(fsBtn);
+    (nav || document.body).appendChild(fsBtn);
+    // the floating copy: outside the header (the header's clip would hide it)
+    const fsFloat = makeFsButton('fullscreenBtnFloat', 'fs-btn--float');
+    document.body.appendChild(fsFloat);
+    const fsButtons = [fsBtn, fsFloat];
     docEl.classList.add('can-fullscreen');
 
     const sync = () => {
       const on = Boolean(fsElement());
       docEl.classList.toggle('is-fullscreen', on);
-      fsBtn.classList.toggle('is-on', on);
       const label = on ? 'إلغاء ملء الشاشة' : 'ملء الشاشة';
-      fsBtn.querySelector('.fs-label').textContent = on ? 'إلغاء' : 'ملء الشاشة';
-      fsBtn.setAttribute('aria-label', label);
-      fsBtn.title = label;
+      fsButtons.forEach((b) => {
+        b.classList.toggle('is-on', on);
+        b.querySelector('.fs-label').textContent = on ? 'إلغاء' : 'ملء الشاشة';
+        b.setAttribute('aria-label', label);
+        b.title = label;
+      });
     };
     sync();
     document.addEventListener('fullscreenchange', sync);
     document.addEventListener('webkitfullscreenchange', sync);
 
-    fsBtn.addEventListener('click', () => {
+    const toggleFs = () => {
       if (fsElement()) {
         writePref(false);
         exitFullscreen();
@@ -247,13 +261,51 @@
         writePref(true);
         enterFullscreen();
       }
-    });
+    };
+    fsButtons.forEach((b) => b.addEventListener('click', toggleFs));
+
+    // The floating copy shows only while the header's own button is out of
+    // reach: the header folded to its logo pill, or scrolled off the screen.
+    let floatQueued = false;
+    const placeFloat = () => {
+      floatQueued = false;
+      const folded = Boolean(nav && nav.classList.contains('is-folded'));
+      const gone = !nav || nav.getBoundingClientRect().bottom < 4;
+      const show = folded || gone;
+      if (show && folded && !gone) {
+        // level with the folded logo pill
+        const r = nav.getBoundingClientRect();
+        const pillH = parseFloat(nav.style.getPropertyValue('--nav-pill-h')) || 0;
+        const top = pillH ? r.top + (pillH - fsFloat.offsetHeight) / 2 : 0;
+        fsFloat.style.top = top > 4 ? `${Math.round(top)}px` : '';
+      } else if (show) {
+        fsFloat.style.top = '';
+      }
+      if (fsFloat.classList.contains('is-shown') !== show) {
+        fsFloat.classList.toggle('is-shown', show);
+        fsFloat.tabIndex = show ? 0 : -1;
+        fsFloat.setAttribute('aria-hidden', show ? 'false' : 'true');
+      }
+    };
+    const queueFloat = () => {
+      if (floatQueued) return;
+      floatQueued = true;
+      requestAnimationFrame(placeFloat);
+    };
+    fsFloat.tabIndex = -1;
+    fsFloat.setAttribute('aria-hidden', 'true');
+    window.addEventListener('scroll', queueFloat, { passive: true });
+    window.addEventListener('resize', queueFloat, { passive: true });
+    if (nav && 'MutationObserver' in window) {
+      new MutationObserver(queueFloat).observe(nav, { attributes: true, attributeFilter: ['class'] });
+    }
+    queueFloat();
 
     // turned on before: the first touch of this visit brings it back
     if (readPref() && !fsElement()) {
       const again = (event) => {
         window.removeEventListener('pointerup', again, true);
-        if (event.target && event.target.closest && event.target.closest('#fullscreenBtn')) return; // the button decides
+        if (event.target && event.target.closest && event.target.closest('.fs-btn')) return; // the button decides
         if (readPref() && !fsElement()) enterFullscreen();
       };
       window.addEventListener('pointerup', again, true);

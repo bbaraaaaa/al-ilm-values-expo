@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from fable_engine.js (sha256 a6defe25efd164214ef9428cd9cb54756fdf36cf8692bd73679c86cede1f6b83) for older browsers. Do not edit: edit fable_engine.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from fable_engine.js (sha256 b04077183843a75d703f9003c4f0830b28baa5c39eaf2d1195098610fa2f876e) for older browsers. Do not edit: edit fable_engine.js and rebuild. */
 (() => {
   "use strict";
   var _a;
@@ -367,7 +367,7 @@
     btn.dataset.recite = "toggle";
     btn.dataset.what = what;
     btn.dataset.unit = unit;
-    btn.dataset.src = `./audio/narration/${unit}.mp3`;
+    btn.dataset.src = `./audio/narration/${unit}.mp3${info.d ? `?d=${info.d}` : ""}`;
     const verses = info.v && info.v.length ? `، والآيات بصوت ${RECITER}` : "";
     btn.title = `استمع (${HADITH_VOICE_NOTE}${verses})`;
     btn.setAttribute("aria-label", `تشغيل ${what}`);

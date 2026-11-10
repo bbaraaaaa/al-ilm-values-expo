@@ -484,7 +484,9 @@
     btn.dataset.recite = 'toggle';
     btn.dataset.what = what;
     btn.dataset.unit = unit;
-    btn.dataset.src = `./audio/narration/${unit}.mp3`;
+    // ?d= (the file's length, from index.json, which is never cached): a rebuilt
+    // reading has a new length, so no screen keeps playing a cached old copy
+    btn.dataset.src = `./audio/narration/${unit}.mp3${info.d ? `?d=${info.d}` : ''}`;
     const verses = info.v && info.v.length ? `، والآيات بصوت ${RECITER}` : '';
     btn.title = `استمع (${HADITH_VOICE_NOTE}${verses})`;
     btn.setAttribute('aria-label', `تشغيل ${what}`);

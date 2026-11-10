@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>نص تسجيل رسائل القيم — معرض ترسيخ القيم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg: #050a08; --card: #0c1913; --line: rgba(255,255,255,.1); --text: #fff; --muted: rgba(255,255,255,.65); --em: #10b981; --amber: #f59e0b; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Cairo', system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { margin: 0 0 4px; font-size: 1.7rem; font-weight: 900; }
+  h1 span { color: var(--em); }
+  .sub { margin: 0 0 20px; color: var(--muted); }
+  .tips { border: 1px solid rgba(245,158,11,.35); background: rgba(245,158,11,.07); border-radius: 16px; padding: 14px 18px; margin-bottom: 22px; }
+  .tips h3 { margin: 0 0 6px; color: var(--amber); font-size: 1rem; }
+  .tips ol { margin: 0; padding-inline-start: 1.2rem; line-height: 1.9; }
+  .progress { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 10px 0; margin-bottom: 8px; font-weight: 800; color: var(--em); }
+  .card { border: 1px solid var(--line); background: var(--card); border-radius: 20px; padding: 18px 20px; margin-bottom: 16px; }
+  .card.is-done { border-color: rgba(16,185,129,.55); opacity: .7; }
+  .card header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .num { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: rgba(16,185,129,.15); color: var(--em); font-weight: 900; }
+  h2 { margin: 0; font-size: 1.35rem; font-weight: 900; }
+  .file { direction: ltr; font-family: ui-monospace, Consolas, monospace; font-size: .85rem; color: var(--muted); border: 1px solid var(--line); border-radius: 8px; padding: 2px 8px; }
+  .done { margin-inline-start: auto; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; cursor: pointer; }
+  .done input { width: 20px; height: 20px; accent-color: var(--em); }
+  .text { margin: 0; font-size: 1.45rem; font-weight: 700; line-height: 2.1; }
+  @media print { body { background: #fff; color: #000; } .card { background: #fff; border-color: #ccc; break-inside: avoid; } .progress, .done { display: none; } .file, .sub { color: #555; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>نص تسجيل <span>رسائل القيم</span></h1>
+  <p class="sub">معرض ترسيخ القيم — ثانوية العلم النافع الأهلية · ١٢ رسالة، كل وحدة تقريباً ١٥–٢٠ ثانية</p>
+  <section class="tips">
+    <h3>قبل التسجيل</h3>
+    <ol>
+      <li>غرفة هادئة، بدون مكيف أو مروحة شغّالة، وابعد عن الجدران الفاضية (الصدى).</li>
+      <li>سجّل بتطبيق «المذكرات الصوتية» في الآيفون (أو مسجل الصوت في الأندرويد)، والجوال على بعد شبر تقريباً من فمك.</li>
+      <li>اسكت ثانية قبل ما تبدأ وثانية بعد ما تخلص، واقرأ بهدوء ووضوح.</li>
+      <li>كل رسالة في ملف لحاله. سمِّ الملف باسم القيمة (مثل: التسامح) أو بالاسم الإنجليزي المكتوب جنبها.</li>
+      <li>إذا غلطت، كمّل من بداية الجملة؛ الأسهل تعيد الرسالة كاملة في ملف جديد.</li>
+    </ol>
+  </section>
+  <div class="progress" id="progress"></div>
+  
+    <article class="card" data-id="tasamuh">
+      <header>
+        <span class="num">١</span>
+        <h2>التسامح</h2>
+        <code class="file">tasamuh.mp3</code>
+        <label class="done"><input type="checkbox" data-done="tasamuh" /> سُجّلت</label>
+      </header>
+      <p class="text">التسامح قوةُ القلوب الكبيرة؛ أن تعفو وأنت قادر، وتحاور باحترام، وتبني الجسور بدل الجدران. في ثانوية العلم النافع نختلف في الآراء، ونلتقي على المحبة، لأن الصفح طريق السلام في النفس والمجتمع والوطن.</p>
+    </article>
+    <article class="card" data-id="watani">
+      <header>
+        <span class="num">٢</span>
+        <h2>الانتماء للوطن</h2>
+        <code class="file">watani.mp3</code>
+        <label class="done"><input type="checkbox" data-done="watani" /> سُجّلت</label>
+      </header>
+      <p class="text">الوطن ليس أرضاً نسكنها فحسب، بل روحٌ تسكننا. الانتماء أن نحفظ أمنه، ونحترم أنظمته، ونرفع رايته بعلمنا وأخلاقنا، ونكون سفراءه أينما حللنا؛ فخورين بماضيه، عاملين لحاضره، صانعين لمستقبله المشرق.</p>
+    </article>
+    <article class="card" data-id="taawun">
+      <header>
+        <span class="num">٣</span>
+        <h2>التعاون</h2>
+        <code class="file">taawun.mp3</code>
+        <label class="done"><input type="checkbox" data-done="taawun" /> سُجّلت</label>
+      </header>
+      <p class="text">التعاون سرّ الإنجاز العظيم؛ فاليد الواحدة لا تصفق، والفريق المتكاتف يصنع المستحيل. نتشارك المعرفة، ونساند المتعثر، ونفرح بنجاح زملائنا كأنه نجاحنا، لأننا في ثانوية العلم النافع أسرةٌ واحدة وهدفٌ واحد.</p>
+    </article>
+    <article class="card" data-id="azeema">
+      <header>
+        <span class="num">٤</span>
+        <h2>العزيمة</h2>
+        <code class="file">azeema.mp3</code>
+        <label class="done"><input type="checkbox" data-done="azeema" /> سُجّلت</label>
+      </header>
+      <p class="text">العزيمة وقود الناجحين؛ أن تحدد هدفك، وتستعين بالله، وتمضي إليه بثبات مهما تعثرت. فالسقوط ليس نهاية الطريق، بل درسٌ يجعلك أقوى. احرص على ما ينفعك، ولا تعجز، فالقمم لا تنتظر المترددين.</p>
+    </article>
+    <article class="card" data-id="amana">
+      <header>
+        <span class="num">٥</span>
+        <h2>الأمانة</h2>
+        <code class="file">amana.mp3</code>
+        <label class="done"><input type="checkbox" data-done="amana" /> سُجّلت</label>
+      </header>
+      <p class="text">الأمانة تاج الأخلاق؛ أن تحفظ الكلمة والعهد، وتؤدي الحقوق إلى أهلها، وتصون الوقت والمال والسر. الأمين يراقب ربه قبل الناس، فيكون نزيهاً في اختباره، وفياً لوعده، جديراً بثقة مدرسته ووطنه.</p>
+    </article>
+    <article class="card" data-id="indibat">
+      <header>
+        <span class="num">٦</span>
+        <h2>الانضباط</h2>
+        <code class="file">indibat.mp3</code>
+        <label class="done"><input type="checkbox" data-done="indibat" /> سُجّلت</label>
+      </header>
+      <p class="text">الانضباط فنّ إدارة الذات؛ أن تحترم وقتك ونظام مدرستك، وتحضر في موعدك، وتنجز مهامك دون تذكير. هو الجسر بين الأهداف والإنجاز، وبه تتحول العادات اليومية الصغيرة إلى نجاحات كبيرة تصنع مستقبلك.</p>
+    </article>
+    <article class="card" data-id="itqan">
+      <header>
+        <span class="num">٧</span>
+        <h2>الإتقان</h2>
+        <code class="file">itqan.mp3</code>
+        <label class="done"><input type="checkbox" data-done="itqan" /> سُجّلت</label>
+      </header>
+      <p class="text">الإتقان أن تمنح كل عمل حقه كاملًا من الجهد والعناية، فتجعل واجبك تحفةً تحمل اسمك، ودرسك خطوةً نحو التميز؛ فالمتقن لا يرضى بأقل من أفضل ما يستطيع، لأنه يبني نفسه ووطنه.</p>
+    </article>
+    <article class="card" data-id="ihtiram">
+      <header>
+        <span class="num">٨</span>
+        <h2>الاحترام</h2>
+        <code class="file">ihtiram.mp3</code>
+        <label class="done"><input type="checkbox" data-done="ihtiram" /> سُجّلت</label>
+      </header>
+      <p class="text">الاحترام لغة الكبار؛ أن تُقدّر معلمك، وتُنصت لزميلك، وتصون مدرستك ونظامها، وتختلف بأدب دون أن تجرح. فمن احترم الناس احترموه، ومن وقّر العلم رفعه العلم إلى منازل السمو.</p>
+    </article>
+    <article class="card" data-id="masooliya">
+      <header>
+        <span class="num">٩</span>
+        <h2>المسؤولية</h2>
+        <code class="file">masooliya.mp3</code>
+        <label class="done"><input type="checkbox" data-done="masooliya" /> سُجّلت</label>
+      </header>
+      <p class="text">المسؤولية أن تقول: هذا شأني، وأنا له. أن تحمل واجبك دون تذكير، وتعترف بخطئك دون تبرير، وتُكمل ما بدأت؛ فكل راعٍ مسؤول عن رعيته، وأنت راعٍ لعلمك ووقتك ومستقبلك.</p>
+    </article>
+    <article class="card" data-id="sidq">
+      <header>
+        <span class="num">١٠</span>
+        <h2>الصدق</h2>
+        <code class="file">sidq.mp3</code>
+        <label class="done"><input type="checkbox" data-done="sidq" /> سُجّلت</label>
+      </header>
+      <p class="text">الصدق أن يتطابق قولك مع حقيقتك، فلا تغش في اختبار، ولا تُزيّف إنجازًا، ولا تُخفي خطأً. الصادق يربح ثقة الناس قبل أن يربح الدرجات، والصدق يهدي إلى البر، والبر يهدي إلى الجنة.</p>
+    </article>
+    <article class="card" data-id="ihsan">
+      <header>
+        <span class="num">١١</span>
+        <h2>الإحسان</h2>
+        <code class="file">ihsan.mp3</code>
+        <label class="done"><input type="checkbox" data-done="ihsan" /> سُجّلت</label>
+      </header>
+      <p class="text">الإحسان أن تعبد الله كأنك تراه، فإن لم تكن تراه فإنه يراك؛ فتتجاوز حدود الواجب إلى الأجمل والأكمل، وتُحسن إلى من حولك قولًا وفعلًا، لأن الله كتب الإحسان على كل شيء.</p>
+    </article>
+    <article class="card" data-id="tumooh">
+      <header>
+        <span class="num">١٢</span>
+        <h2>الطموح</h2>
+        <code class="file">tumooh.mp3</code>
+        <label class="done"><input type="checkbox" data-done="tumooh" /> سُجّلت</label>
+      </header>
+      <p class="text">الطموح أن ترى نفسك حيث تريد أن تكون، ثم تمشي إليها بخطى ثابتة؛ تحرص على ما ينفعك، وتستعين بالله ولا تعجز، فهمّتك سقف إنجازك، ووطنك ينتظر أحلامك الكبيرة.</p>
+    </article>
+</main>
+<script>
+  (function () {
+    var KEY = 'recording-done';
+    var done = {};
+    try { done = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
+    var boxes = document.querySelectorAll('[data-done]');
+    function render() {
+      var n = 0;
+      boxes.forEach(function (b) {
+        var on = !!done[b.dataset.done];
+        b.checked = on; b.closest('.card').classList.toggle('is-done', on); if (on) n++;
+      });
+      document.getElementById('progress').textContent = 'سُجّل ' + n.toLocaleString('ar-SA') + ' من ' + boxes.length.toLocaleString('ar-SA');
+    }
+    boxes.forEach(function (b) {
+      b.addEventListener('change', function () {
+        done[b.dataset.done] = b.checked;
+        try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+        render();
+      });
+    });
+    render();
+  })();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+/* ==========================================================================
+ * Scroll-linked motion (v5.12) — goes with motion_scroll.js, which explains
+ * what each part does and which devices get it (html[data-perf]).
+ * ========================================================================== */
+
+/* --- A. the intro: the emblem flies into the header logo ------------------ */
+#intro-section.ms-scrub .intro-inner > * {
+  will-change: transform, opacity;
+}
+
+.ms-flyer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 35; /* over the header (30), under the section bar (40) and windows */
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  filter: drop-shadow(0 0 26px rgb(30 160 190 / 34%)); /* as .intro-emblem */
+  will-change: transform, opacity;
+}
+
+@keyframes msCatch {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.top-nav .brand-emblem.ms-catch {
+  animation: msCatch 560ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* --- B. a giant faint word behind each section title ----------------------
+ * Solid colour + element opacity (a see-through text colour would show the
+ * seams where Arabic letters join). The section is its stacking context, so
+ * the word sits above the page background and under every card. */
+.ms-giant-host {
+  position: relative;
+  isolation: isolate;
+}
+
+.ms-giant {
+  position: absolute;
+  top: 4rem; /* motion_scroll.js puts it on the middle of the title block */
+  right: -1%;
+  z-index: -1;
+  margin: -0.55em 0 0;
+  color: var(--text-main, #f5f7fa);
+  font-family: var(--font-ui, 'Cairo', sans-serif);
+  font-size: 9rem; /* older browsers */
+  font-size: clamp(5.5rem, 17vw, 15rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  opacity: 0.095;
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* its own GPU layer only while near the screen (motion_scroll.js) */
+.ms-giant.is-live {
+  will-change: transform;
+}
+
+body.projector-day .ms-giant {
+  opacity: 0.1;
+}
+
+@media (max-width: 640px) {
+  .ms-giant {
+    font-size: 5.5rem;
+    opacity: 0.08;
+  }
+}
+
+/* --- D. the light of the page: two layers cross-fading -------------------- */
+.ms-atmo,
+.ms-atmo > i {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.ms-atmo {
+  z-index: -1;
+}
+
+.ms-atmo > i {
+  opacity: 0;
+  --mt: opacity 1200ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: var(--mt);
+}
+
+.ms-atmo > i.is-on {
+  opacity: 1;
+}
+
+html[data-perf="low"] .ms-atmo {
+  display: none;
+}
+
+/* --- E. titles come into focus, cards tilt in (strong devices only) ------- */
+@keyframes msWordFocus {
+  from {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translate3d(0, 0.4em, 0) scale(1.04);
+  }
+}
+
+@keyframes msCardTilt {
+  from {
+    opacity: 0;
+    transform: perspective(1100px) rotateX(11deg) translate3d(0, 36px, 0) scale(0.98);
+  }
+}
+
+html.rv-ready[data-perf="high"] body:not(.classroom-mode) .rv-group.rv-on .rv-word {
+  --ma: msWordFocus 820ms var(--motion-ease-reveal) calc(var(--i, 0) * 70ms) backwards;
+  animation: var(--ma);
+}
+
+html.rv-ready[data-perf="high"] body:not(.classroom-mode) .rv-group.rv-cards.rv-on > * {
+  --ma: msCardTilt 800ms var(--motion-ease-reveal) calc(220ms + var(--i, 0) * 75ms) backwards;
+  animation: var(--ma);
+  transform-origin: 50% 100%;
+}
+
+/* --- F. a thin progress line in the floating section bar (RTL) ------------ */
+.ms-progress {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 0.28rem;
+  left: 1.25rem;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to left, #10b981, #d4af37);
+  opacity: 0.85;
+  transform: scaleX(0);
+  transform-origin: 100% 50%;
+  pointer-events: none;
+}
+
+/* --- G. a value card grows into the value window (View Transitions) ------- */
+::view-transition-group(ms-studio) {
+  animation-duration: 560ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+::view-transition-old(ms-studio),
+::view-transition-new(ms-studio) {
+  animation-duration: 560ms;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 360ms;
+}
+
+/* while the card grows, the window's own rise is switched off */
+html.ms-vt .studio-modal,
+html.ms-vt .studio-modal > .studio-panel {
+  transition: none !important;
+}
+
+/* reduced-motion devices keep this motion, like the rest of the exhibit
+ * (the global reduce rule in section 9 switches every transition /
+ * animation off with !important, so it is restored the same way) */
+@media (prefers-reduced-motion: reduce) {
+  .ms-atmo > i {
+    transition: var(--mt, none) !important;
+  }
+
+  .top-nav .brand-emblem.ms-catch {
+    animation: msCatch 560ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+}
