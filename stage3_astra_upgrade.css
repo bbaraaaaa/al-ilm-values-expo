@@ -2538,8 +2538,8 @@ body:not(.projector-day) :is(
  *     low    (entry-level phones, TVs, no GPU): also no glows, lighter
  *            shadows, shorter header fold, no staggered entrances.
  *     lite   (html[data-motion="lite"], below low, set only when a device
- *            still drops frames at low or draws without a GPU): nothing
- *            scrubbed with the scroll (motion_scroll.js / .css).
+ *            is measured still dropping frames at low): nothing scrubbed
+ *            with the scroll (motion_scroll.js / .css).
  *     The card ring itself is thinned out in fable_engine.js.
  * ========================================================================== */
 html:is([data-perf="medium"], [data-perf="low"]) .intro-glow {

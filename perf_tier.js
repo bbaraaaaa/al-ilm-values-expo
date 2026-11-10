@@ -17,10 +17,13 @@
  * short CPU check after the page has loaded (remembered for a week), and is
  * stepped down live if real animations keep dropping frames.
  * Below low there is one more step, the lite motion (v5.13.1): a device that
- * still drops frames at the low level, or a browser drawing without a GPU,
- * keeps the page and its light motion but nothing that follows the scroll
- * frame by frame (motion_scroll.js: no emblem flight, intro dissolve or word
- * drift). Like the level, it is measured, never guessed, and kept a week.
+ * still drops frames at the low level keeps the page and its light motion
+ * but nothing that follows the scroll frame by frame (motion_scroll.js: no
+ * emblem flight, intro dissolve or word drift). Like the level, it is
+ * measured, never guessed, and kept a week: a browser drawing without a GPU
+ * starts at low, and only reaches lite if its frames really drop there
+ * (v5.13.2; in v5.13.1 no GPU meant lite at once, and a computer that played
+ * the emblem flight smoothly lost it).
  * It sets <html data-perf="high|medium|low" data-motion="full|lite"
  * data-device="…">; the CSS (stage3_astra_upgrade.css section 19) and the
  * scripts read it.
@@ -33,7 +36,8 @@
   var root = document.documentElement;
   var RANK = { low: 0, medium: 1, high: 2 };
   var NAMES = ['low', 'medium', 'high'];
-  var STORE = 'alm_perf_v1';
+  // v2 (5.13.2): every device measures again under the lite rule above
+  var STORE = 'alm_perf_v2';
   var FORCE = 'alm_perf_force';
   var WEEK = 7 * 864e5;
 
@@ -93,6 +97,7 @@
   var forcedValue = read('sessionStorage', FORCE);
   var forced = RANK.hasOwnProperty(forcedValue) || forcedValue === 'lite' ? forcedValue : null;
 
+  write('localStorage', 'alm_perf_v1', null); // the old measurements
   var saved = null;
   try {
     saved = JSON.parse(read('localStorage', STORE) || 'null');
@@ -144,10 +149,11 @@
     if (saveData) l = Math.min(l, 1);
     return Math.max(minLevel, Math.min(l, cap));
   }
-  // lite motion: only at the low level, never on the iPad
+  // lite motion: only at the low level, never on the iPad, and only once the
+  // frame watch has seen the low level still dropping frames
   function isLite(l) {
     if (forced) return forced === 'lite';
-    return l === 0 && minLevel === 0 && (lite || noGpu);
+    return l === 0 && minLevel === 0 && lite;
   }
 
   var level = compute();

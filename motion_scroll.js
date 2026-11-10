@@ -28,9 +28,10 @@
  *       low    (classroom boards, TVs) the emblem flight without the 3D turn
  *              and its glow, the intro dissolve without blur, the giant
  *              words; no ring tilt, no colour light, no card morph
- *       lite   (data-motion="lite": a device still dropping frames at low,
- *              or drawing without a GPU) none of the scrubbed parts: a still
- *              intro, still words, the header logo in place from the start
+ *       lite   (data-motion="lite": a device measured still dropping frames
+ *              at low) none of the scrubbed parts: a still intro (its emblem
+ *              still draws itself once, CSS section H), still words, the
+ *              header logo in place from the start
  *     and perf_tier.js steps the level down by itself if frames drop while
  *     this scrubs (PerfTier.watch)
  * Like the rest of the exhibit (CSS sections 12 and 20.9) the motion stays
