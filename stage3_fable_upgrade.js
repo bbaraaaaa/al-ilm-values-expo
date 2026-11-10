@@ -739,6 +739,9 @@
     const T = (x, y, s) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${s.toFixed(4)})`;
     const durationFor = (dist) =>
       Math.round(Math.min(1200, Math.max(860, 640 + dist * 0.45)) * (window.PerfTier?.motion || 1));
+    // a brisker glide, the same both ways (owner's request, v5.13.1); the
+    // header's fold and unfold follow it (motion_scroll.js)
+    const GLIDE_PACE = 0.7;
 
     // Where the floating bar must be to sit exactly over the header bar. The
     // header copy is only hidden (its layout box stays), so it can be measured.
@@ -782,14 +785,14 @@
       let ms;
       let frames;
       if (reversing) {
-        ms = durationFor(p.dist);
+        ms = Math.round(durationFor(p.dist) * GLIDE_PACE);
         frames = [
           { transform: from, opacity: 1, easing: EASE_TRAVEL },
           { transform: T(0, 7, 1.012), opacity: 1, offset: 0.84, easing: EASE_SETTLE },
           { transform: T(0, 0, 1), opacity: 1 }
         ];
       } else {
-        ms = HANDOFF_IN + durationFor(p.dist);
+        ms = HANDOFF_IN + Math.round(durationFor(p.dist) * GLIDE_PACE);
         const inAt = HANDOFF_IN / ms;
         frames = [
           // 0) fade in exactly over the header bar (which hides beneath it)
@@ -819,7 +822,7 @@
       setFolded(false); // header grows back first
       setInteractive(false);
 
-      const travel = durationFor(p.dist) - 80;
+      const travel = Math.round(durationFor(p.dist) * GLIDE_PACE) - 80;
       const ms = travel + HANDOFF_OUT;
       const settledAt = travel / ms;
       // visibility stays 'visible' in every frame so the bar can keep flying

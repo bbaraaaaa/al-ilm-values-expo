@@ -21,6 +21,17 @@
   will-change: transform, opacity;
 }
 
+/* light devices: no glow on the moving copy (a blurred shadow redrawn every
+ * frame as it moves and scales is costly for a phone-class GPU at 4K);
+ * lite motion: no flight at all */
+html[data-perf="low"] .ms-flyer {
+  filter: none;
+}
+
+html[data-motion="lite"] .ms-flyer {
+  display: none;
+}
+
 @keyframes msCatch {
   0% {
     transform: scale(1);
@@ -35,6 +46,47 @@
 
 .top-nav .brand-emblem.ms-catch {
   animation: msCatch 560ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Where the emblem flies into the header (a header that stays on screen,
+ * .ms-slot from motion_scroll.js), the open header leaves the logo's slot
+ * out at its right edge (--nav-slot-w: logo + its gap), so the school name
+ * ends the header. Folding, the header pulls in on the left and at the same
+ * moment grows out on the right, opening the space the emblem flies into;
+ * unfolding plays it back: the right pulls in, the left grows out, and the
+ * emblem returns home. One clip-path transition does both edges (the fold's
+ * own, on .top-nav / .top-nav.is-folded in stage3). The school name never
+ * moves. The section bar is shifted by half the slot so it stays in the
+ * middle of the header as it is seen. */
+.top-nav.ms-slot:not(.is-folded) {
+  clip-path: inset(0 var(--nav-slot-w, 4.25rem) 0 0 round var(--radius-card, 1.5rem));
+}
+
+/* Two steps on the way down: the fold first pulls the header in on the left
+ * while the pill still stops at the school name (.ms-brand-wait), and the
+ * space on the right comes out as the section bar lands at the bottom (or as
+ * the emblem gets there, if sooner; motion_scroll.js lifts the class), on a
+ * quick transition of its own; then the emblem flies into it. */
+.top-nav.is-folded.ms-slot.ms-brand-wait {
+  clip-path: inset(
+    0 var(--nav-slot-w, 4.25rem) calc(100% - var(--nav-pill-h, 82px)) calc(100% - var(--nav-pill-w, 21rem))
+    round var(--radius-card, 1.5rem)
+  );
+}
+
+.top-nav.is-folded.ms-slot:not(.ms-brand-wait) {
+  transition: clip-path 260ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* (kept while folded too: the bar is hidden then, and a jump at the moment
+ * it hands over to the floating copy would show) */
+.top-nav.ms-slot .header-dock {
+  transform: translateX(calc(var(--nav-slot-w, 4.25rem) / -2));
+}
+
+/* the first state after loading is set at once, not slid into */
+.top-nav.ms-instant {
+  transition: none !important;
 }
 
 /* --- B. a giant faint word behind each section title ----------------------
@@ -69,10 +121,6 @@
 /* its own GPU layer only while near the screen (motion_scroll.js) */
 .ms-giant.is-live {
   will-change: transform;
-}
-
-body.projector-day .ms-giant {
-  opacity: 0.1;
 }
 
 @media (max-width: 640px) {
@@ -165,6 +213,154 @@ html.ms-vt .studio-modal > .studio-panel {
   transition: none !important;
 }
 
+/* --- H. the emblem draws itself on arrival (v5.13.1) ---------------------
+ * The opening screen's emblem is the school emblem in parts (index.html):
+ * the book's pages open from the spine, the two arcs swing in, the side
+ * figures rise and then the centre one, the star pops with a champagne
+ * glint, and the emblem's glow comes last. Pure CSS from the first paint
+ * (no script to wait for); the parts only move and fade, inside a 7.5rem
+ * emblem. Light devices (boards): a little quicker, no glint, the glow
+ * put on at the end in one step. Lite motion: the finished emblem, still.
+ * The section's other lines still rise in with introRise. */
+.intro-emblem.ie-draw {
+  display: block;
+  --ie-k: 1;
+  --ma: ieGlow 700ms ease-out calc(2000ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.intro-emblem.ie-draw > svg {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+}
+
+.ie-draw g {
+  transform-box: view-box;
+}
+
+.ie-pg {
+  transform-origin: 500px 965px;
+  --ma: iePage calc(700ms * var(--ie-k)) cubic-bezier(0.16, 1, 0.3, 1) calc(120ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-arc {
+  transform-origin: 500px 700px;
+}
+
+.ie-arc-l {
+  --ma: ieArcL calc(700ms * var(--ie-k)) cubic-bezier(0.22, 1, 0.36, 1) calc(520ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-arc-r {
+  --ma: ieArcR calc(700ms * var(--ie-k)) cubic-bezier(0.22, 1, 0.36, 1) calc(520ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-fig-l,
+.ie-fig-r {
+  transform-origin: 500px 900px;
+}
+
+.ie-fig-l {
+  --ma: ieRise calc(680ms * var(--ie-k)) cubic-bezier(0.22, 1, 0.36, 1) calc(820ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-fig-r {
+  --ma: ieRise calc(680ms * var(--ie-k)) cubic-bezier(0.22, 1, 0.36, 1) calc(890ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-fig-c {
+  transform-origin: 480px 900px;
+  --ma: ieRiseC calc(760ms * var(--ie-k)) cubic-bezier(0.22, 1, 0.36, 1) calc(1000ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-star,
+.ie-glint {
+  transform-origin: 596px 108px;
+}
+
+.ie-star {
+  --ma: ieStar calc(620ms * var(--ie-k)) cubic-bezier(0.34, 1.56, 0.64, 1) calc(1550ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+.ie-glint {
+  opacity: 0;
+  --ma: ieGlint 800ms ease-out calc(1820ms * var(--ie-k)) both;
+  animation: var(--ma);
+}
+
+@keyframes iePage {
+  from { transform: scaleX(0.04); opacity: 0; }
+  30% { opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes ieArcL {
+  from { transform: rotate(-30deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes ieArcR {
+  from { transform: rotate(30deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes ieRise {
+  from { transform: translateY(80px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes ieRiseC {
+  from { transform: translateY(120px) scale(0.9); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes ieStar {
+  from { transform: scale(0) rotate(-70deg); opacity: 0; }
+  60% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes ieGlint {
+  from { transform: scale(0.2); opacity: 0; }
+  35% { opacity: 1; }
+  to { transform: scale(1.5) rotate(45deg); opacity: 0; }
+}
+
+@keyframes ieGlow {
+  from { filter: drop-shadow(0 0 0 rgba(30, 160, 190, 0)); }
+  to { filter: drop-shadow(0 0 26px rgba(30, 160, 190, 0.34)); }
+}
+
+/* the glow off while the parts move, on at the end in one step */
+@keyframes ieGlowStep {
+  from { filter: none; }
+  to { filter: drop-shadow(0 0 26px rgba(30, 160, 190, 0.34)); }
+}
+
+html[data-perf="low"] .intro-emblem.ie-draw {
+  --ie-k: 0.85;
+  --ma: ieGlowStep 1ms linear calc(2000ms * var(--ie-k)) both;
+}
+
+html[data-perf="low"] .ie-glint {
+  display: none;
+}
+
+html[data-motion="lite"] .intro-emblem.ie-draw,
+html[data-motion="lite"] .ie-draw g {
+  --ma: none;
+  animation: none;
+}
+
 /* reduced-motion devices keep this motion, like the rest of the exhibit
  * (the global reduce rule in section 9 switches every transition /
  * animation off with !important, so it is restored the same way) */
@@ -173,7 +369,23 @@ html.ms-vt .studio-modal > .studio-panel {
     transition: var(--mt, none) !important;
   }
 
+  .intro-emblem.ie-draw,
+  .ie-draw .ie-pg,
+  .ie-draw .ie-arc-l,
+  .ie-draw .ie-arc-r,
+  .ie-draw .ie-fig-l,
+  .ie-draw .ie-fig-r,
+  .ie-draw .ie-fig-c,
+  .ie-draw .ie-star,
+  .ie-draw .ie-glint {
+    animation: var(--ma, none) !important;
+  }
+
   .top-nav .brand-emblem.ms-catch {
     animation: msCatch 560ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+
+  .top-nav.is-folded.ms-slot:not(.ms-brand-wait):not(.ms-instant) {
+    transition: clip-path 260ms cubic-bezier(0.2, 0, 0, 1) !important;
   }
 }

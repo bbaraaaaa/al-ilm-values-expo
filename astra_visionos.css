@@ -6,7 +6,7 @@
  * No fonts, images, scripts, or external dependencies are fetched here.
  *
  * Integration:
- * - Toggle body.projector-day for the projection palette.
+ * - One dark palette (the day / projector palette was removed in v5.13.1).
  * - Toggle .active / .spa-hidden and synchronize aria-selected, aria-expanded,
  *   aria-hidden and inert in the SPA controller.
  * - Modals are fixed overlays with a .studio-panel / .manager-panel child
@@ -121,48 +121,6 @@
   --z-nav: 30;
   --z-dock: 40;
   --z-modal: 100;
-}
-
-body.projector-day {
-  color-scheme: light;
-  --bg-main: #F6F3EB;
-  --bg-card: rgba(255, 255, 255, 0.96);
-  --bg-elevated: rgba(255, 253, 248, 0.98);
-  --text-main: #001820;
-  --text-muted: #42516A;
-  --border-line: rgba(0, 24, 32, 0.224);
-  --glass-bg: rgba(255, 255, 255, 0.88);
-  --surface-solid: #FFFFFF;
-  --surface-elevated-solid: #FFFDFA;
-  --specular-top: rgba(255, 255, 255, 1);
-  --specular-inner: rgba(255, 255, 255, 0.65);
-  --control-bg: rgba(0, 24, 32, 0.044);
-  --control-hover: rgba(0, 24, 32, 0.08);
-  --text-accent: #735514;
-  --text-success: #005d69;
-  --focus-ring: #005a65;
-  --selection-bg: rgba(206, 175, 106, 0.256);
-  --active-bg: #EDE3C7;
-  --active-border: #8b6b25;
-  --scrim: rgba(0, 24, 32, 0.368);
-  --shadow-surface: 0 2px 4px rgba(0, 24, 32, 0.064),
-    0 12px 28px rgba(0, 24, 32, 0.072),
-    0 28px 64px rgba(0, 24, 32, 0.048);
-  --shadow-float: 0 4px 8px rgba(0, 24, 32, 0.08),
-    0 24px 48px rgba(0, 24, 32, 0.112),
-    0 52px 100px rgba(0, 24, 32, 0.096);
-  --shadow-control: 0 2px 3px rgba(0, 24, 32, 0.064),
-    0 8px 20px rgba(0, 24, 32, 0.08);
-  --best-ink: #005d69;
-  --best-bg: #def2f5;
-  --best-border: #00707e;
-  --mid-ink: #704702;
-  --mid-bg: #FBEDD3;
-  --mid-border: #916728;
-  --low-ink: #883B36;
-  --low-bg: #F6E7E4;
-  --low-border: #9F4B43;
-  --spot-color: rgba(161, 126, 59, 0.072);
 }
 
 *,
@@ -1639,8 +1597,7 @@ body.modal-open {
 }
 
 @media (forced-colors: active) {
-  :root,
-  body.projector-day {
+  :root {
     --bg-main: Canvas;
     --bg-card: Canvas;
     --bg-elevated: Canvas;

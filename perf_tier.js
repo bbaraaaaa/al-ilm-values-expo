@@ -16,9 +16,16 @@
  * The level starts as a guess from the kind of device, is refined once by a
  * short CPU check after the page has loaded (remembered for a week), and is
  * stepped down live if real animations keep dropping frames.
- * It sets <html data-perf="high|medium|low" data-device="…">; the CSS
- * (stage3_astra_upgrade.css section 19) and the scripts read it.
- * Test any level on any device with ?perf=high|medium|low (?perf=auto resets).
+ * Below low there is one more step, the lite motion (v5.13.1): a device that
+ * still drops frames at the low level, or a browser drawing without a GPU,
+ * keeps the page and its light motion but nothing that follows the scroll
+ * frame by frame (motion_scroll.js: no emblem flight, intro dissolve or word
+ * drift). Like the level, it is measured, never guessed, and kept a week.
+ * It sets <html data-perf="high|medium|low" data-motion="full|lite"
+ * data-device="…">; the CSS (stage3_astra_upgrade.css section 19) and the
+ * scripts read it.
+ * Test any level on any device with ?perf=high|medium|low|lite (?perf=auto
+ * resets).
  * ========================================================================== */
 (function () {
   'use strict';
@@ -78,9 +85,13 @@
   }
 
   // Manual override (this tab only).
-  var asked = /[?&]perf=(high|medium|low|auto)\b/.exec(location.search);
+  var asked = /[?&]perf=(high|medium|low|lite|auto)\b/.exec(location.search);
   if (asked) write('sessionStorage', FORCE, asked[1] === 'auto' ? null : asked[1]);
-  var forced = RANK.hasOwnProperty(read('sessionStorage', FORCE)) ? read('sessionStorage', FORCE) : null;
+  // ?perf=auto also forgets what was measured here (a fresh CPU check, and
+  // no step-down or lite motion kept from an earlier visit)
+  if (asked && asked[1] === 'auto') write('localStorage', STORE, null);
+  var forcedValue = read('sessionStorage', FORCE);
+  var forced = RANK.hasOwnProperty(forcedValue) || forcedValue === 'lite' ? forcedValue : null;
 
   var saved = null;
   try {
@@ -124,13 +135,19 @@
   var cpu = saved ? saved.cpu : null;
   var noGpu = saved ? !!saved.noGpu : false;
   var cap = saved && saved.cap != null ? saved.cap : 2; // set by the frame watch
+  var lite = saved ? !!saved.lite : false; // set by the frame watch, at the low level
   var minLevel = device === 'ipad' ? 1 : 0;
 
   function compute() {
-    if (forced) return RANK[forced];
+    if (forced) return forced === 'lite' ? 0 : RANK[forced];
     var l = refine(guess(), cpu, noGpu);
     if (saveData) l = Math.min(l, 1);
     return Math.max(minLevel, Math.min(l, cap));
+  }
+  // lite motion: only at the low level, never on the iPad
+  function isLite(l) {
+    if (forced) return forced === 'lite';
+    return l === 0 && minLevel === 0 && (lite || noGpu);
   }
 
   var level = compute();
@@ -140,17 +157,24 @@
     forced: !!forced,
     /** motion length multiplier for scripted animations */
     motion: 1,
+    /** true: the lite motion (nothing scrubbed frame by frame with the scroll) */
+    lite: false,
     watch: watch,
     set: function (name) {
-      if (RANK.hasOwnProperty(name)) apply(RANK[name], 'manual');
+      if (name === 'lite') {
+        lite = true;
+        apply(0, 'manual');
+      } else if (RANK.hasOwnProperty(name)) apply(RANK[name], 'manual');
     }
   });
 
   function apply(next, reason) {
     level = next;
     api.level = NAMES[level];
+    api.lite = isLite(level);
     api.motion = level === 0 ? 0.85 : 1;
     root.setAttribute('data-perf', api.level);
+    root.setAttribute('data-motion', api.lite ? 'lite' : 'full');
     root.setAttribute('data-device', device);
     if (reason) {
       try {
@@ -161,7 +185,7 @@
   apply(level, null);
 
   function save() {
-    write('localStorage', STORE, JSON.stringify({ ua: ua, at: Date.now(), cpu: cpu, noGpu: noGpu, cap: cap }));
+    write('localStorage', STORE, JSON.stringify({ ua: ua, at: Date.now(), cpu: cpu, noGpu: noGpu, cap: cap, lite: lite }));
   }
 
   // ---- CPU check (once a week, after load, in short idle slices) ---------
@@ -217,7 +241,7 @@
       api.cpuMs = Math.round(best * 10) / 10;
       save();
       var l = compute();
-      if (l !== level) apply(l, 'cpu');
+      if (l !== level || isLite(l) !== api.lite) apply(l, 'cpu');
     }
     next();
   }
@@ -284,6 +308,12 @@
       // The exhibition iPad starts every visit at full quality again.
       if (device !== 'ipad') save();
       apply(cap, 'frames');
+    } else if (rough >= 3 && level === 0 && minLevel === 0 && !lite) {
+      // still rough at the low level: the lite motion (kept a week)
+      history = [];
+      lite = true;
+      save();
+      apply(0, 'frames');
     }
   }
 
@@ -325,7 +355,7 @@
       var paint = function () {
         box.textContent =
           navigator.userAgent +
-          '\nlevel ' + api.level + ' | device ' + device + (window.ALM_LEGACY ? ' | older-browser scripts' : '') +
+          '\nlevel ' + api.level + (api.lite ? ' (lite motion)' : '') + ' | device ' + device + (window.ALM_LEGACY ? ' | older-browser scripts' : '') +
           '\nscreen ' + screen.width + 'x' + screen.height + ' @' + (window.devicePixelRatio || 1) +
           ' | window ' + innerWidth + 'x' + innerHeight +
           '\ncores ' + (cores || '?') + ' | memory ' + (memory || '?') + ' GB | cpu ' + (api.cpuMs || '?') + ' ms' +

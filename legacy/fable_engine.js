@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from fable_engine.js (sha256 2661d4914d582446dc01277b62be443b6ff7c45f9bc1c63c8338279e09648e71) for older browsers. Do not edit: edit fable_engine.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from fable_engine.js (sha256 66da6f04bfb5142dff228853a0d2246108fdb4dd395787a8a1554f497df110d4) for older browsers. Do not edit: edit fable_engine.js and rebuild. */
 (() => {
   "use strict";
   var _a;
@@ -1112,7 +1112,7 @@
       const perf = ((_a2 = window.PerfTier) == null ? void 0 : _a2.level) || "high";
       const maxVisibleDist = perf === "low" ? 1.75 : perf === "medium" ? len <= 6 ? 2.4 : 2.6 : len <= 6 ? 2.95 : 3.6;
       const depthBlur = perf === "high";
-      const minBrightness = document.body.classList.contains("projector-day") ? 0.82 : 0.58;
+      const minBrightness = 0.58;
       for (let i = 0; i < len; i++) {
         const cardObj = this.cards[i];
         const el = cardObj.element;

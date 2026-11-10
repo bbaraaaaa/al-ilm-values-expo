@@ -11,7 +11,9 @@
  *   Native <dialog> opens with showModal(); [hidden] always wins.
  * - JS owns focus trapping, status text, persistence and audio cancellation.
  *
- * Priority: projector-day owns colors; classroom-mode owns scale and motion.
+ * Priority: classroom-mode owns scale and motion. (The day / projector palette
+ * was removed in v5.13.1; a few dark rules still read body:not(.projector-day),
+ * and fable_engine.js keeps that class off.)
  * No external assets, continuous animations, global font replacement or
  * per-card backdrop filters. Essential content remains visible in all modes.
  */
@@ -56,35 +58,6 @@
   --alm-ease: cubic-bezier(0.2, 0, 0, 1);
   --alm-duration: 160ms;
   --reader-font-size: 1.375rem;
-}
-
-body.projector-day {
-  --alm-surface: #ffffff;
-  --alm-glass: #ffffff;
-  --alm-reading: #fffefa;
-  --alm-hover: #eee8db;
-  --alm-ink: #09242d;
-  --alm-secondary: #34465c;
-  --alm-muted: #526176;
-  --alm-border: #cdd3db;
-  --alm-control-border: #748297;
-  --alm-specular: #ffffff;
-  --alm-gold: #765607;
-  --alm-gold-ink: #ffffff;
-  --alm-selected: #f4ebd3;
-  --alm-emerald: #006674;
-  --alm-emerald-ink: #ffffff;
-  --alm-success-text: #006674;
-  --alm-success-surface: #e4f4f6;
-  --alm-danger: #a32d38;
-  --alm-focus: #174d9b;
-  --alm-track: #d5dce4;
-  --alm-scrim: rgba(9, 36, 45, 0.336);
-  --alm-mark-bg: #e7cb84;
-  --alm-mark-ink: #09242d;
-  --alm-shadow: 0 4px 12px rgba(9, 36, 45, 0.064);
-  --alm-modal-shadow: 0 20px 56px rgba(9, 36, 45, 0.144);
-  --alm-blur: 0px;
 }
 
 :where(
@@ -320,16 +293,6 @@ body.projector-day {
 .jewel-pill[data-completion="complete"] .jewel-pill__count {
   color: var(--alm-success-text);
   font-weight: 800;
-}
-
-body.projector-day .jewel-pill {
-  border-color: var(--alm-control-border);
-}
-
-body.projector-day .jewel-pill__ring {
-  /* A dark outer boundary preserves the silhouette of pale jewel colors. */
-  outline: 1px solid var(--alm-control-border);
-  outline-offset: 1px;
 }
 
 /* 03. Today's practice stays in document flow ---------------------------- */
@@ -813,10 +776,6 @@ mark.alm-hl {
   margin-block-end: 0.35rem;
 }
 
-body.projector-day .reader-insight-label {
-  color: var(--alm-gold);
-}
-
 .reader-insight-text {
   margin: 0;
   font-size: 0.95rem;
@@ -920,10 +879,6 @@ body.classroom-mode {
   animation: none !important;
   transition: none !important;
   scroll-behavior: auto !important;
-}
-
-body.projector-day :is(.alm-aurora, .alm-starfield, .ambient-orb, .aurora-orb) {
-  display: none;
 }
 
 @media (max-width: 39.999rem) {
@@ -1140,7 +1095,6 @@ body.projector-day :is(.alm-aurora, .alm-starfield, .ambient-orb, .aurora-orb) {
 }
 
 .spatial-orbit-stage .value-card-3d.is-center > .vcard-glare { opacity: 0.5; }
-body.projector-day .value-card-3d > .vcard-glare { opacity: 0 !important; }
 
 /* Exhibition value badge on cards (reference amber) */
 .vcard-group-pill.vcard-expo-pill {
@@ -1149,24 +1103,12 @@ body.projector-day .value-card-3d > .vcard-glare { opacity: 0 !important; }
   border-color: rgba(216, 171, 109, 0.336);
 }
 
-body.projector-day .vcard-group-pill.vcard-expo-pill {
-  color: #824d1c;
-  background: #ddcda3;
-  border-color: #bb8851;
-}
-
 /* 10.5 Hero: simple, reference-style --------------------------------------- */
 .hero-kicker.expo-kicker {
   background: rgba(55, 175, 191, 0.08);
   border-color: rgba(55, 175, 191, 0.24);
   color: #55c8d8;
   box-shadow: none;
-}
-
-body.projector-day .hero-kicker.expo-kicker {
-  background: #c8f9ff;
-  border-color: #6fe0f0;
-  color: #005d69;
 }
 
 /* Keep the group control beside the hero copy (not wrapped below it)
@@ -1214,12 +1156,6 @@ body.projector-day .hero-kicker.expo-kicker {
   background: rgba(55, 175, 191, 0.16);
   color: #6fe0f0;
   font-weight: 800;
-}
-
-body.projector-day #hero-section .group-segmented .filter-pill:is(.active, [aria-pressed="true"]) {
-  border-color: #007585;
-  background: #c8f9ff;
-  color: #005d69;
 }
 
 /* One control row: [arrows + dots] ··· [SPIN] with a hairline on top */
@@ -1286,10 +1222,6 @@ body.projector-day #hero-section .group-segmented .filter-pill:is(.active, [aria
   inline-size: 24px;
   background: var(--dot-accent, #37afbf);
   box-shadow: 0 0 10px color-mix(in srgb, var(--dot-accent, #37afbf) 55%, transparent);
-}
-
-body.projector-day #dotsBar .orbit-dot:not(.active) {
-  background: rgba(14, 41, 50, 0.16);
 }
 
 /* SPIN: reference emerald gradient pill; amber while spinning */
@@ -1406,44 +1338,6 @@ html {
   scrollbar-color: rgba(167, 220, 224, 0.28) transparent;
 }
 
-body.projector-day {
-  color-scheme: light;
-  --bg-main: #f3f7f8;
-  --bg-card: #ffffff;
-  --bg-elevated: #e7f0f1;
-  --text-main: #0e2932;
-  --text-muted: rgba(14, 41, 50, 0.576);
-  --border-line: rgba(0, 76, 86, 0.12);
-  --glass-bg: rgba(0, 76, 86, 0.048);
-  --surface-solid: #ffffff;
-  --surface-elevated-solid: #f3f7f8;
-  --control-bg: rgba(0, 76, 86, 0.048);
-  --control-hover: rgba(0, 76, 86, 0.096);
-  --text-accent: #824d1c;
-  --focus-ring: #007585;
-  --selection-bg: rgba(55, 175, 191, 0.192);
-  --active-bg: #c8f9ff;
-  --active-border: #007585;
-  --scrim: rgba(14, 41, 50, 0.336);
-
-  --alm-surface: #ffffff;
-  --alm-glass: #ffffff;
-  --alm-reading: #fbfdfd;
-  --alm-hover: #e7f0f1;
-  --alm-ink: #0e2932;
-  --alm-secondary: #25494e;
-  --alm-muted: #44696f;
-  --alm-border: rgba(0, 76, 86, 0.144);
-  --alm-control-border: #65898f;
-  --alm-specular: #ffffff;
-  --alm-gold: #824d1c;
-  --alm-gold-ink: #ffffff;
-  --alm-selected: #def2f5;
-  --alm-focus: #007585;
-  --alm-track: #cce0e3;
-  --alm-scrim: rgba(14, 41, 50, 0.336);
-}
-
 /* Backdrop: dawn light from the top (the logo's star), an aqua breath on the
  * right, a champagne whisper low on the left, and a quiet 52px grid */
 html body:not(.projector-day) {
@@ -1457,15 +1351,6 @@ html body:not(.projector-day) {
   background-size: auto, auto, auto, 52px 52px, 52px 52px;
 }
 
-html body.projector-day {
-  background-color: #f3f7f8;
-  background-image:
-    radial-gradient(900px 460px at 50% -8%, rgba(55, 175, 191, 0.056), transparent 62%),
-    linear-gradient(to right, rgba(0, 76, 86, 0.032) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 76, 86, 0.032) 1px, transparent 1px);
-  background-size: auto, 52px 52px, 52px 52px;
-}
-
 .top-nav .brand-emblem {
   background: rgba(55, 175, 191, 0.08);
   border-color: rgba(55, 175, 191, 0.24);
@@ -1473,8 +1358,7 @@ html body.projector-day {
 }
 
 /* Official school logo: transparent PNG straight on the page, no tile */
-.top-nav .brand-emblem.has-logo,
-body.projector-day .top-nav .brand-emblem.has-logo {
+.top-nav .brand-emblem.has-logo {
   inline-size: 3.5rem;
   block-size: 3.5rem;
   padding: 0;
@@ -1585,14 +1469,6 @@ body.projector-day .top-nav .brand-emblem.has-logo {
 #studioModal .exhibit-step-text {
   font-size: 0.84rem;
   line-height: 1.7;
-}
-
-body.projector-day :is(.exhibit-step-num, .exhibit-step-kicker) {
-  color: color-mix(in srgb, var(--step-accent, #ceaf6a) 62%, #09242d);
-}
-
-body.projector-day .exhibit-step-num {
-  box-shadow: none;
 }
 
 :is(html.classroom-mode, body.classroom-mode) .exhibit-step-text {
@@ -1723,12 +1599,6 @@ body.is-attract .attract-hint {
   transform: none;
   transition-delay: 0s;
   animation: attractBreath 2.8s ease-in-out 600ms infinite;
-}
-
-body.projector-day .attract-hint {
-  background: #ffffff;
-  color: #0e2932;
-  border-color: #007585;
 }
 
 @keyframes attractBreath {
@@ -1889,6 +1759,55 @@ body.projector-day .attract-hint {
   .top-nav .header-dock {
     order: 3;
     margin-inline: auto;
+  }
+}
+
+/* The section bar stays in the middle of the header, as it was beside the
+ * search (removed in v5.13): logo + name at the start, the fullscreen button
+ * (boards only) at the end, the bar in the true centre whether or not that
+ * button is there. Under 1000px the bar keeps its own centred row below. */
+@media (min-width: 641px) {
+  .top-nav {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand fs"
+      "dock dock";
+    align-items: center;
+    column-gap: 1rem;
+    row-gap: 0.5rem;
+  }
+
+  .top-nav .nav-brand {
+    grid-area: brand;
+    justify-self: start;
+  }
+
+  .top-nav .header-dock {
+    grid-area: dock;
+    justify-self: center;
+    margin-inline: 0;
+  }
+
+  .top-nav .fs-btn {
+    grid-area: fs;
+    justify-self: end;
+  }
+}
+
+@media (min-width: 1000px) {
+  .top-nav {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas: "brand dock fs";
+  }
+}
+
+/* short landscape screens hide the header bar (the phone rules further
+ * down): one row */
+@media (min-width: 641px) and (max-height: 500px) {
+  .top-nav {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand fs";
   }
 }
 
@@ -2618,6 +2537,9 @@ body:not(.projector-day) :is(
  *            filters, no 3D lift inside the centre card, steady glows.
  *     low    (entry-level phones, TVs, no GPU): also no glows, lighter
  *            shadows, shorter header fold, no staggered entrances.
+ *     lite   (html[data-motion="lite"], below low, set only when a device
+ *            still drops frames at low or draws without a GPU): nothing
+ *            scrubbed with the scroll (motion_scroll.js / .css).
  *     The card ring itself is thinned out in fable_engine.js.
  * ========================================================================== */
 html:is([data-perf="medium"], [data-perf="low"]) .intro-glow {
@@ -3286,7 +3208,6 @@ html[data-perf="low"] :is(.audio-btn--main, .hadith-play) :is(.audio-icon-play, 
   }
 }
 
-
 /* ==========================================================================
  * 21. THE NARRATOR + THE NEON FOLLOW-ALONG (fable_engine.js)
  *     The stories and the value texts have the hadith ▶ (same shape, same
@@ -3482,12 +3403,6 @@ html[data-perf="low"] .ra-live .ra-w.is-now {
 
 .fs-btn--float:hover {
   background: linear-gradient(rgba(206, 175, 106, 0.176), rgba(206, 175, 106, 0.176)), rgba(18, 36, 42, 0.768);
-}
-
-body.projector-day .fs-btn--float {
-  background: linear-gradient(rgba(206, 175, 106, 0.112), rgba(206, 175, 106, 0.112)), #ffffff;
-  color: #6c4f0e;
-  box-shadow: 0 8px 22px rgba(14, 41, 50, 0.128);
 }
 
 html[data-perf="low"] .fs-btn--float {

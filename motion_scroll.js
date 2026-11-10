@@ -25,9 +25,12 @@
  *   - html[data-perf] (perf_tier.js) picks what runs, as everywhere else:
  *       high   everything
  *       medium everything but the blur and the CSS focus / tilt entrances
- *       low    (classroom boards, TVs) the emblem flight without the 3D turn,
- *              the intro dissolve without blur, the giant words; no ring
- *              tilt, no colour light, no card morph
+ *       low    (classroom boards, TVs) the emblem flight without the 3D turn
+ *              and its glow, the intro dissolve without blur, the giant
+ *              words; no ring tilt, no colour light, no card morph
+ *       lite   (data-motion="lite": a device still dropping frames at low,
+ *              or drawing without a GPU) none of the scrubbed parts: a still
+ *              intro, still words, the header logo in place from the start
  *     and perf_tier.js steps the level down by itself if frames drop while
  *     this scrubs (PerfTier.watch)
  * Like the rest of the exhibit (CSS sections 12 and 20.9) the motion stays
@@ -53,6 +56,11 @@
   }
   function reduced() {
     return !!(reduceMQ && reduceMQ.matches);
+  }
+  // the lite motion (perf_tier.js): a device that still drops frames at the
+  // low level keeps a still page here, nothing scrubbed with the scroll
+  function lite() {
+    return root.getAttribute('data-motion') === 'lite';
   }
   function scrollTop() {
     return window.pageYOffset || root.scrollTop || 0;
@@ -137,7 +145,9 @@
   if (emblem) {
     flyer = doc.createElement('img');
     flyer.className = 'ms-flyer';
-    flyer.src = emblem.currentSrc || emblem.src;
+    // the opening emblem is drawn in parts (an inline SVG); the copy that
+    // flies uses the emblem file itself
+    flyer.src = emblem.currentSrc || emblem.src || emblem.getAttribute('data-src') || (brandImg && brandImg.src) || '';
     flyer.alt = '';
     flyer.setAttribute('aria-hidden', 'true');
     flyer.decoding = 'async';
@@ -231,7 +241,17 @@
       return shown(el) ? { id: id, top: docTop(el) } : null;
     }).filter(Boolean);
 
+    // the logo's slot in the header (logo + its gap to the name): what the
+    // folded pill leaves out while the emblem is on its way
+    var slot = 0;
+    if (brand && brand.parentNode) {
+      var bs = window.getComputedStyle(brand.parentNode);
+      slot = brand.offsetWidth + (parseFloat(bs.columnGap || bs.gap) || 0);
+    }
+
     // writes
+    if (nav && slot) nav.style.setProperty('--nav-slot-w', Math.round(slot) + 'px');
+    setSlot(!lite() && !!(M.pinned && brandImg && flyer && M.emblem && slot));
     if (flyer && M.emblem) {
       flyer.style.width = M.emblem.w + 'px';
       flyer.style.height = M.emblem.h + 'px';
@@ -258,6 +278,117 @@
   // that stays on screen); elsewhere, and without this script, it just shows.
   function brandShow(o) {
     if (brand) put(brand, undefined, o);
+  }
+  // The header keeps a space for the logo only where the emblem flies into
+  // it (.ms-slot, motion_scroll.css): the open header ends at the school
+  // name, and folding opens the space on the right. The first state after
+  // loading is set at once, not slid into.
+  var slotOn = false;
+  var slotSet = false;
+  function setSlot(on) {
+    if (!nav || (slotSet && on === slotOn)) return;
+    slotOn = on;
+    if (!slotSet) {
+      slotSet = true;
+      nav.classList.add('ms-instant');
+      nav.classList.toggle('ms-slot', on);
+      void nav.offsetWidth;
+      window.requestAnimationFrame(function () {
+        nav.classList.remove('ms-instant');
+      });
+      return;
+    }
+    nav.classList.toggle('ms-slot', on);
+  }
+  // ... in two steps: the header first pulls in on the left (the fold) for as
+  // long as the section bar takes to glide down to the bottom of the screen
+  // (stage3_fable_upgrade.js animates it), ending as the bar lands; then the
+  // space on the right comes out, and the emblem flies into it
+  // (.ms-brand-wait holds the pill at the name meanwhile). Unfolding brings
+  // both edges back on the fold's own transition.
+  var waiting = false;
+  function setWait(on) {
+    if (!nav || on === waiting) return;
+    waiting = on;
+    nav.classList.toggle('ms-brand-wait', on);
+  }
+  // One rhythm for the whole move, set by the section bar's glide
+  // (stage3_fable_upgrade.js, the same pace both ways):
+  //   down  the header pulls in on the left while the bar glides down and
+  //         ends as it lands; the space on the right then opens (260ms,
+  //         .ms-slot rules in motion_scroll.css); the emblem flies in
+  //   up    the header grows back (right edge in, left edge out) while the
+  //         bar rises, ending as the bar settles back in it
+  var FOLD_LEAD = 180; // ms: without the bar's glide to follow (older browsers)
+  var BAR_LANDS = 0.87; // where the glide down puts the bar down (its keyframes)
+  var UP_HANDOFF = 150; // the glide up's fade after it settles (HANDOFF_OUT, stage3)
+  var EASE_PULL = 'cubic-bezier(0.4, 0, 0.2, 1)'; // the glide's travel curve
+  var dock = doc.querySelector('.glass-dock.floating-dock');
+  var lastFolded = null;
+  var foldTimer = 0;
+  // the bar's glide, if it is under way: ms until it lands at the bottom
+  // (down) or settles back in the header (up)
+  function barLandsIn(up) {
+    if (!dock || !dock.getAnimations) return 0;
+    var list = dock.getAnimations();
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      var d = a.effect && a.effect.getTiming ? Number(a.effect.getTiming().duration) : 0;
+      if (a.playState !== 'running' || !(d > 0)) continue;
+      var end = up ? d - UP_HANDOFF : d * BAR_LANDS;
+      return Math.max(0, end - (a.currentTime || 0));
+    }
+    return 0;
+  }
+  // restart the header's clip-path transition from where it is now, with a
+  // new length (inline !important: the reduced-motion rules use it too)
+  function pullFor(ms) {
+    var now = window.getComputedStyle(nav).clipPath;
+    nav.style.setProperty('transition', 'none', 'important');
+    nav.style.setProperty('clip-path', now, 'important');
+    void nav.offsetWidth;
+    nav.style.setProperty('transition', 'clip-path ' + Math.round(ms) + 'ms ' + EASE_PULL, 'important');
+    nav.style.removeProperty('clip-path');
+  }
+  function endPull() {
+    nav.style.removeProperty('transition');
+    nav.style.removeProperty('clip-path');
+  }
+  function frameFold() {
+    if (!nav || !slotOn) return;
+    var folded = nav.classList.contains('is-folded');
+    if (folded === lastFolded) return;
+    var first = lastFolded === null;
+    lastFolded = folded;
+    clearTimeout(foldTimer);
+    endPull();
+    if (!folded) {
+      setWait(true);
+      // unfolding: grow back with the bar as it rises into the header
+      var back = first ? 0 : barLandsIn(true);
+      if (back > 60) {
+        pullFor(back);
+        foldTimer = setTimeout(endPull, back);
+      }
+      return;
+    }
+    if (first) {
+      setWait(false); // a page that loads already folded
+      return;
+    }
+    setWait(true);
+    var lands = barLandsIn();
+    if (lands > 60) pullFor(lands);
+    foldTimer = setTimeout(openSpace, lands > 60 ? lands : FOLD_LEAD);
+  }
+  // open the space now: when the bar lands, or sooner if the emblem gets
+  // there first (a quick scroll), so it never arrives outside the pill —
+  // the pull-in then finishes with the opening, on its short transition
+  function openSpace() {
+    clearTimeout(foldTimer);
+    if (!waiting || !nav.classList.contains('is-folded')) return;
+    endPull();
+    setWait(false);
   }
   function frameIntro(S, level, still, brandRect) {
     var I = M.intro;
@@ -309,6 +440,7 @@
         caught = false;
       }
       lastP = p;
+      if (p >= 0.74) openSpace(); // the emblem is ~93% of the way, just under the header
       if (p >= 1) {
         // landed: the copy has faded into the logo; nothing left to move
         put(flyer, undefined, '0');
@@ -433,9 +565,8 @@
     var rgb = rgbOf(atmoWant);
     if (!rgb) return;
     atmoShown = atmoWant;
-    var day = body.classList.contains('projector-day');
-    var a1 = day ? 0.09 : 0.15;
-    var a2 = day ? 0.05 : 0.08;
+    var a1 = 0.15;
+    var a2 = 0.08;
     var c = rgb.join(',');
     var next = atmoLayers[1 - atmoCur];
     next.style.backgroundImage =
@@ -470,7 +601,7 @@
     if (!M) measure();
     var S = scrollTop();
     var level = perf();
-    var still = MOTION_STILL && reduced();
+    var still = (MOTION_STILL && reduced()) || lite();
     now = now || Date.now();
 
     if (eased === null || still || Math.abs(S - eased) > M.vh * 1.5) {
@@ -488,6 +619,7 @@
       brandRect = brandImg.getBoundingClientRect();
     }
 
+    frameFold(); // first: a fold that starts in this frame sets its steps up
     frameIntro(Y, level, still, brandRect);
     frameGiants(Y, level, still);
     frameRing(Y, level, still);
@@ -580,6 +712,9 @@
     if (ambient) mo.observe(ambient, { attributes: true, attributeFilter: ['style'] });
     if (encycCard) mo.observe(encycCard, { attributes: true, attributeFilter: ['style'] });
     mo.observe(body, { attributes: true, attributeFilter: ['class'] });
+    // the header folds from its own scroll handler: catch it even if the
+    // scroll has already stopped
+    if (nav) mo.observe(nav, { attributes: true, attributeFilter: ['class'] });
   }
   request();
 

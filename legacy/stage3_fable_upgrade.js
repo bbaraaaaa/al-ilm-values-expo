@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from stage3_fable_upgrade.js (sha256 89a535363e4e5a4bd999e383d591789b0e99de2ff400e6a89616516684a5964a) for older browsers. Do not edit: edit stage3_fable_upgrade.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from stage3_fable_upgrade.js (sha256 3373d1a8ba5290f32adfea950cd7977829aa9674610796f32c13f62f24e3db79) for older browsers. Do not edit: edit stage3_fable_upgrade.js and rebuild. */
 (() => {
   "use strict";
   var _a, _b, _c, _d, _e, _f, _g, _h, _i;
@@ -583,6 +583,7 @@
       var _a3;
       return Math.round(Math.min(1200, Math.max(860, 640 + dist * 0.45)) * (((_a3 = window.PerfTier) == null ? void 0 : _a3.motion) || 1));
     };
+    const GLIDE_PACE = 0.7;
     function headerPose() {
       const from = headerDock.getBoundingClientRect();
       const to = floatingDock.getBoundingClientRect();
@@ -616,14 +617,14 @@
       let ms;
       let frames;
       if (reversing) {
-        ms = durationFor(p.dist);
+        ms = Math.round(durationFor(p.dist) * GLIDE_PACE);
         frames = [
           { transform: from, opacity: 1, easing: EASE_TRAVEL },
           { transform: T(0, 7, 1.012), opacity: 1, offset: 0.84, easing: EASE_SETTLE },
           { transform: T(0, 0, 1), opacity: 1 }
         ];
       } else {
-        ms = HANDOFF_IN + durationFor(p.dist);
+        ms = HANDOFF_IN + Math.round(durationFor(p.dist) * GLIDE_PACE);
         const inAt = HANDOFF_IN / ms;
         frames = [
           // 0) fade in exactly over the header bar (which hides beneath it)
@@ -652,7 +653,7 @@
       const p = headerPose();
       setFolded(false);
       setInteractive(false);
-      const travel = durationFor(p.dist) - 80;
+      const travel = Math.round(durationFor(p.dist) * GLIDE_PACE) - 80;
       const ms = travel + HANDOFF_OUT;
       const settledAt = travel / ms;
       const path = reversing ? [

@@ -1042,8 +1042,10 @@
 
   window.switchView = (view) => AppRouter.switchView(view, true);
 
-  // The day / projector theme toggle was removed: the site always uses the dark
-  // exhibition theme. Clear any saved choice so a device can't stay stuck in it.
+  // The day / projector theme toggle was removed (and its styles, v5.13.1):
+  // the site always uses the dark exhibition theme. Clear any saved choice so
+  // a device can't stay stuck in it (a few dark-page rules are still written
+  // as body:not(.projector-day), so the class must never be on).
   document.body.classList.remove('projector-day');
   try {
     localStorage.removeItem('al_ilm_projector_day');
@@ -1342,8 +1344,7 @@
       const maxVisibleDist =
         perf === 'low' ? 1.75 : perf === 'medium' ? (len <= 6 ? 2.4 : 2.6) : len <= 6 ? 2.95 : 3.6;
       const depthBlur = perf === 'high';
-      // Day projector cards are light: dimming them too far reads as grey smudge.
-      const minBrightness = document.body.classList.contains('projector-day') ? 0.82 : 0.58;
+      const minBrightness = 0.58;
 
       for (let i = 0; i < len; i++) {
         const cardObj = this.cards[i];
