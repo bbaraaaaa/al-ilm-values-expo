@@ -2480,10 +2480,10 @@ html[data-perf="low"] .ks-name {
   font-weight: 900;
 }
 
-/* a name never breaks across two lines on a phone */
-.intro-credits-name {
-  white-space: nowrap;
-}
+/* A name never breaks across two lines: index.html joins its words with
+ * no-break spaces. No `white-space: nowrap` here: with it Safari kept the
+ * whole «إشراف» line on one line and ran «مأمون» past the box on the iPad
+ * (v5.13.6). */
 
 .intro-lead {
   margin: 0.25rem 0 0;

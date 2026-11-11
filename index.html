@@ -14,8 +14,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
   <meta name="theme-color" content="#051920" />
-  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.5" />
-  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.5" />
+  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.6" />
+  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.6" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
   <title>معرض ترسيخ القيم — ثانوية العلم النافع الأهلية</title>
@@ -32,17 +32,17 @@
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
   <!-- Device performance level (sets html[data-perf]) before the styles apply -->
-  <script src="./perf_tier.js?v=5.13.5"></script>
+  <script src="./perf_tier.js?v=5.13.6"></script>
   <!-- The header logo waits for the emblem (motion_scroll.js): hidden from the
        first paint, not only from motion_scroll's first frame, which on the
        live site came up to a few seconds after the page showed (v5.13.4).
        motion_scroll.js takes over in its first frame; without it, the logo
        comes back after 4 s. -->
   <script>document.documentElement.classList.add('ms-logo-wait');setTimeout(function(){document.documentElement.classList.remove('ms-logo-wait');},4000);</script>
-  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.5" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.5" />
+  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.6" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.6" />
   <!-- Scroll-linked motion (emblem flight, giant words, ring settle, page light) -->
-  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.5" />
+  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.6" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -915,9 +915,13 @@
           <p class="intro-school">ثانوية العلم النافع الأهلية</p>
           <h1 id="introTitle" class="intro-title">معرض <span class="accent-span">ترسيخ القيم</span></h1>
           <div class="intro-credits" role="group" aria-label="فريق العمل">
-            <p><span class="intro-credits-role">تصميم الموقع وتطويره:</span> <span class="intro-credits-name">براء زمزمي</span></p>
-            <p><span class="intro-credits-role">أفكار ومقترحات:</span> <span class="intro-credits-name">عمر غندورة</span>، <span class="intro-credits-name">عبدالإله الشريف</span>، <span class="intro-credits-name">فيصل الزهراني</span>، <span class="intro-credits-name">عبدالله اللقماني</span></p>
-            <p><span class="intro-credits-role">إشراف:</span> رائد النشاط <span class="intro-credits-name">الأستاذ عبدالإله هوساوي</span>، والموجهان الطلابيان <span class="intro-credits-name">الأستاذ عبدالرحمن الهذلي</span> و<span class="intro-credits-name">الأستاذ هاني مأمون</span></p>
+            <!-- names and titles are joined by no-break spaces (&nbsp;), so a
+                 name never splits across two lines; a nowrap style did that
+                 before, but Safari then kept the «إشراف» line on one line and
+                 ran «مأمون» past the box on the iPad (v5.13.6) -->
+            <p><span class="intro-credits-role">تصميم الموقع وتطويره:</span> <span class="intro-credits-name">براء&nbsp;زمزمي</span></p>
+            <p><span class="intro-credits-role">أفكار ومقترحات:</span> <span class="intro-credits-name">عمر&nbsp;غندورة</span>، <span class="intro-credits-name">عبدالإله&nbsp;الشريف</span>، <span class="intro-credits-name">فيصل&nbsp;الزهراني</span>، <span class="intro-credits-name">عبدالله&nbsp;اللقماني</span></p>
+            <p><span class="intro-credits-role">إشراف:</span> رائد&nbsp;النشاط <span class="intro-credits-name">الأستاذ&nbsp;عبدالإله&nbsp;هوساوي</span>، والموجهان&nbsp;الطلابيان <span class="intro-credits-name">الأستاذ&nbsp;عبدالرحمن&nbsp;الهذلي</span> و<span class="intro-credits-name">الأستاذ&nbsp;هاني&nbsp;مأمون</span></p>
           </div>
           <p class="intro-lead">
             مرحبًا بكم في معرض ترسيخ القيم، الذي يتبنّاه النشاط الطلابي والتوجيه الطلابي بمتابعة إدارة ثانوية العلم النافع.
@@ -1318,7 +1322,7 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=5.13.5"></script>
+  <script src="./opus_content.js?v=5.13.6"></script>
   <!-- Older browsers (many classroom boards / smart TVs, Chrome < 80) cannot
        read the modern scripts below: the second line only parses in a modern
        browser, so ALM_LEGACY stays true elsewhere, and after each modern script
@@ -1326,18 +1330,18 @@
        (legacy/, built by tools/build-legacy.ps1) is loaded instead. -->
   <script>window.ALM_LEGACY = true;</script>
   <script>window.ALM_LEGACY = ({})?.x ?? false;</script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.5"><\/script>');</script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.6"><\/script>');</script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=5.13.5"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.5"><\/script>');</script>
+  <script src="./fable_engine.js?v=5.13.6"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.6"><\/script>');</script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=5.13.5"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.5"><\/script>');</script>
+  <script src="./stage3_fable_upgrade.js?v=5.13.6"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.6"><\/script>');</script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=5.13.5"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.5"><\/script>');</script>
+  <script src="./exhibition_kiosk.js?v=5.13.6"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.6"><\/script>');</script>
 
   <!-- Scroll-linked motion: written for older board browsers too (no legacy copy) -->
-  <script src="./motion_scroll.js?v=5.13.5"></script>
+  <script src="./motion_scroll.js?v=5.13.6"></script>
 </body>
 </html>
