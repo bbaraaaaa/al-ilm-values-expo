@@ -32,6 +32,13 @@ html[data-motion="lite"] .ms-flyer {
   display: none;
 }
 
+/* ... instead the header logo fades into its pill as the emblem scrolls up
+ * under it (motion_scroll.js), one short CSS fade (v5.13.3) */
+html[data-motion="lite"] .top-nav .brand-emblem {
+  --mt: opacity 320ms ease;
+  transition: var(--mt);
+}
+
 @keyframes msCatch {
   0% {
     transform: scale(1);
@@ -105,7 +112,7 @@ html[data-motion="lite"] .ms-flyer {
   z-index: -1;
   margin: -0.55em 0 0;
   color: var(--alm-aqua, #a7dce0); /* a watermark in the logo's aqua */
-  font-family: var(--font-ui, 'Cairo', sans-serif);
+  font-family: var(--font-ui, 'Tajawal', sans-serif);
   font-size: 9rem; /* older browsers */
   font-size: clamp(5.5rem, 17vw, 15rem);
   font-weight: 900;
@@ -379,6 +386,10 @@ html[data-perf="low"] .ie-glint {
 
   .top-nav .brand-emblem.ms-catch {
     animation: msCatch 560ms cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  }
+
+  html[data-motion="lite"] .top-nav .brand-emblem {
+    transition: var(--mt, none) !important;
   }
 
   .top-nav.is-folded.ms-slot:not(.ms-brand-wait):not(.ms-instant) {

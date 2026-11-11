@@ -5,7 +5,7 @@
   <!-- Same policy as the Cloudflare headers (_headers), here so the GitHub and
        Firebase copies are covered too (a <meta> policy cannot hold
        frame-ancestors; the hosts that allow headers send that one). -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -14,29 +14,50 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
   <meta name="theme-color" content="#051920" />
-  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.2" />
-  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.2" />
+  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.3" />
+  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.3" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
   <title>معرض ترسيخ القيم — ثانوية العلم النافع الأهلية</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <!-- The identity font, Tajawal, kept in the site itself (assets/fonts, SIL
+       Open Font License, OFL.txt there): no call to Google Fonts, so it opens
+       quicker and still shows its letters without internet (v5.13.3; Cairo
+       from Google Fonts before). The first screen's four Arabic weights load
+       first. -->
+  <link rel="preload" href="./assets/fonts/tajawal-400-arabic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./assets/fonts/tajawal-700-arabic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./assets/fonts/tajawal-800-arabic.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="./assets/fonts/tajawal-900-arabic.woff2" as="font" type="font/woff2" crossorigin />
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
   <!-- Device performance level (sets html[data-perf]) before the styles apply -->
-  <script src="./perf_tier.js?v=5.13.2"></script>
-  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.2" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.2" />
+  <script src="./perf_tier.js?v=5.13.3"></script>
+  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.3" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.3" />
   <!-- Scroll-linked motion (emblem flight, giant words, ring settle, page light) -->
-  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.2" />
+  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.3" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
+    /* Tajawal comes in 400 / 500 / 700 / 800 / 900: the 600 and 650 used
+       here show as 700, 750 as 800. Each weight is split like Google Fonts
+       serves it (Arabic letters / Latin letters and digits); a browser only
+       fetches the parts and weights a page actually shows. */
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 400; font-display: swap; src: url('./assets/fonts/tajawal-400-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 400; font-display: swap; src: url('./assets/fonts/tajawal-400-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 500; font-display: swap; src: url('./assets/fonts/tajawal-500-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 500; font-display: swap; src: url('./assets/fonts/tajawal-500-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 700; font-display: swap; src: url('./assets/fonts/tajawal-700-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 700; font-display: swap; src: url('./assets/fonts/tajawal-700-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 800; font-display: swap; src: url('./assets/fonts/tajawal-800-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 800; font-display: swap; src: url('./assets/fonts/tajawal-800-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 900; font-display: swap; src: url('./assets/fonts/tajawal-900-arabic.woff2') format('woff2'); unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC; }
+    @font-face { font-family: 'Tajawal'; font-style: normal; font-weight: 900; font-display: swap; src: url('./assets/fonts/tajawal-900-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
     :root {
-      --font-ui: 'Cairo', -apple-system, BlinkMacSystemFont, 'SF Pro Arabic', sans-serif;
-      --font-reading: 'Cairo', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-ui: 'Tajawal', -apple-system, BlinkMacSystemFont, 'SF Pro Arabic', sans-serif;
+      --font-reading: 'Tajawal', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     html,
@@ -549,6 +570,8 @@
       grid-template-columns: minmax(18rem, 0.36fr) minmax(0, 0.64fr);
       gap: 1.5rem;
       align-items: stretch;
+      /* on wide screens stage3_astra_upgrade.css rearranges this grid so its
+         cards pair up with near-equal lengths (v5.13.3) */
     }
 
     .encyc-hero-card {
@@ -1224,7 +1247,7 @@
             <ul id="modalStepsList" class="studio-list"></ul>
           </div>
 
-          <div class="studio-story-card" style="justify-content: space-between; gap: 0.75rem;">
+          <div class="studio-story-card" style="gap: 0.75rem;">
             <div class="ra-head" style="font-size: 0.9rem; font-weight: 900; color: var(--text-accent);">الأثر بين حضور القيمة وغيابها: <span class="ra-slot" data-ra-btn></span></div>
             <div class="comp-box comp-box-pos">
               <div class="comp-box-label">✓ عند تطبيق القيمة:</div>
@@ -1289,7 +1312,7 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=5.13.2"></script>
+  <script src="./opus_content.js?v=5.13.3"></script>
   <!-- Older browsers (many classroom boards / smart TVs, Chrome < 80) cannot
        read the modern scripts below: the second line only parses in a modern
        browser, so ALM_LEGACY stays true elsewhere, and after each modern script
@@ -1297,18 +1320,18 @@
        (legacy/, built by tools/build-legacy.ps1) is loaded instead. -->
   <script>window.ALM_LEGACY = true;</script>
   <script>window.ALM_LEGACY = ({})?.x ?? false;</script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.2"><\/script>');</script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.3"><\/script>');</script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=5.13.2"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.2"><\/script>');</script>
+  <script src="./fable_engine.js?v=5.13.3"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.3"><\/script>');</script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=5.13.2"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.2"><\/script>');</script>
+  <script src="./stage3_fable_upgrade.js?v=5.13.3"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.3"><\/script>');</script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=5.13.2"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.2"><\/script>');</script>
+  <script src="./exhibition_kiosk.js?v=5.13.3"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.3"><\/script>');</script>
 
   <!-- Scroll-linked motion: written for older board browsers too (no legacy copy) -->
-  <script src="./motion_scroll.js?v=5.13.2"></script>
+  <script src="./motion_scroll.js?v=5.13.3"></script>
 </body>
 </html>

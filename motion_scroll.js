@@ -30,8 +30,9 @@
  *              words; no ring tilt, no colour light, no card morph
  *       lite   (data-motion="lite": a device measured still dropping frames
  *              at low) none of the scrubbed parts: a still intro (its emblem
- *              still draws itself once, CSS section H), still words, the
- *              header logo in place from the start
+ *              still draws itself once, CSS section H), still words; the
+ *              header logo still waits, and fades into the pill as the
+ *              emblem scrolls under it (v5.13.3)
  *     and perf_tier.js steps the level down by itself if frames drop while
  *     this scrubs (PerfTier.watch)
  * Like the rest of the exhibit (CSS sections 12 and 20.9) the motion stays
@@ -252,7 +253,8 @@
 
     // writes
     if (nav && slot) nav.style.setProperty('--nav-slot-w', Math.round(slot) + 'px');
-    setSlot(!lite() && !!(M.pinned && brandImg && flyer && M.emblem && slot));
+    // every level keeps the slot, lite included (v5.13.3: the logo waits there too)
+    setSlot(!!(M.pinned && brandImg && flyer && M.emblem && slot));
     if (flyer && M.emblem) {
       flyer.style.width = M.emblem.w + 'px';
       flyer.style.height = M.emblem.h + 'px';
@@ -272,6 +274,7 @@
   var introReady = false;
   var introPromoted = false;
   var caught = false;
+  var liteArmed = false; // lite: the first frame only notes where the page is
   var lastP = 0; // how far the emblem had flown on the previous frame
   // The header logo waits for the emblem (one emblem on screen at a time):
   // hidden on the home screen and while the emblem is on its way, it appears
@@ -393,6 +396,40 @@
   }
   function frameIntro(S, level, still, brandRect) {
     var I = M.intro;
+
+    // The lite motion scrubs nothing, but the header logo still waits for the
+    // emblem, as on every screen (v5.13.3): the emblem scrolls up with the
+    // page under the folded pill, and as it passes under it the logo fades
+    // into the pill with its catch (one CSS fade, motion_scroll.css), and
+    // back out on the way up.
+    if (still) {
+      if (introLive) {
+        introLive = false;
+        introLines.forEach(clear);
+        clear(emblem);
+      }
+      if (introPromoted) {
+        introPromoted = false;
+        intro.classList.remove('ms-scrub');
+      }
+      if (flyer) put(flyer, undefined, '0');
+      var E0 = M.emblem;
+      if (!(I && E0 && slotOn)) {
+        brandShow('');
+        return;
+      }
+      var under = S >= E0.cy + E0.h / 2 - M.fadeLine + 16; // its bottom has reached the pill
+      if (under) {
+        openSpace();
+        if (!caught && liteArmed) catchLogo(); // not on a page that loads scrolled down
+        caught = true;
+      } else {
+        caught = false;
+      }
+      liteArmed = true;
+      brandShow(under ? '' : '0');
+      return;
+    }
     var inRange = !!I && !still && S < I.top + I.h + M.vh;
     var canFly = !!(M.pinned && brandImg && flyer && M.emblem);
     var promote = inRange && introReady;

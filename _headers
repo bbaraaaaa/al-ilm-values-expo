@@ -1,8 +1,9 @@
 # Cloudflare Pages response headers for the exhibition site.
-# The page only loads its own files plus the Cairo font from Google Fonts.
+# The page only loads its own files (its font, Tajawal, too: assets/fonts,
+# since v5.13.3; Cairo came from Google Fonts before).
 # 'unsafe-inline' is needed for the inline onclick handlers and style blocks.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
@@ -15,3 +16,58 @@
 
 /
   Cache-Control: no-cache
+
+# Caching (v5.13.3; before it every file was asked about on every visit).
+# The page itself is always checked (no-cache, above), so a release reaches
+# every screen at once. The files it loads carry its version (?v=...), so
+# each is kept a year and not asked about again until a release changes the
+# version (tools: the deploy check refuses an index.html with mixed ?v=).
+# Fonts never change (a new font gets a new name). Recordings, images and
+# icons have no version: kept an hour, then played or shown from the device
+# at once while it checks for a newer copy in the background, so a
+# re-recorded message reaches the board within the hour. (The JSON lists
+# are fetched with no-cache by the scripts: always fresh.)
+/perf_tier.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/astra_visionos.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/stage3_astra_upgrade.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/motion_scroll.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/opus_content.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/fable_engine.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/stage3_fable_upgrade.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/exhibition_kiosk.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/motion_scroll.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/legacy/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/audio/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/assets/school-emblem.svg
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/assets/school-emblem.png
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+/icons/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
