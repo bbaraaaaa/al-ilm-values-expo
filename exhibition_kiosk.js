@@ -812,9 +812,9 @@
     const fsBtn = makeFsButton('fullscreenBtn');
     // in the header's end (on phones the bottom bar holds the sections)
     (navTools || nav || document.body).appendChild(fsBtn);
-    // with the search, «على جوالك» and this button the header's end is too
-    // full for one row on a board's enlarged type: the bar takes its own
-    // centred row there (stage3 .top-nav.has-fs)
+    // with the search and «على جوالك» beside it, this button shows its icon
+    // alone in the one-row header, so the bar stays centred on a board's
+    // enlarged type (stage3 .top-nav.has-fs)
     nav?.classList.add('has-fs');
     // the floating copy: outside the header (the header's clip would hide it)
     const fsFloat = makeFsButton('fullscreenBtnFloat', 'fs-btn--float');

@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 b2b1dfbbca3cc453b38ed6621f56191eea95cd30b4493bb4bd992f857d849ad7) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 a0499b0a9304aef2d10ff37442a321b532fc8604abdd4fad7701a4ad3b00d799) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
 (() => {
   "use strict";
   var _a;

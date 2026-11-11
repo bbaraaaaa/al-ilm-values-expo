@@ -14,8 +14,8 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="format-detection" content="telephone=no, date=no, email=no, address=no" />
   <meta name="theme-color" content="#051920" />
-  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.4" />
-  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.4" />
+  <link rel="icon" type="image/svg+xml" href="./assets/school-emblem.svg?v=5.13.5" />
+  <link rel="icon" type="image/png" href="./assets/school-emblem.png?v=5.13.5" />
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.json" />
   <title>معرض ترسيخ القيم — ثانوية العلم النافع الأهلية</title>
@@ -32,17 +32,17 @@
 
   <!-- [Astra 6 xhigh] VisionOS Spatial Glassmorphism Architecture -->
   <!-- Device performance level (sets html[data-perf]) before the styles apply -->
-  <script src="./perf_tier.js?v=5.13.4"></script>
+  <script src="./perf_tier.js?v=5.13.5"></script>
   <!-- The header logo waits for the emblem (motion_scroll.js): hidden from the
        first paint, not only from motion_scroll's first frame, which on the
        live site came up to a few seconds after the page showed (v5.13.4).
        motion_scroll.js takes over in its first frame; without it, the logo
        comes back after 4 s. -->
   <script>document.documentElement.classList.add('ms-logo-wait');setTimeout(function(){document.documentElement.classList.remove('ms-logo-wait');},4000);</script>
-  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.4" />
-  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.4" />
+  <link rel="stylesheet" href="./astra_visionos.css?v=5.13.5" />
+  <link rel="stylesheet" href="./stage3_astra_upgrade.css?v=5.13.5" />
   <!-- Scroll-linked motion (emblem flight, giant words, ring settle, page light) -->
-  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.4" />
+  <link rel="stylesheet" href="./motion_scroll.css?v=5.13.5" />
 
   <!-- [Argon 4 Max 1.00] Harmonization & iPad Air 13 (1366x1024 @ 60Hz) Optical Bridge -->
   <style>
@@ -1318,7 +1318,7 @@
   <audio id="realAudioPlayer" preload="none"></audio>
 
   <!-- [Claude Opus 5.5 xhigh] Complete 12 Values & 36 Real Stories -->
-  <script src="./opus_content.js?v=5.13.4"></script>
+  <script src="./opus_content.js?v=5.13.5"></script>
   <!-- Older browsers (many classroom boards / smart TVs, Chrome < 80) cannot
        read the modern scripts below: the second line only parses in a modern
        browser, so ALM_LEGACY stays true elsewhere, and after each modern script
@@ -1326,18 +1326,18 @@
        (legacy/, built by tools/build-legacy.ps1) is loaded instead. -->
   <script>window.ALM_LEGACY = true;</script>
   <script>window.ALM_LEGACY = ({})?.x ?? false;</script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.4"><\/script>');</script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/polyfills.js?v=5.13.5"><\/script>');</script>
   <!-- [Claude Fable 5.1] 60Hz Touch Physics, SPA Router, IndexedDB Audio & Studio -->
-  <script src="./fable_engine.js?v=5.13.4"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.4"><\/script>');</script>
+  <script src="./fable_engine.js?v=5.13.5"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/fable_engine.js?v=5.13.5"><\/script>');</script>
   <!-- [Shared Office Stage 3] HikmahStore, orbit dots, story reader, TTS & visitor book -->
-  <script src="./stage3_fable_upgrade.js?v=5.13.4"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.4"><\/script>');</script>
+  <script src="./stage3_fable_upgrade.js?v=5.13.5"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/stage3_fable_upgrade.js?v=5.13.5"><\/script>');</script>
   <!-- Exhibition kiosk layer for iPad Air 13": attract mode, wake lock, touch hardening -->
-  <script src="./exhibition_kiosk.js?v=5.13.4"></script>
-  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.4"><\/script>');</script>
+  <script src="./exhibition_kiosk.js?v=5.13.5"></script>
+  <script>if (window.ALM_LEGACY) document.write('<script src="./legacy/exhibition_kiosk.js?v=5.13.5"><\/script>');</script>
 
   <!-- Scroll-linked motion: written for older board browsers too (no legacy copy) -->
-  <script src="./motion_scroll.js?v=5.13.4"></script>
+  <script src="./motion_scroll.js?v=5.13.5"></script>
 </body>
 </html>

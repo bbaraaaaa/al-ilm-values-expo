@@ -2316,37 +2316,27 @@ html[data-perf="low"] .ks-name {
 }
 
 /* Boards / Android (the fullscreen button is there, exhibition_kiosk.js adds
- * .has-fs): the search, «على جوالك» and «ملء الشاشة» on the first row with
- * the school name, the bar centred on its own row below, at every width
- * (one row could not hold them on a board's enlarged type) */
+ * .has-fs): one row like everywhere else (owner's request, v5.13.4; a two-row
+ * take was refused). To fit the search and «على جوالك» beside it, the
+ * fullscreen button shows its icon alone in the one-row header (it is the
+ * operator's button; its name stays as the tooltip and the screen-reader
+ * label), and the search may narrow a little more. */
 @media (min-width: 1180px) {
-  .top-nav.has-fs {
-    grid-template-columns: 1fr auto;
-    grid-template-areas:
-      "brand fs"
-      "dock dock";
+  .top-nav.has-fs .fs-btn {
+    padding: 0.35rem;
   }
 
-  .top-nav.has-fs .nav-tools,
-  .top-nav.has-fs.ms-slot .nav-tools {
-    justify-self: end;
-    margin-inline-start: 0;
+  .top-nav.has-fs .fs-btn .fs-label {
+    position: absolute;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    inline-size: 1px;
+    block-size: 1px;
+    white-space: nowrap;
   }
 
   .top-nav.has-fs .vf-bar {
-    flex: 0 0 15rem;
-  }
-
-  .top-nav.has-fs .phone-qr-btn {
-    padding: 0.35rem 0.9rem;
-  }
-
-  .top-nav.has-fs .phone-qr-btn .pq-label {
-    position: static;
-    overflow: visible;
-    clip: auto;
-    inline-size: auto;
-    block-size: auto;
+    min-inline-size: 8rem;
   }
 }
 
