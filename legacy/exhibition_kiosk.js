@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 da1e47524a6f46508b19fd8453080ae3b493d0d29c16d41014c569e5b6f2d56c) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 b2b1dfbbca3cc453b38ed6621f56191eea95cd30b4493bb4bd992f857d849ad7) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
 (() => {
   "use strict";
   var _a;
@@ -181,6 +181,7 @@
     ignoreActivityUntil = performance.now() + 1500;
     closeFinder(false);
     if (finderInput) finderInput.value = "";
+    closePhoneCard(false);
     if (isOpen("storyReaderModal")) (_a2 = window.closeStoryReader) == null ? void 0 : _a2.call(window);
     if (isOpen("studioModal")) (_b = window.closeStudio) == null ? void 0 : _b.call(window);
     if ((_c = window.speechSynthesis) == null ? void 0 : _c.speaking) window.speechSynthesis.cancel();
@@ -452,6 +453,118 @@
       if (finderOpen()) placeFinder();
     }, { passive: true });
   }
+  const SITE_URL_TEXT = "afteryou.pages.dev";
+  const SITE_QR = [
+    "#######.#.###.#.#.#######",
+    "#.....#.#.#.#.#...#.....#",
+    "#.###.#......#.#..#.###.#",
+    "#.###.#.####.##...#.###.#",
+    "#.###.#..#.#..##..#.###.#",
+    "#.....#...#.##....#.....#",
+    "#######.#.#.#.#.#.#######",
+    "........#...#...#........",
+    "#.##.###......#...#..#.##",
+    "#...#..#.####...#..#...#.",
+    "#..####..#.#.#..#..##....",
+    "....##....#.####..##.##..",
+    ".###.###...####..##.#.###",
+    "....##.#...#..###.###...#",
+    ".#..#.##..#..##..#..#.##.",
+    "#.#..#.#.###..##..###...#",
+    "...##.#.######.##########",
+    "........#.#######...#.#.#",
+    "#######.#....#..#.#.#.###",
+    "#.....#.#.###..##...#..##",
+    "#.###.#..#......######..#",
+    "#.###.#.####.#.####.#####",
+    "#.###.#.####.#...##.#.##.",
+    "#.....#.....##.#.#..#.#..",
+    "#######.##..###..########"
+  ];
+  const qrSvg = () => {
+    const n = SITE_QR.length;
+    const q = 4;
+    const s = n + 2 * q;
+    const eye = (r, c) => r < 7 && c < 7 || r < 7 && c >= n - 7 || r >= n - 7 && c < 7;
+    let rects = "";
+    SITE_QR.forEach((row, r) => {
+      for (let c = 0; c < n; c++) {
+        if (row[c] !== "#") continue;
+        rects += `<rect x="${c + q}" y="${r + q}" width="1.02" height="1.02" fill="${eye(r, c) ? "#00596a" : "#051920"}"/>`;
+      }
+    });
+    return `<svg viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges" role="img" aria-label="رمز الموقع ${SITE_URL_TEXT}"><rect width="${s}" height="${s}" fill="#ffffff"/>${rects}</svg>`;
+  };
+  const QR_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h1.5M20.5 14v1.5"/></svg>';
+  let phoneCard = null;
+  let phoneBtn = null;
+  let phoneTimer = 0;
+  function phoneOpen() {
+    return Boolean(phoneCard && phoneCard.classList.contains("is-open"));
+  }
+  function closePhoneCard(returnFocus) {
+    var _a2;
+    if (!phoneOpen()) return;
+    phoneCard.classList.remove("is-open");
+    phoneCard.setAttribute("aria-hidden", "true");
+    phoneBtn == null ? void 0 : phoneBtn.setAttribute("aria-expanded", "false");
+    window.clearTimeout(phoneTimer);
+    if (returnFocus) (_a2 = phoneBtn == null ? void 0 : phoneBtn.focus) == null ? void 0 : _a2.call(phoneBtn, { preventScroll: true });
+  }
+  function placePhoneCard() {
+    const r = phoneBtn.getBoundingClientRect();
+    const w = phoneCard.offsetWidth;
+    const left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12));
+    phoneCard.style.left = `${Math.round(left)}px`;
+    phoneCard.style.top = `${Math.round(r.bottom + 10)}px`;
+  }
+  function openPhoneCard() {
+    if (!phoneCard) {
+      phoneCard = document.createElement("div");
+      phoneCard.className = "phone-qr-card";
+      phoneCard.id = "phoneQrCard";
+      phoneCard.setAttribute("role", "dialog");
+      phoneCard.setAttribute("aria-label", "افتح المعرض على جوالك");
+      phoneCard.setAttribute("aria-hidden", "true");
+      phoneCard.innerHTML = `<button type="button" class="pq-close" aria-label="إغلاق">✕</button><p class="pq-title">امسح الرمز بكاميرا جوالك</p><div class="pq-code">${qrSvg()}</div><p class="pq-url" dir="ltr">${SITE_URL_TEXT}</p>`;
+      document.body.appendChild(phoneCard);
+      phoneCard.querySelector(".pq-close").addEventListener("click", () => closePhoneCard(true));
+    }
+    closeFinder(false);
+    placePhoneCard();
+    phoneCard.classList.add("is-open");
+    phoneCard.setAttribute("aria-hidden", "false");
+    phoneBtn.setAttribute("aria-expanded", "true");
+    window.clearTimeout(phoneTimer);
+    phoneTimer = window.setTimeout(() => closePhoneCard(false), 25e3);
+  }
+  if (navTools) {
+    phoneBtn = document.createElement("button");
+    phoneBtn.type = "button";
+    phoneBtn.className = "phone-qr-btn";
+    phoneBtn.setAttribute("aria-expanded", "false");
+    phoneBtn.setAttribute("aria-controls", "phoneQrCard");
+    phoneBtn.setAttribute("aria-label", "افتح المعرض على جوالك");
+    phoneBtn.title = "افتح المعرض على جوالك";
+    phoneBtn.innerHTML = `${QR_ICON}<span class="pq-label">على جوالك</span>`;
+    phoneBtn.addEventListener("click", () => phoneOpen() ? closePhoneCard(false) : openPhoneCard());
+    navTools.appendChild(phoneBtn);
+    finderInput == null ? void 0 : finderInput.addEventListener("input", () => closePhoneCard(false));
+    document.addEventListener(
+      "pointerdown",
+      (event) => {
+        if (!phoneOpen()) return;
+        if (phoneCard.contains(event.target) || phoneBtn.contains(event.target)) return;
+        closePhoneCard(false);
+      },
+      true
+    );
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && phoneOpen()) closePhoneCard(true);
+    });
+    window.addEventListener("scroll", () => closePhoneCard(false), { passive: true });
+    window.addEventListener("resize", () => closePhoneCard(false), { passive: true });
+  }
   const FS_PREF = "alm_fullscreen";
   const FS_SHOW = "alm_fs_show";
   const docEl = document.documentElement;
@@ -521,6 +634,7 @@
     const nav = document.querySelector(".top-nav");
     const fsBtn = makeFsButton("fullscreenBtn");
     (navTools || nav || document.body).appendChild(fsBtn);
+    nav == null ? void 0 : nav.classList.add("has-fs");
     const fsFloat = makeFsButton("fullscreenBtnFloat", "fs-btn--float");
     document.body.appendChild(fsFloat);
     const fsButtons = [fsBtn, fsFloat];

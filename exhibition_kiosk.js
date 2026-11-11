@@ -247,6 +247,7 @@
 
     closeFinder(false); // «ابحث عن قيمة»: results closed, the field emptied
     if (finderInput) finderInput.value = '';
+    closePhoneCard(false); // «على جوالك» card, if left open
     if (isOpen('storyReaderModal')) window.closeStoryReader?.();
     if (isOpen('studioModal')) window.closeStudio?.();
     if (window.speechSynthesis?.speaking) window.speechSynthesis.cancel();
@@ -595,6 +596,140 @@
   }
 
   // --------------------------------------------------------------------------
+  // «على جوالك» (v5.13.4, beside the search, the owner's request): a visitor
+  // at the big screen takes the exhibit along. The button opens a small card
+  // under it with the site's code to scan (the same code as the iPad poster,
+  // _office_docs_and_tools/ipad_qr, checked module by module against a fresh
+  // encoding of https://afteryou.pages.dev: version 2, level M, mask 3). Big
+  // screens only (phones are already there). The card lives outside the
+  // header (its clip would cut it) and closes with ✕, Escape, a touch
+  // elsewhere, a scroll, the search opening, the waiting screen or after 25 s.
+  // --------------------------------------------------------------------------
+  const SITE_URL_TEXT = 'afteryou.pages.dev';
+  const SITE_QR = [
+    '#######.#.###.#.#.#######',
+    '#.....#.#.#.#.#...#.....#',
+    '#.###.#......#.#..#.###.#',
+    '#.###.#.####.##...#.###.#',
+    '#.###.#..#.#..##..#.###.#',
+    '#.....#...#.##....#.....#',
+    '#######.#.#.#.#.#.#######',
+    '........#...#...#........',
+    '#.##.###......#...#..#.##',
+    '#...#..#.####...#..#...#.',
+    '#..####..#.#.#..#..##....',
+    '....##....#.####..##.##..',
+    '.###.###...####..##.#.###',
+    '....##.#...#..###.###...#',
+    '.#..#.##..#..##..#..#.##.',
+    '#.#..#.#.###..##..###...#',
+    '...##.#.######.##########',
+    '........#.#######...#.#.#',
+    '#######.#....#..#.#.#.###',
+    '#.....#.#.###..##...#..##',
+    '#.###.#..#......######..#',
+    '#.###.#.####.#.####.#####',
+    '#.###.#.####.#...##.#.##.',
+    '#.....#.....##.#.#..#.#..',
+    '#######.##..###..########'
+  ];
+  const qrSvg = () => {
+    const n = SITE_QR.length;
+    const q = 4; // the quiet zone around the code
+    const s = n + 2 * q;
+    const eye = (r, c) => (r < 7 && c < 7) || (r < 7 && c >= n - 7) || (r >= n - 7 && c < 7);
+    let rects = '';
+    SITE_QR.forEach((row, r) => {
+      for (let c = 0; c < n; c++) {
+        if (row[c] !== '#') continue;
+        // the corner eyes in deep logo teal (about 8:1 on white), the rest in the site's deep sea
+        rects += `<rect x="${c + q}" y="${r + q}" width="1.02" height="1.02" fill="${eye(r, c) ? '#00596a' : '#051920'}"/>`;
+      }
+    });
+    return (
+      `<svg viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges" role="img" aria-label="رمز الموقع ${SITE_URL_TEXT}">` +
+      `<rect width="${s}" height="${s}" fill="#ffffff"/>${rects}</svg>`
+    );
+  };
+  const QR_ICON =
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 20.5h1.5M20.5 14v1.5"/></svg>';
+
+  let phoneCard = null;
+  let phoneBtn = null;
+  let phoneTimer = 0;
+  function phoneOpen() {
+    return Boolean(phoneCard && phoneCard.classList.contains('is-open'));
+  }
+  function closePhoneCard(returnFocus) {
+    if (!phoneOpen()) return;
+    phoneCard.classList.remove('is-open');
+    phoneCard.setAttribute('aria-hidden', 'true');
+    phoneBtn?.setAttribute('aria-expanded', 'false');
+    window.clearTimeout(phoneTimer);
+    if (returnFocus) phoneBtn?.focus?.({ preventScroll: true });
+  }
+  function placePhoneCard() {
+    const r = phoneBtn.getBoundingClientRect();
+    const w = phoneCard.offsetWidth;
+    // under the button, its left edge with the button's, kept on screen
+    const left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12));
+    phoneCard.style.left = `${Math.round(left)}px`;
+    phoneCard.style.top = `${Math.round(r.bottom + 10)}px`;
+  }
+  function openPhoneCard() {
+    if (!phoneCard) {
+      phoneCard = document.createElement('div');
+      phoneCard.className = 'phone-qr-card';
+      phoneCard.id = 'phoneQrCard';
+      phoneCard.setAttribute('role', 'dialog');
+      phoneCard.setAttribute('aria-label', 'افتح المعرض على جوالك');
+      phoneCard.setAttribute('aria-hidden', 'true');
+      phoneCard.innerHTML =
+        '<button type="button" class="pq-close" aria-label="إغلاق">✕</button>' +
+        '<p class="pq-title">امسح الرمز بكاميرا جوالك</p>' +
+        `<div class="pq-code">${qrSvg()}</div>` +
+        `<p class="pq-url" dir="ltr">${SITE_URL_TEXT}</p>`;
+      document.body.appendChild(phoneCard);
+      phoneCard.querySelector('.pq-close').addEventListener('click', () => closePhoneCard(true));
+    }
+    closeFinder(false); // one drop-down at a time
+    placePhoneCard();
+    phoneCard.classList.add('is-open');
+    phoneCard.setAttribute('aria-hidden', 'false');
+    phoneBtn.setAttribute('aria-expanded', 'true');
+    window.clearTimeout(phoneTimer);
+    phoneTimer = window.setTimeout(() => closePhoneCard(false), 25000);
+  }
+  if (navTools) {
+    phoneBtn = document.createElement('button');
+    phoneBtn.type = 'button';
+    phoneBtn.className = 'phone-qr-btn';
+    phoneBtn.setAttribute('aria-expanded', 'false');
+    phoneBtn.setAttribute('aria-controls', 'phoneQrCard');
+    phoneBtn.setAttribute('aria-label', 'افتح المعرض على جوالك');
+    phoneBtn.title = 'افتح المعرض على جوالك';
+    phoneBtn.innerHTML = `${QR_ICON}<span class="pq-label">على جوالك</span>`;
+    phoneBtn.addEventListener('click', () => (phoneOpen() ? closePhoneCard(false) : openPhoneCard()));
+    navTools.appendChild(phoneBtn); // after the search field: nearer the header's end
+    // typing in the search closes the card
+    finderInput?.addEventListener('input', () => closePhoneCard(false));
+    document.addEventListener(
+      'pointerdown',
+      (event) => {
+        if (!phoneOpen()) return;
+        if (phoneCard.contains(event.target) || phoneBtn.contains(event.target)) return;
+        closePhoneCard(false);
+      },
+      true
+    );
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && phoneOpen()) closePhoneCard(true);
+    });
+    window.addEventListener('scroll', () => closePhoneCard(false), { passive: true });
+    window.addEventListener('resize', () => closePhoneCard(false), { passive: true });
+  }
+
+  // --------------------------------------------------------------------------
   // «ملء الشاشة» — the owner's rule (v5.10): only where the browser's own bar
   // stays on screen: interactive classroom boards (BenQ and the like), smart
   // TVs and Android phones / tablets. Not on computers, the iPad or iPhone.
@@ -677,6 +812,10 @@
     const fsBtn = makeFsButton('fullscreenBtn');
     // in the header's end (on phones the bottom bar holds the sections)
     (navTools || nav || document.body).appendChild(fsBtn);
+    // with the search, «على جوالك» and this button the header's end is too
+    // full for one row on a board's enlarged type: the bar takes its own
+    // centred row there (stage3 .top-nav.has-fs)
+    nav?.classList.add('has-fs');
     // the floating copy: outside the header (the header's clip would hide it)
     const fsFloat = makeFsButton('fullscreenBtnFloat', 'fs-btn--float');
     document.body.appendChild(fsFloat);

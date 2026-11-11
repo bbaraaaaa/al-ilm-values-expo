@@ -632,6 +632,7 @@
 
   // ---- the loop ------------------------------------------------------------
   var queued = false;
+  var logoWait = root.classList.contains('ms-logo-wait');
   var eased = null; // the softly eased scroll position the scrubbed parts follow
   var lastAt = 0;
   function frame(now) {
@@ -659,6 +660,12 @@
 
     frameFold(); // first: a fold that starts in this frame sets its steps up
     frameIntro(Y, level, still, brandRect);
+    // the header logo was hidden from the first paint (index.html,
+    // .ms-logo-wait); frameIntro has now set its own state: hand it over
+    if (logoWait) {
+      logoWait = false;
+      root.classList.remove('ms-logo-wait');
+    }
     frameGiants(Y, level, still);
     frameRing(Y, level, still);
     frameAtmo(S, level);
