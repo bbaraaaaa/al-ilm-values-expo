@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 a0499b0a9304aef2d10ff37442a321b532fc8604abdd4fad7701a4ad3b00d799) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 2b86a1173c0fcea0dd87cc49587102ee7ca658bd807f38b7d47dd30f6c8f3b45) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
 (() => {
   "use strict";
   var _a;
@@ -584,6 +584,9 @@
     const ua = navigator.userAgent || "";
     const device = window.PerfTier && window.PerfTier.device || "";
     if (device === "ipad" || /iPad|iPhone|iPod|Macintosh/.test(ua)) return false;
+    const scr = window.screen || {};
+    const shortSide = Math.min(scr.width || 0, scr.height || 0);
+    if ((device === "phone" || /Android.+Mobile/.test(ua)) && shortSide > 0 && shortSide < 600) return false;
     if (window.matchMedia && window.matchMedia("(display-mode: fullscreen)").matches) return false;
     return /Android/.test(ua) || device === "tv" || device === "board";
   };

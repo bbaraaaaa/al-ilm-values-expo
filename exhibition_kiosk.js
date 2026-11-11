@@ -732,7 +732,8 @@
   // --------------------------------------------------------------------------
   // «ملء الشاشة» — the owner's rule (v5.10): only where the browser's own bar
   // stays on screen: interactive classroom boards (BenQ and the like), smart
-  // TVs and Android phones / tablets. Not on computers, the iPad or iPhone.
+  // TVs and Android tablets. Not on computers, the iPad, the iPhone or any
+  // phone («بس مب الجوالات», v5.13.7: Android phones showed it too).
   // The exhibition board is a BenQ RM7504 on Android 13: the Android rule
   // covers it (and perf_tier.js names it a board, also in «desktop site»
   // mode). For any other screen that needs it, open the site once on it with
@@ -761,6 +762,12 @@
     const ua = navigator.userAgent || '';
     const device = (window.PerfTier && window.PerfTier.device) || '';
     if (device === 'ipad' || /iPad|iPhone|iPod|Macintosh/.test(ua)) return false;
+    // phones: a phone-sized screen (its short side under 600px). The size
+    // decides, not only the browser's name, so the board keeps its button even
+    // if its browser ever introduces itself as a phone ("Mobile")
+    const scr = window.screen || {};
+    const shortSide = Math.min(scr.width || 0, scr.height || 0);
+    if ((device === 'phone' || /Android.+Mobile/.test(ua)) && shortSide > 0 && shortSide < 600) return false;
     if (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) return false;
     return /Android/.test(ua) || device === 'tv' || device === 'board';
   };

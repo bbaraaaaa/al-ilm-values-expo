@@ -97,6 +97,14 @@ html.ms-logo-wait .top-nav .brand-emblem {
   transform: translateX(calc(var(--nav-slot-w, 4.25rem) / -2));
 }
 
+/* In the one-row header (from 1180px) the bar sits right after the school
+ * name, not in the middle (stage3, v5.13.7), so it is not moved. */
+@media (min-width: 1180px) {
+  .top-nav.ms-slot .header-dock {
+    transform: none;
+  }
+}
+
 /* the first state after loading is set at once, not slid into */
 .top-nav.ms-instant {
   transition: none !important;

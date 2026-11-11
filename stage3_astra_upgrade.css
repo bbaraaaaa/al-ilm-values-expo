@@ -2251,10 +2251,10 @@ html[data-perf="low"] .ks-name {
   }
 }
 
-/* The section bar stays in the middle of the header, as it was beside the
- * search (removed in v5.13): logo + name at the start, the fullscreen button
- * (boards only) at the end, the bar in the true centre whether or not that
- * button is there. Under 1180px the bar keeps its own centred row below. */
+/* The header grid: logo + name at the start, the search, «على جوالك» and the
+ * fullscreen button (boards only) at the end. Under 1180px the section bar
+ * has its own centred row below; from 1180px it joins the one row, right
+ * after the name (below). */
 @media (min-width: 641px) {
   .top-nav {
     display: grid;
@@ -2299,11 +2299,14 @@ html[data-perf="low"] .ks-name {
 
 /* one row from 1180px (the 11" iPad on its side and up); below it the bar
  * keeps its own centred row, so the school name, the search and «على جوالك»
- * all fit the first row without pushing the bar off centre (v5.13.4; 1000px
- * before the search and the QR button joined the header) */
+ * all fit the first row (v5.13.4; 1000px before the search and the QR button
+ * joined the header). In the one row the section bar sits right after the
+ * school name and the search takes the rest, so no empty space is left after
+ * «الأهلية» (owner's choice, v5.13.7; it was in the true centre before, with
+ * the space beside the name left empty). */
 @media (min-width: 1180px) {
   .top-nav {
-    grid-template-columns: 1fr auto 1fr;
+    grid-template-columns: auto auto minmax(0, 1fr);
     grid-template-areas: "brand dock fs";
   }
 }
@@ -3987,18 +3990,12 @@ html[data-perf="low"] .fs-btn--float {
  *     only once something is typed; choosing opens the value's window
  *     (exhibition_kiosk.js). Big screens only. */
 @media (min-width: 1180px) {
-  /* the end column takes its share of the row, so the field can reach in
-     toward the bar (the fullscreen button keeps the very end) */
+  /* the end column takes the rest of the row after the name and the bar, so
+     the field reaches in up to the bar (the fullscreen button keeps the very
+     end) */
   .top-nav .nav-tools {
     justify-self: stretch;
-    margin-inline-start: 0.75rem; /* a breath before the bar */
-  }
-
-  /* where the header keeps the logo's space (motion_scroll.css .ms-slot), the
-     bar is moved half that space toward this end to stay centred: keep the
-     same breath from it */
-  .top-nav.ms-slot .nav-tools {
-    margin-inline-start: calc(0.75rem + var(--nav-slot-w, 4.25rem) / 2);
+    margin-inline-start: 1.5rem; /* a breath after the bar */
   }
 }
 
