@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from stage3_fable_upgrade.js (sha256 3373d1a8ba5290f32adfea950cd7977829aa9674610796f32c13f62f24e3db79) for older browsers. Do not edit: edit stage3_fable_upgrade.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from stage3_fable_upgrade.js (sha256 cfa1251e159c39f73eeabfcce66a2259e987101fab5385c6aecba3de03950254) for older browsers. Do not edit: edit stage3_fable_upgrade.js and rebuild. */
 (() => {
   "use strict";
   var _a, _b, _c, _d, _e, _f, _g, _h, _i;
@@ -505,6 +505,7 @@
   }
   let glideRaf = 0;
   let glideStop = null;
+  window.glideScrollTo = glideScrollTo;
   function glideScrollTo(targetY, onDone) {
     var _a2, _b2;
     if (glideStop) glideStop();

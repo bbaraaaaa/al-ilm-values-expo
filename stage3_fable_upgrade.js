@@ -632,6 +632,7 @@
   // distance; a touch, wheel or key during the glide hands control back.
   let glideRaf = 0;
   let glideStop = null;
+  window.glideScrollTo = glideScrollTo; // the same glide for «الصعود للأعلى» (exhibition_kiosk.js)
   function glideScrollTo(targetY, onDone) {
     if (glideStop) glideStop(); // a new glide replaces the running one
     const startY = window.scrollY;

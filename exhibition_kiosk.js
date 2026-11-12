@@ -903,6 +903,84 @@
     }
   }
 
+  // --------------------------------------------------------------------------
+  // «الصعود للأعلى» (v5.13.8, the owner's request): a round button in the
+  // bottom corner opposite the logo. It shows once the page is about a screen
+  // and a bit down and hides again near the top (the page is ~7 screens long
+  // on the board, ~15 on a phone). On wide screens it sits on the line of the
+  // floating section bar (same height and glass); on phones, where that bar
+  // is a full-width tab bar, just above it (stage3 22.3). Pressed, it glides
+  // to the top with the site's own glide (glideScrollTo in
+  // stage3_fable_upgrade.js: ease in-out, handed back on a touch, the wheel
+  // or a key). No timers: only the scroll shows or hides it.
+  // --------------------------------------------------------------------------
+  {
+    const toTop = document.createElement('button');
+    toTop.type = 'button';
+    toTop.className = 'to-top-btn';
+    toTop.setAttribute('aria-label', 'الصعود للأعلى');
+    toTop.title = 'الصعود للأعلى';
+    toTop.tabIndex = -1;
+    toTop.setAttribute('aria-hidden', 'true');
+    toTop.innerHTML =
+      '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/></svg>';
+    document.body.appendChild(toTop);
+
+    const root = document.documentElement;
+    const pageY = () => window.pageYOffset || root.scrollTop || 0;
+    let toTopShown = false;
+    let toTopQueued = false;
+    // phones: wait just above the tab bar, whatever its height
+    const measureTabbar = () => {
+      const bar = document.querySelector('.glass-dock.floating-dock');
+      if (bar && bar.offsetHeight) root.style.setProperty('--tabbar-h', `${bar.offsetHeight}px`);
+    };
+    // in after 1.2 screens, out again under 0.8, so it never flickers at one spot
+    const placeToTop = () => {
+      toTopQueued = false;
+      const h = window.innerHeight;
+      const y = pageY();
+      const want = toTopShown ? y > h * 0.8 : y > h * 1.2;
+      if (want === toTopShown) return;
+      toTopShown = want;
+      toTop.classList.toggle('is-shown', want);
+      toTop.tabIndex = want ? 0 : -1;
+      toTop.setAttribute('aria-hidden', want ? 'false' : 'true');
+    };
+    const queueToTop = () => {
+      if (toTopQueued) return;
+      toTopQueued = true;
+      requestAnimationFrame(placeToTop);
+    };
+    window.addEventListener('scroll', queueToTop, { passive: true });
+    window.addEventListener(
+      'resize',
+      () => {
+        measureTabbar();
+        queueToTop();
+      },
+      { passive: true }
+    );
+    measureTabbar();
+    queueToTop();
+
+    toTop.addEventListener('click', (event) => {
+      // from the keyboard, the focus goes back to the top too (the header's
+      // school name link), so the next Tab carries on from there
+      const fromKeys = event.detail === 0;
+      const arrived = () => {
+        if (!fromKeys) return;
+        const first = document.querySelector('.top-nav .nav-brand');
+        if (first && first.focus) first.focus({ preventScroll: true });
+      };
+      if (typeof window.glideScrollTo === 'function') window.glideScrollTo(0, arrived);
+      else {
+        window.scrollTo(0, 0);
+        arrived();
+      }
+    });
+  }
+
   // Small public handle (handy for testing on the device).
   window.ExhibitionKiosk = {
     enterAttract,

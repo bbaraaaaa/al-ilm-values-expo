@@ -4359,6 +4359,94 @@ html[data-perf="low"] .phone-qr-card {
   }
 }
 
+/* --- 22.3 «الصعود للأعلى» (v5.13.8, exhibition_kiosk.js): a round button in
+ *     the bottom corner opposite the logo, shown once the page is a screen
+ *     and a bit down. On wide screens it sits on the line of the floating
+ *     section bar, the same height and glass; on phones (the bar is a
+ *     full-width tab bar there) it waits just above the bar. */
+.to-top-btn {
+  position: fixed;
+  left: 1rem; /* older browsers (no max() / env()) */
+  bottom: 1rem;
+  left: max(1rem, env(safe-area-inset-left, 0px));
+  bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+  z-index: 41; /* beside the section bar (40), under the windows */
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  block-size: 3.5rem;
+  padding: 0;
+  border: 1px solid rgba(97, 206, 212, 0.24);
+  border-radius: 50%;
+  background-color: rgba(18, 36, 42, 0.768); /* the section bar's glass */
+  color: #61ced4;
+  color: var(--alm-teal, #61ced4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 30px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 0.75rem, 0) scale(0.92);
+  --mt: opacity 160ms ease, transform 200ms cubic-bezier(0.4, 0, 1, 1), visibility 0s linear 200ms;
+  transition: var(--mt);
+}
+
+.to-top-btn.is-shown {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  --mt: opacity 240ms ease, transform 420ms cubic-bezier(0.16, 1, 0.3, 1), visibility 0s;
+}
+
+.to-top-btn svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.to-top-btn.is-shown:active {
+  transform: scale(0.94);
+  --mt: transform 120ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .to-top-btn:hover {
+    border-color: rgba(97, 206, 212, 0.5);
+    color: #a3e6ea;
+  }
+}
+
+.to-top-btn:focus-visible {
+  outline: 2px solid #61ced4;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px), (max-height: 500px) {
+  .to-top-btn {
+    left: 0.75rem;
+    left: max(0.75rem, env(safe-area-inset-left, 0px));
+    bottom: calc(max(1rem, env(safe-area-inset-bottom, 0px)) + var(--tabbar-h, 3.5rem) + 0.75rem);
+    inline-size: 3rem;
+    block-size: 3rem;
+  }
+}
+
+/* not over a window, nor over the waiting screen */
+body.modal-open .to-top-btn,
+body.is-attract .to-top-btn {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* the fade stays on reduced-motion devices too, like the other header
+   buttons; only the rise is dropped */
+@media (prefers-reduced-motion: reduce) {
+  .to-top-btn,
+  .to-top-btn.is-shown {
+    transform: none;
+    transition: var(--mt, none) !important;
+  }
+}
+
 /* ==========================================================================
  * 23. LIGHT DEVICES AND OLDER BROWSERS (smart boards, TVs)
  *     Plain selectors only: the browsers of many classroom boards and TVs are
@@ -4388,8 +4476,18 @@ html[data-perf="low"] .studio-panel,
 html[data-perf="low"] .manager-panel,
 html[data-perf="low"] .reader-panel,
 html[data-perf="low"] .top-nav,
-html[data-perf="low"] .glass-dock.floating-dock {
+html[data-perf="low"] .glass-dock.floating-dock,
+html[data-perf="low"] .to-top-btn {
   background-color: rgb(20, 37, 43);
+}
+
+/* The header and the section bar set their glass colour with !important
+   (section 17), which beat the line above, so on the light level the page
+   under the folded header showed through it (no blur there to soften it).
+   The solid colour needs !important too (v5.13.8). */
+html[data-perf="low"] .top-nav,
+html[data-perf="low"] .glass-dock.floating-dock {
+  background-color: rgb(20, 37, 43) !important;
 }
 
 html[data-perf="low"] .value-card-3d .vcard-header,

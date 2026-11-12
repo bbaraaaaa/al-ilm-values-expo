@@ -1,4 +1,4 @@
-/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 2b86a1173c0fcea0dd87cc49587102ee7ca658bd807f38b7d47dd30f6c8f3b45) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
+/* Built by tools/build-legacy.ps1 from exhibition_kiosk.js (sha256 5975de0154bed9cd55705b9781d3735d871f130213f980105f21b1d8d7f35915) for older browsers. Do not edit: edit exhibition_kiosk.js and rebuild. */
 (() => {
   "use strict";
   var _a;
@@ -707,6 +707,65 @@
       };
       window.addEventListener("pointerup", again, true);
     }
+  }
+  {
+    const toTop = document.createElement("button");
+    toTop.type = "button";
+    toTop.className = "to-top-btn";
+    toTop.setAttribute("aria-label", "الصعود للأعلى");
+    toTop.title = "الصعود للأعلى";
+    toTop.tabIndex = -1;
+    toTop.setAttribute("aria-hidden", "true");
+    toTop.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5.5 11.5 12 5l6.5 6.5"/></svg>';
+    document.body.appendChild(toTop);
+    const root = document.documentElement;
+    const pageY = () => window.pageYOffset || root.scrollTop || 0;
+    let toTopShown = false;
+    let toTopQueued = false;
+    const measureTabbar = () => {
+      const bar = document.querySelector(".glass-dock.floating-dock");
+      if (bar && bar.offsetHeight) root.style.setProperty("--tabbar-h", `${bar.offsetHeight}px`);
+    };
+    const placeToTop = () => {
+      toTopQueued = false;
+      const h = window.innerHeight;
+      const y = pageY();
+      const want = toTopShown ? y > h * 0.8 : y > h * 1.2;
+      if (want === toTopShown) return;
+      toTopShown = want;
+      toTop.classList.toggle("is-shown", want);
+      toTop.tabIndex = want ? 0 : -1;
+      toTop.setAttribute("aria-hidden", want ? "false" : "true");
+    };
+    const queueToTop = () => {
+      if (toTopQueued) return;
+      toTopQueued = true;
+      requestAnimationFrame(placeToTop);
+    };
+    window.addEventListener("scroll", queueToTop, { passive: true });
+    window.addEventListener(
+      "resize",
+      () => {
+        measureTabbar();
+        queueToTop();
+      },
+      { passive: true }
+    );
+    measureTabbar();
+    queueToTop();
+    toTop.addEventListener("click", (event) => {
+      const fromKeys = event.detail === 0;
+      const arrived = () => {
+        if (!fromKeys) return;
+        const first = document.querySelector(".top-nav .nav-brand");
+        if (first && first.focus) first.focus({ preventScroll: true });
+      };
+      if (typeof window.glideScrollTo === "function") window.glideScrollTo(0, arrived);
+      else {
+        window.scrollTo(0, 0);
+        arrived();
+      }
+    });
   }
   window.ExhibitionKiosk = {
     enterAttract,

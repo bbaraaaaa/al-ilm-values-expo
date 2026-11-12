@@ -35,7 +35,17 @@
   <main>
     <h1>الصفحة غير موجودة</h1>
     <p>الرابط الذي فتحته غير موجود في معرض ترسيخ القيم.</p>
-    <a href="./">العودة إلى المعرض</a>
+    <a id="home" href="/">العودة إلى المعرض</a>
   </main>
+  <!-- The site sits at the root of the Cloudflare and Firebase links and under
+       /al-ilm-values-expo/ on GitHub Pages. "./" pointed at the wrong folder
+       when the bad link had more than one part (/a/b led to /a/, another
+       «غير موجودة»), so the button goes to the site's own start (v5.13.8). -->
+  <script>
+    (function () {
+      var gh = '/al-ilm-values-expo/';
+      if (location.pathname.indexOf(gh) === 0) document.getElementById('home').href = gh;
+    })();
+  </script>
 </body>
 </html>
